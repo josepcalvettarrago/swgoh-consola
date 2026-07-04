@@ -45,6 +45,35 @@ describe("assemble()", () => {
   });
 });
 
+describe("unicidad de Leyenda Galáctica (gl:1)", () => {
+  const glCount = R => [...R.team, ...R.subs].filter(u => u.gl).length;
+
+  it("equipo por defecto: nunca más de una GL entre titulares + suplentes", () => {
+    expect(glCount(assemble(RD.R, [], null))).toBeLessThanOrEqual(1);
+  });
+
+  it("cada counter del meta: nunca más de una GL", () => {
+    for (const e of ENEMIES) {
+      expect(glCount(assemble(RD.R, [], e.needs))).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("forzando DOS GLs, el equipo sigue con una sola GL", () => {
+    const slkr = byName("Supreme Leader Kylo Ren"), glrey = byName("Rey");
+    expect(slkr.gl).toBe(1); expect(glrey.gl).toBe(1);
+    const R = assemble(RD.R, [slkr, glrey], null);
+    expect(R.team.filter(u => u.gl).length).toBe(1);
+    expect(glCount(R)).toBeLessThanOrEqual(1);
+  });
+
+  it("líder GL: ninguna otra GL rellena el equipo", () => {
+    const jabba = byName("Jabba the Hutt"); // gl:1, ld:1
+    const R = assemble(RD.R, [jabba], null);
+    expect(R.leader.gl).toBe(1);
+    expect(R.team.filter(u => u.gl).length).toBe(1);
+  });
+});
+
 describe("lookupByName()", () => {
   it("resuelve el sufijo (GL) contra el nombre base", () => {
     const hit = lookupByName("Jabba the Hutt (GL)");

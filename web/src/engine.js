@@ -33,9 +33,11 @@ export function assemble(pool, forced, needs) {
   if (fLead.length) leader = fLead.slice().sort((a, b) => lscore(b) - lscore(a))[0];
   else { const pLead = pool.filter(u => u.ld); leader = (pLead.length ? pLead : universe).slice().sort((a, b) => lscore(b) - lscore(a))[0]; }
   const team = [leader];
+  // Restricción de juego: máximo UNA Leyenda Galáctica (gl:1) por equipo.
+  const teamHasGL = () => team.some(u => u.gl);
   const covered = new Set(leader.a.filter(a => KEYMECH.includes(a)));
   const roleCnt = {}; roleCnt[leader.r] = 1;
-  forced.forEach(f => { if (team.length < 5 && !team.includes(f)) { team.push(f); f.a.forEach(a => { if (KEYMECH.includes(a)) covered.add(a); }); roleCnt[f.r] = (roleCnt[f.r] || 0) + 1; } });
+  forced.forEach(f => { if (team.length < 5 && !team.includes(f) && !(f.gl && teamHasGL())) { team.push(f); f.a.forEach(a => { if (KEYMECH.includes(a)) covered.add(a); }); roleCnt[f.r] = (roleCnt[f.r] || 0) + 1; } });
   function marginal(u) {
     const strengthW = norm(u) * 1.0;
     let coh = 0; team.forEach(t => { coh += u.c.filter(c => c !== "Leader" && t.c.includes(c)).length; });
@@ -50,11 +52,11 @@ export function assemble(pool, forced, needs) {
     return strengthW + coh + roleB + cov + needB;
   }
   while (team.length < 5) {
-    const rest = pool.filter(u => !team.includes(u)); if (!rest.length) break;
+    const rest = pool.filter(u => !team.includes(u) && !(teamHasGL() && u.gl)); if (!rest.length) break;
     const pick = rest.slice().sort((a, b) => marginal(b) - marginal(a))[0]; team.push(pick);
     pick.a.forEach(a => { if (KEYMECH.includes(a)) covered.add(a); }); roleCnt[pick.r] = (roleCnt[pick.r] || 0) + 1;
   }
-  const subs = pool.filter(u => !team.includes(u)).sort((a, b) => (needs && needs.length ? (needCov(b) - needCov(a)) : 0) || (norm(b) - norm(a))).slice(0, 4);
+  const subs = pool.filter(u => !team.includes(u) && !(teamHasGL() && u.gl)).sort((a, b) => (needs && needs.length ? (needCov(b) - needCov(a)) : 0) || (norm(b) - norm(a))).slice(0, 4);
   const avgStr = team.reduce((s, u) => s + norm(u), 0) / team.length;
   const covScore = [...covered].filter(m => KEYMECH.includes(m)).length / KEYMECH.length;
   const hasTank = team.some(u => u.r === "Tank"), hasSus = team.some(u => u.r === "Healer" || u.r === "Support");
