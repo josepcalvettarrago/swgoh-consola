@@ -1,16 +1,19 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
-import { DATA, RD, ENEMIES, SIDES } from "./data.js";
+import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES } from "./data.js";
 import { assemble, teamRow, portrait, unitImg, lookupByName } from "./engine.js";
+
+// Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
+let RD = EMBEDDED_RD;
 
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const fmt = n => n.toLocaleString("es-ES");
 
 // ---- estado de módulo ----
 let lvpct = 0, ringDone = false, rmIO = null;
-const rm = matchMedia("(prefers-reduced-motion:reduce)").matches;
+const rm = typeof matchMedia !== "undefined" ? matchMedia("(prefers-reduced-motion:reduce)").matches : false;
 const rxState = { q: "", side: "", role: "", fac: "", ab: "", sort: "p" };
-const NAME2ID = {}, ID2U = {}; RD.R.forEach(u => { NAME2ID[u.n] = u.i; ID2U[u.i] = u; });
+let NAME2ID = {}, ID2U = {}; // se (re)construyen en init() a partir del roster activo.
 let cqCons = [];
 const CQTYPE_ES = { fac: "Facción", side: "Lado", role: "Rol", ab: "Mecánica", char: "Personaje" };
 const ROLE_ES = { Tank: "Tanque", Healer: "Sustain", Support: "Apoyo", Attacker: "Daño" };
@@ -249,7 +252,11 @@ function genCounter(ei) {
 }
 
 // ===== cableado de eventos + arranque =====
-export function init() {
+export function init(rd) {
+  // Roster inyectado (en vivo) o embebido como fallback.
+  RD = rd && Array.isArray(rd.R) && rd.V ? rd : EMBEDDED_RD;
+  NAME2ID = {}; ID2U = {}; RD.R.forEach(u => { NAME2ID[u.n] = u.i; ID2U[u.i] = u; });
+
   renderStatic();
 
   // Roster explorer: poblar selects

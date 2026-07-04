@@ -2,15 +2,18 @@ name = "swgoh-consola"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
-# Fase 1: cron cada 6-12 h para llamar a api.swgoh.gg y escribir en Firestore.
-# Descomentar cuando se implemente el pipeline de datos.
+# Fase 1 (post-gate): cron cada 8 h para refrescar Yusepi + gremio y escribir snapshots.
+# Descomentar cuando el normalizador + escritura en Firestore estén listos.
 # [triggers]
 # crons = ["0 */8 * * *"]
 
-# Variables NO secretas. La API key real se inyecta con:
-#   wrangler secret put SWGOH_GG_API_KEY
-# NUNCA se commitea el valor real.
+# Variables NO secretas.
 [vars]
-SWGOH_GG_BASE = "https://api.swgoh.gg"
 ALLY_CODE = "355463284"
-# SWGOH_GG_API_KEY -> wrangler secret (header x-gg-bot-access)
+GUILD_ID = ""                 # se rellena tras leer el perfil de Yusepi
+PAGES_ORIGIN = "*"            # en prod: https://<tu-proyecto>.pages.dev
+
+# Secrets (NUNCA en el repo). Configurar con:
+#   wrangler secret put FIREBASE_SERVICE_ACCOUNT   # JSON del service account en una línea
+#   wrangler secret put SWGOH_GG_API_KEY           # opcional, header x-gg-bot-access
+# En local: usar .dev.vars (ya está en .gitignore).
