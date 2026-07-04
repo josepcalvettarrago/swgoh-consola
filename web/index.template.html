@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holotable · Consola de Mando — Yusepi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+<!--INJECT:CSS-->
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="hbar">
+      <div class="idblock">
+        <div class="eyebrow">Holotable · Consola de mando</div>
+        <h1 id="pname">—</h1>
+        <div class="sub">Gremio <b id="pguild">—</b> · <span class="mono" id="pally">—</span> · Nivel 85 · F2P</div>
+      </div>
+      <div class="chips">
+        <div class="chip"><div class="k">GP total</div><div class="v" id="pgp">—</div></div>
+        <div class="chip rank" id="rankchip"><div class="k">Rango arena</div><div class="v" id="prank">—</div></div>
+        <div class="chip"><div class="k">En gremio</div><div class="v" id="pguildrank">—</div></div>
+        <div class="chip"><div class="k">Skill rating</div><div class="v" id="pskill">—</div></div>
+      </div>
+    </div>
+    <div class="diag">
+      <span class="dot"></span>
+      <div>
+        <h2>Diagnóstico: no es tu roster, son tus mods y datacrons</h2>
+        <p>Tienes 7 Galactic Legends y todo el meta, pero <b id="d-unlev">—</b> de 1700 mods están sin subir de nivel, solo <b id="d-spd20">—</b> superan 20 de velocidad y llevas <b>0 datacrons</b>. Eso explica el rango 228 — y son los arreglos más baratos que existen para F2P.</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-p="mods"><span class="n">01</span> Arena / Mods</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="vader"><span class="n">02</span> Lord Vader</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="gl"><span class="n">03</span> Galactic Legends</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="counters"><span class="n">04</span> Counters</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="roster"><span class="n">05</span> Roster</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="conquest"><span class="n">06</span> Conquest</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="next"><span class="n">07</span> Mejoras</button>
+  </nav>
+
+  <!-- MODS -->
+  <section class="panel on" id="p-mods" role="tabpanel">
+    <div class="card"><div class="head"><h3>Estado global de tus mods</h3><span class="note">Foto de tu inventario actual</span></div>
+      <div class="statgrid" id="modstats"></div></div>
+    <div class="card"><div class="head"><h3>Equipo a modear #1 — SLKR (First Order)</h3>
+      <span class="note">Tu GL más desarrollado (R8) y equipo completo. Sube <b>todos</b> sus mods a nivel 15.</span></div>
+      <div id="team"></div></div>
+    <div class="card"><div class="head"><h3>Reasigna estos mods premium (están desperdiciados)</h3>
+      <span class="note">Los llevan Inquisidores que no usas en arena — muévelos al soporte de SLKR</span></div>
+      <ul class="relocate" id="reloc"></ul>
+      <p style="color:var(--muted);font-size:14px;padding-bottom:12px"><b style="color:var(--text)">Stats objetivo:</b> en el soporte (Hux, Kylo desenmascarado, Oficial FO, Piloto SF TIE) prioriza <b style="color:var(--holo)">VELOCIDAD</b> por encima de todo. En SLKR busca protección + salud + ofensiva y ~60% de potencia; de velocidad ya va sobrado.</p></div>
+  </section>
+
+  <!-- VADER -->
+  <section class="panel" id="p-vader" role="tabpanel">
+    <div class="card"><div class="head"><h3>Protocolo de ascensión — Lord Vader</h3><span class="note">Requisitos verificados (swgoh.wiki)</span></div>
+      <div class="lvtop"><div class="ring" id="lvring"><div class="lab"><b id="lvpct">0%</b><span>Relic</span></div></div>
+      <div class="lvfacts" id="lvfacts"></div></div>
+      <div class="shipnote" id="shipnote"></div></div>
+    <div class="loop"><div class="lh">Ciclo semanal con <span>Claude Cowork</span> — tú ejecutas, Cowork planifica y mide</div>
+      <div class="cycle">
+        <div class="step you"><div class="sn">01 · TÚ</div><div class="st">Ejecutas en el juego</div><div class="sd">Farmeas y subes relic/mods según la semana.</div></div>
+        <div class="step you"><div class="sn">02 · TÚ</div><div class="st">Subes el export</div><div class="sd">Nuevo JSON de swgoh.gg al proyecto (30 s).</div></div>
+        <div class="step"><div class="sn">03 · COWORK</div><div class="st">Compara y recalcula</div><div class="sd">Marca lo hecho y actualiza el panel.</div></div>
+        <div class="step"><div class="sn">04 · COWORK</div><div class="st">Te da la semana</div><div class="sd">Lista concreta de qué hacer a continuación.</div></div>
+      </div></div>
+    <div class="card"><div class="head"><h3>Roadmap semana a semana</h3><span class="note" id="rmnote">—</span></div>
+      <div class="tl" id="tl"></div></div>
+  </section>
+
+  <!-- GL -->
+  <section class="panel" id="p-gl" role="tabpanel">
+    <div class="card"><div class="head"><h3>Tus Galactic Legends</h3><span class="note" id="glcount">—</span></div>
+      <div class="glgrid" id="glowned"></div>
+      <div class="subhead">Te faltan — completa de uno en uno</div>
+      <div class="glgrid" id="glmissing" style="padding-bottom:8px"></div></div>
+    <div class="card"><div class="head"><h3>Huecos de roster para los próximos GL</h3><span class="note">Lo que farmear tras Vader</span></div>
+      <div class="subhead" style="margin-top:4px">GL Ahsoka — unidades marquee "(Exile)"</div><div class="gaptbl" id="gapAhsoka"></div>
+      <div class="subhead">Pirate King Hondo — piratas / scoundrels</div><div class="gaptbl" id="gapHondo"></div></div>
+  </section>
+
+  <!-- NEXT / PROPOSALS -->
+  <section class="panel" id="p-next" role="tabpanel">
+    <div class="card"><div class="head"><h3>Top 5 — próximas mejoras del panel</h3><span class="note">Basado en las tendencias actuales de SWGOH y en tus huecos</span></div>
+      <div id="props" style="padding-bottom:6px"></div>
+      <div class="bonus" id="bonus"></div></div>
+  </section>
+
+  <!-- COUNTERS -->
+  <section class="panel" id="p-counters" role="tabpanel">
+    <div class="card"><div class="head"><h3>Counters GAC / TW</h3>
+      <span class="note" id="cx-count">—</span></div>
+      <div class="rx-controls">
+        <input id="cx-q" class="rx-in" type="text" placeholder="Buscar rival…" autocomplete="off">
+        <div class="seg-btns" id="cx-side">
+          <button data-v="" aria-pressed="true">Todos</button>
+          <button data-v="L">Luz</button><button data-v="D">Oscuro</button></div>
+        <select id="cx-fac" class="rx-sel"><option value="">Cualquier facción</option></select>
+      </div>
+      <div id="counters"></div>
+      <div class="clive">
+        <span class="cll">Datos en vivo del meta (se actualizan cada semana)</span>
+        <div class="cllinks">
+          <a href="https://swgoh.gg/gac/counters/" target="_blank" rel="noopener">swgoh.gg · Counters GAC</a>
+          <a href="https://swgoh-cantina.com/en/gac-counters" target="_blank" rel="noopener">swgoh-cantina · 3v3 / 5v5 / flota</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROSTER EXPLORER -->
+  <section class="panel" id="p-roster" role="tabpanel">
+    <div class="card"><div class="head"><h3>Explorador de roster</h3><span class="note" id="rx-count">—</span></div>
+      <div class="rx-controls">
+        <input id="rx-q" class="rx-in" type="text" placeholder="Buscar por nombre…" autocomplete="off">
+        <div class="seg-btns" id="rx-side">
+          <button data-v="" aria-pressed="true">Todos</button>
+          <button data-v="L">Luz</button><button data-v="D">Oscuro</button></div>
+        <select id="rx-role" class="rx-sel"><option value="">Cualquier rol</option></select>
+        <select id="rx-fac" class="rx-sel"><option value="">Cualquier facción</option></select>
+        <select id="rx-ab" class="rx-sel"><option value="">Cualquier habilidad</option></select>
+        <select id="rx-sort" class="rx-sel">
+          <option value="p">Orden: GP</option><option value="rl">Orden: Relic</option><option value="n">Orden: A→Z</option></select>
+        <button class="toggle" id="rx-reset">Limpiar</button>
+      </div>
+      <div class="rxgrid" id="rx-grid"></div>
+    </div>
+  </section>
+
+  <!-- CONQUEST SIMULATOR -->
+  <section class="panel" id="p-conquest" role="tabpanel">
+    <div class="card"><div class="head"><h3>Simulador de equipos — Conquest</h3>
+      <span class="note">Combina varios requisitos con <b>Y</b> (facción + rol + mecánica…) y fija hasta <b>3 personajes obligatorios</b>. Te propongo el mejor equipo por <b>sinergia</b> sin descartar a nadie por bajo power.</span></div>
+      <div class="cq-builder">
+        <div class="cq-row">
+          <select id="cq-type" class="rx-sel">
+            <option value="fac">Facción</option>
+            <option value="side">Lado</option>
+            <option value="role">Rol</option>
+            <option value="ab">Mecánica / debuff</option>
+            <option value="char">Personaje(s)</option>
+          </select>
+          <select id="cq-val" class="rx-sel"></select>
+          <span id="cq-charwrap" style="display:none">
+            <input id="cq-char" class="rx-in" list="cq-chardl" placeholder="Escribe un personaje…" autocomplete="off">
+            <datalist id="cq-chardl"></datalist>
+          </span>
+          <button class="cfbtn" id="cq-add">+ Añadir</button>
+        </div>
+        <div id="cq-chips" class="cq-chips"></div>
+        <div id="cq-warn" class="cq-warn" style="display:none"></div>
+        <button class="simgo" id="cq-go">Proponer equipo</button>
+      </div>
+      <div id="sim-out"></div>
+    </div>
+  </section>
+
+  <footer><span id="foot-updated">—</span><span>Actualiza: descarga swgoh.gg/api/player/355463284/ y súbelo de nuevo</span></footer>
+</div>
+
+<script>
+<!--INJECT:JS-->
+</script>
+</body>
+</html>

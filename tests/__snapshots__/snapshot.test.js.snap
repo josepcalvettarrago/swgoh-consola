@@ -1,0 +1,212 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshot del motor > counter por cada defensa del meta 1`] = `
+[
+  {
+    "enemy": "Jabba the Hutt (GL)",
+    "leader": "JABBATHEHUTT",
+    "score": 80,
+    "team": [
+      "JABBATHEHUTT",
+      "BOBAFETT",
+      "SUPREMELEADERKYLOREN",
+      "GRANDMASTERLUKE",
+      "SITHPALPATINE",
+    ],
+  },
+  {
+    "enemy": "Rey (GL)",
+    "leader": "GRANDMASTERLUKE",
+    "score": 83,
+    "team": [
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "GLLEIA",
+      "SUPREMELEADERKYLOREN",
+      "JEDIMASTERKENOBI",
+    ],
+  },
+  {
+    "enemy": "Sith Eternal Emperor (GL)",
+    "leader": "GRANDMASTERLUKE",
+    "score": 83,
+    "team": [
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "GLLEIA",
+      "SUPREMELEADERKYLOREN",
+      "JEDIMASTERKENOBI",
+    ],
+  },
+  {
+    "enemy": "Jedi Master Kenobi (GL)",
+    "leader": "GRANDMASTERLUKE",
+    "score": 83,
+    "team": [
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "GLLEIA",
+      "SUPREMELEADERKYLOREN",
+      "JEDIMASTERKENOBI",
+    ],
+  },
+  {
+    "enemy": "Leia Organa (GL)",
+    "leader": "JEDIMASTERKENOBI",
+    "score": 84,
+    "team": [
+      "JEDIMASTERKENOBI",
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "SUPREMELEADERKYLOREN",
+      "GLREY",
+    ],
+  },
+  {
+    "enemy": "General Skywalker",
+    "leader": "GRANDMASTERLUKE",
+    "score": 71,
+    "team": [
+      "GRANDMASTERLUKE",
+      "MASTERQUIGON",
+      "PADAWANOBIWAN",
+      "MACEWINDU",
+      "GRANDINQUISITOR",
+    ],
+  },
+  {
+    "enemy": "Lord Vader",
+    "leader": "GRANDMASTERLUKE",
+    "score": 83,
+    "team": [
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "GLLEIA",
+      "SUPREMELEADERKYLOREN",
+      "JEDIMASTERKENOBI",
+    ],
+  },
+  {
+    "enemy": "Bo-Katan (Mand'alor)",
+    "leader": "GRANDMASTERLUKE",
+    "score": 80,
+    "team": [
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "JEDIMASTERKENOBI",
+      "SUPREMELEADERKYLOREN",
+      "CALKESTIS",
+    ],
+  },
+  {
+    "enemy": "GL Ahsoka",
+    "leader": "GRANDMASTERLUKE",
+    "score": 71,
+    "team": [
+      "GRANDMASTERLUKE",
+      "MASTERQUIGON",
+      "PADAWANOBIWAN",
+      "MACEWINDU",
+      "GRANDINQUISITOR",
+    ],
+  },
+  {
+    "enemy": "Darth Malgus",
+    "leader": "JEDIMASTERKENOBI",
+    "score": 78,
+    "team": [
+      "JEDIMASTERKENOBI",
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "SUPREMELEADERKYLOREN",
+      "MASTERQUIGON",
+    ],
+  },
+  {
+    "enemy": "Padmé Amidala",
+    "leader": "GRANDMASTERLUKE",
+    "score": 78,
+    "team": [
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "GLLEIA",
+      "SUPREMELEADERKYLOREN",
+      "CALKESTIS",
+    ],
+  },
+  {
+    "enemy": "Supreme Leader Kylo Ren (GL)",
+    "leader": "GRANDMASTERLUKE",
+    "score": 80,
+    "team": [
+      "GRANDMASTERLUKE",
+      "GLLEIA",
+      "JABBATHEHUTT",
+      "SUPREMELEADERKYLOREN",
+      "COMMANDERLUKESKYWALKER",
+    ],
+  },
+  {
+    "enemy": "General Grievous (droides Sep)",
+    "leader": "SUPREMELEADERKYLOREN",
+    "score": 83,
+    "team": [
+      "SUPREMELEADERKYLOREN",
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "GLLEIA",
+      "GLREY",
+    ],
+  },
+  {
+    "enemy": "Nightsisters (Great Mothers)",
+    "leader": "SUPREMELEADERKYLOREN",
+    "score": 76,
+    "team": [
+      "SUPREMELEADERKYLOREN",
+      "JABBATHEHUTT",
+      "GRANDMASTERLUKE",
+      "GLREY",
+      "GLLEIA",
+    ],
+  },
+  {
+    "enemy": "Queen Amidala (gungans)",
+    "leader": "GRANDMASTERLUKE",
+    "score": 78,
+    "team": [
+      "GRANDMASTERLUKE",
+      "JABBATHEHUTT",
+      "GLLEIA",
+      "SUPREMELEADERKYLOREN",
+      "CALKESTIS",
+    ],
+  },
+  {
+    "enemy": "Bounty Hunters (Bossk/Boba)",
+    "leader": "SUPREMELEADERKYLOREN",
+    "score": 76,
+    "team": [
+      "SUPREMELEADERKYLOREN",
+      "JABBATHEHUTT",
+      "GRANDMASTERLUKE",
+      "GLREY",
+      "GLLEIA",
+    ],
+  },
+]
+`;
+
+exports[`snapshot del motor > equipo por defecto (pool completo) 1`] = `
+{
+  "leader": "SUPREMELEADERKYLOREN",
+  "score": 79,
+  "team": [
+    "SUPREMELEADERKYLOREN",
+    "GRANDMASTERLUKE",
+    "JABBATHEHUTT",
+    "GLREY",
+    "GLLEIA",
+  ],
+}
+`;

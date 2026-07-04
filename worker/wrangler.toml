@@ -1,0 +1,16 @@
+name = "swgoh-consola"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Fase 1: cron cada 6-12 h para llamar a api.swgoh.gg y escribir en Firestore.
+# Descomentar cuando se implemente el pipeline de datos.
+# [triggers]
+# crons = ["0 */8 * * *"]
+
+# Variables NO secretas. La API key real se inyecta con:
+#   wrangler secret put SWGOH_GG_API_KEY
+# NUNCA se commitea el valor real.
+[vars]
+SWGOH_GG_BASE = "https://api.swgoh.gg"
+ALLY_CODE = "355463284"
+# SWGOH_GG_API_KEY -> wrangler secret (header x-gg-bot-access)
