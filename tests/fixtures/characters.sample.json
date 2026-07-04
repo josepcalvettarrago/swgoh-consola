@@ -1,0 +1,1050 @@
+[
+ {
+  "name": "Ahsoka Tano (Fulcrum)",
+  "base_id": "FULCRUMAHSOKA",
+  "url": "//swgoh.gg/units/ahsoka-tano-fulcrum/",
+  "image": "https://game-assets.swgoh.gg/textures/tex.charui_ahsokaadult.png",
+  "power": 37413,
+  "description": "Enduring Rebel Attacker who shrugs off debuffs and consumes buffs to deal extra damage",
+  "combat_type": 1,
+  "gear_levels": [
+   {
+    "tier": 1,
+    "gear": [
+     "009",
+     "002",
+     "011",
+     "011",
+     "003",
+     "011"
+    ]
+   },
+   {
+    "tier": 2,
+    "gear": [
+     "017",
+     "032",
+     "028",
+     "026",
+     "029",
+     "026"
+    ]
+   },
+   {
+    "tier": 3,
+    "gear": [
+     "040",
+     "053",
+     "053",
+     "056",
+     "062",
+     "037"
+    ]
+   },
+   {
+    "tier": 4,
+    "gear": [
+     "078",
+     "078",
+     "055",
+     "053",
+     "051",
+     "051"
+    ]
+   },
+   {
+    "tier": 5,
+    "gear": [
+     "074",
+     "079",
+     "082",
+     "076",
+     "077",
+     "051"
+    ]
+   },
+   {
+    "tier": 6,
+    "gear": [
+     "096",
+     "097",
+     "091",
+     "092",
+     "102",
+     "101"
+    ]
+   },
+   {
+    "tier": 7,
+    "gear": [
+     "103",
+     "101",
+     "107",
+     "113",
+     "102",
+     "102"
+    ]
+   },
+   {
+    "tier": 8,
+    "gear": [
+     "117",
+     "118",
+     "109",
+     "112",
+     "091",
+     "091"
+    ]
+   },
+   {
+    "tier": 9,
+    "gear": [
+     "115",
+     "126",
+     "117",
+     "108",
+     "108",
+     "102"
+    ]
+   },
+   {
+    "tier": 10,
+    "gear": [
+     "131",
+     "125",
+     "125",
+     "121",
+     "138",
+     "138"
+    ]
+   },
+   {
+    "tier": 11,
+    "gear": [
+     "144",
+     "138",
+     "139",
+     "129",
+     "121",
+     "149"
+    ]
+   },
+   {
+    "tier": 12,
+    "gear": [
+     "158",
+     "165",
+     "160",
+     "167",
+     "170",
+     "G12Finisher_FULCRUMAHSOKA_A"
+    ]
+   }
+  ],
+  "alignment": "Light Side",
+  "categories": [
+   "Rebel",
+   "Spectre",
+   "Unaligned Force User"
+  ],
+  "ability_classes": [
+   "+Speed",
+   "DoT",
+   "Gain Turn Meter",
+   "Taunt",
+   "Foresight",
+   "Revive",
+   "Retribution",
+   "Dispel",
+   "Protection Up",
+   "Anti-Revive",
+   "Counter"
+  ],
+  "role": "Attacker",
+  "ship": "",
+  "ship_slot": null,
+  "activate_shard_count": 25
+ },
+ {
+  "name": "Hondo Ohnaka",
+  "base_id": "HONDO",
+  "url": "//swgoh.gg/units/hondo-ohnaka/",
+  "image": "https://game-assets.swgoh.gg/textures/tex.charui_hondoohnaka.png",
+  "power": 40393,
+  "description": "The unparalleled Scoundrel willing to play all angles for his own gains",
+  "combat_type": 1,
+  "gear_levels": [
+   {
+    "tier": 1,
+    "gear": [
+     "001",
+     "002",
+     "003",
+     "004",
+     "004",
+     "005"
+    ]
+   },
+   {
+    "tier": 2,
+    "gear": [
+     "027",
+     "021",
+     "015",
+     "028",
+     "028",
+     "034"
+    ]
+   },
+   {
+    "tier": 3,
+    "gear": [
+     "062",
+     "076",
+     "050",
+     "041",
+     "069",
+     "049"
+    ]
+   },
+   {
+    "tier": 4,
+    "gear": [
+     "055",
+     "058",
+     "024",
+     "055",
+     "070",
+     "074"
+    ]
+   },
+   {
+    "tier": 5,
+    "gear": [
+     "093",
+     "043",
+     "086",
+     "051",
+     "084",
+     "079"
+    ]
+   },
+   {
+    "tier": 6,
+    "gear": [
+     "075",
+     "055",
+     "092",
+     "092",
+     "093",
+     "097"
+    ]
+   },
+   {
+    "tier": 7,
+    "gear": [
+     "102",
+     "079",
+     "106",
+     "102",
+     "100",
+     "099"
+    ]
+   },
+   {
+    "tier": 8,
+    "gear": [
+     "108",
+     "117",
+     "098",
+     "072",
+     "111",
+     "117"
+    ]
+   },
+   {
+    "tier": 9,
+    "gear": [
+     "117",
+     "117",
+     "174",
+     "174",
+     "098",
+     "111"
+    ]
+   },
+   {
+    "tier": 10,
+    "gear": [
+     "174",
+     "122",
+     "132",
+     "125",
+     "123",
+     "143"
+    ]
+   },
+   {
+    "tier": 11,
+    "gear": [
+     "109",
+     "130",
+     "135",
+     "143",
+     "124",
+     "137"
+    ]
+   },
+   {
+    "tier": 12,
+    "gear": [
+     "158",
+     "161",
+     "163",
+     "168",
+     "169",
+     "G12Finisher_HONDO_C"
+    ]
+   }
+  ],
+  "alignment": "Neutral",
+  "categories": [
+   "Mercenary",
+   "Pirate",
+   "Scoundrel",
+   "Smuggler",
+   "Order 66 Raid"
+  ],
+  "ability_classes": [
+   "+Speed",
+   "Expose",
+   "Assist",
+   "Defense Up",
+   "Gain Turn Meter",
+   "Foresight",
+   "Buff Immunity",
+   "Remove Turn Meter",
+   "Profit",
+   "Bonus Turn",
+   "Dispel",
+   "Protection Up",
+   "Counter",
+   "Ability Block",
+   "AoE"
+  ],
+  "role": "Support",
+  "ship": "",
+  "ship_slot": null,
+  "activate_shard_count": 25
+ },
+ {
+  "name": "CT-7567 \"Rex\"",
+  "base_id": "CT7567",
+  "url": "//swgoh.gg/units/ct-7567-rex/",
+  "image": "https://game-assets.swgoh.gg/textures/tex.charui_trooperclone_rex.png",
+  "power": 38197,
+  "description": "Clone Leader who fiercely supports and protects his 501st and Clone Trooper allies",
+  "combat_type": 1,
+  "gear_levels": [
+   {
+    "tier": 1,
+    "gear": [
+     "006",
+     "006",
+     "008",
+     "004",
+     "007",
+     "005"
+    ]
+   },
+   {
+    "tier": 2,
+    "gear": [
+     "019",
+     "019",
+     "028",
+     "015",
+     "026",
+     "034"
+    ]
+   },
+   {
+    "tier": 3,
+    "gear": [
+     "059",
+     "053",
+     "069",
+     "051",
+     "013",
+     "072"
+    ]
+   },
+   {
+    "tier": 4,
+    "gear": [
+     "056",
+     "081",
+     "068",
+     "024",
+     "065",
+     "076"
+    ]
+   },
+   {
+    "tier": 5,
+    "gear": [
+     "082",
+     "064",
+     "079",
+     "057",
+     "058",
+     "053"
+    ]
+   },
+   {
+    "tier": 6,
+    "gear": [
+     "084",
+     "096",
+     "092",
+     "101",
+     "095",
+     "091"
+    ]
+   },
+   {
+    "tier": 7,
+    "gear": [
+     "110",
+     "109",
+     "094",
+     "082",
+     "103",
+     "102"
+    ]
+   },
+   {
+    "tier": 8,
+    "gear": [
+     "118",
+     "112",
+     "099",
+     "098",
+     "091",
+     "113"
+    ]
+   },
+   {
+    "tier": 9,
+    "gear": [
+     "115",
+     "077",
+     "103",
+     "101",
+     "094",
+     "086"
+    ]
+   },
+   {
+    "tier": 10,
+    "gear": [
+     "116",
+     "118",
+     "109",
+     "064",
+     "060",
+     "071"
+    ]
+   },
+   {
+    "tier": 11,
+    "gear": [
+     "140",
+     "139",
+     "150",
+     "108",
+     "104",
+     "125"
+    ]
+   },
+   {
+    "tier": 12,
+    "gear": [
+     "165",
+     "164",
+     "158",
+     "170",
+     "170",
+     "G12Finisher_CT7567_B"
+    ]
+   }
+  ],
+  "alignment": "Light Side",
+  "categories": [
+   "Leader",
+   "501st",
+   "Clone Trooper",
+   "Galactic Republic"
+  ],
+  "ability_classes": [
+   "+Speed",
+   "Gain Turn Meter",
+   "Critical Hit Immunity",
+   "Remove Turn Meter",
+   "+Max Health",
+   "Dispel",
+   "Tenacity Up",
+   "Counter",
+   "Potency Up",
+   "Reduce Cooldowns"
+  ],
+  "role": "Support",
+  "ship": "ARC170REX",
+  "ship_slot": 0,
+  "activate_shard_count": 25
+ },
+ {
+  "name": "Kix",
+  "base_id": "KIX",
+  "url": "//swgoh.gg/units/kix/",
+  "image": "https://game-assets.swgoh.gg/textures/tex.charui_kix.png",
+  "power": 39609,
+  "description": "A conflicted and skilled Healer who does anything it takes to keep his allies alive",
+  "combat_type": 1,
+  "gear_levels": [
+   {
+    "tier": 1,
+    "gear": [
+     "010",
+     "011",
+     "025",
+     "021",
+     "049",
+     "008"
+    ]
+   },
+   {
+    "tier": 2,
+    "gear": [
+     "025",
+     "021",
+     "049",
+     "034",
+     "032",
+     "015"
+    ]
+   },
+   {
+    "tier": 3,
+    "gear": [
+     "053",
+     "069",
+     "049",
+     "041",
+     "027",
+     "049"
+    ]
+   },
+   {
+    "tier": 4,
+    "gear": [
+     "077",
+     "043",
+     "053",
+     "070",
+     "044",
+     "024"
+    ]
+   },
+   {
+    "tier": 5,
+    "gear": [
+     "091",
+     "079",
+     "053",
+     "064",
+     "080",
+     "086"
+    ]
+   },
+   {
+    "tier": 6,
+    "gear": [
+     "088",
+     "065",
+     "097",
+     "050",
+     "088",
+     "034"
+    ]
+   },
+   {
+    "tier": 7,
+    "gear": [
+     "088",
+     "093",
+     "102",
+     "107",
+     "102",
+     "117"
+    ]
+   },
+   {
+    "tier": 8,
+    "gear": [
+     "172",
+     "117",
+     "102",
+     "118",
+     "069",
+     "073"
+    ]
+   },
+   {
+    "tier": 9,
+    "gear": [
+     "173",
+     "079",
+     "129",
+     "074",
+     "091",
+     "111"
+    ]
+   },
+   {
+    "tier": 10,
+    "gear": [
+     "172",
+     "117",
+     "117",
+     "083",
+     "131",
+     "145"
+    ]
+   },
+   {
+    "tier": 11,
+    "gear": [
+     "117",
+     "117",
+     "125",
+     "144",
+     "134",
+     "124"
+    ]
+   },
+   {
+    "tier": 12,
+    "gear": [
+     "161",
+     "162",
+     "163",
+     "168",
+     "169",
+     "G12Finisher_KIX_B"
+    ]
+   }
+  ],
+  "alignment": "Light Side",
+  "categories": [
+   "Clone Trooper",
+   "Pirate",
+   "Scoundrel",
+   "Order 66 Raid"
+  ],
+  "ability_classes": [
+   "Taunt",
+   "Healing Immunity",
+   "Evasion Up",
+   "Shock",
+   "Tenacity Up",
+   "Health Steal Up",
+   "+Speed",
+   "Reset Cooldown",
+   "Assist",
+   "Heal Over Time",
+   "Stealth",
+   "Instant Defeat",
+   "Health Up",
+   "Protection Up",
+   "Damage Immunity",
+   "Protection Over Time",
+   "Gain Turn Meter",
+   "Speed Up",
+   "Critical Hit Immunity",
+   "Revive",
+   "Retribution",
+   "Profit",
+   "Bonus Turn",
+   "Counter",
+   "AoE",
+   "Remove Turn Meter",
+   "Dispel"
+  ],
+  "role": "Healer",
+  "ship": "",
+  "ship_slot": null,
+  "activate_shard_count": 25
+ },
+ {
+  "name": "Leia Organa",
+  "base_id": "GLLEIA",
+  "url": "//swgoh.gg/units/leia-organa/",
+  "image": "https://game-assets.swgoh.gg/textures/tex.charui_leiaendor.png",
+  "power": 57429,
+  "description": "Leia Organa, the tactical leader of the Rebellion and high priority target of the Empire, dictates the precise strikes of the battle while inspiring and defending her allies",
+  "combat_type": 1,
+  "gear_levels": [
+   {
+    "tier": 1,
+    "gear": [
+     "003",
+     "003",
+     "005",
+     "005",
+     "009",
+     "009"
+    ]
+   },
+   {
+    "tier": 2,
+    "gear": [
+     "015",
+     "041",
+     "014",
+     "014",
+     "026",
+     "059"
+    ]
+   },
+   {
+    "tier": 3,
+    "gear": [
+     "052",
+     "070",
+     "031",
+     "070",
+     "031",
+     "026"
+    ]
+   },
+   {
+    "tier": 4,
+    "gear": [
+     "085",
+     "082",
+     "077",
+     "072",
+     "071",
+     "068"
+    ]
+   },
+   {
+    "tier": 5,
+    "gear": [
+     "083",
+     "088",
+     "083",
+     "077",
+     "091",
+     "077"
+    ]
+   },
+   {
+    "tier": 6,
+    "gear": [
+     "090",
+     "091",
+     "094",
+     "083",
+     "088",
+     "098"
+    ]
+   },
+   {
+    "tier": 7,
+    "gear": [
+     "105",
+     "108",
+     "108",
+     "090",
+     "172",
+     "108"
+    ]
+   },
+   {
+    "tier": 8,
+    "gear": [
+     "112",
+     "117",
+     "172",
+     "172",
+     "108",
+     "112"
+    ]
+   },
+   {
+    "tier": 9,
+    "gear": [
+     "108",
+     "117",
+     "173",
+     "172",
+     "112",
+     "111"
+    ]
+   },
+   {
+    "tier": 10,
+    "gear": [
+     "135",
+     "122",
+     "174",
+     "117",
+     "135",
+     "145"
+    ]
+   },
+   {
+    "tier": 11,
+    "gear": [
+     "145",
+     "146",
+     "129",
+     "130",
+     "149",
+     "124"
+    ]
+   },
+   {
+    "tier": 12,
+    "gear": [
+     "165",
+     "161",
+     "165",
+     "168",
+     "169",
+     "G12Finisher_GLLEIA_C"
+    ]
+   }
+  ],
+  "alignment": "Light Side",
+  "categories": [
+   "Galactic Legend",
+   "Leader",
+   "Rebel"
+  ],
+  "ability_classes": [
+   "Taunt",
+   "Defense Down",
+   "Burning",
+   "Potency Down",
+   "Relic Scaling",
+   "Tenacity Up",
+   "+Speed",
+   "Plague",
+   "Assist",
+   "Critical Damage Down",
+   "Foresight",
+   "Stealth",
+   "Protection Up",
+   "Tenacity Down",
+   "Healing",
+   "Damage Immunity",
+   "Critical Chance Down",
+   "Gain Turn Meter",
+   "Revive",
+   "Buff Immunity",
+   "Daze",
+   "Retribution",
+   "+Defense",
+   "Bonus Turn",
+   "+Max Health",
+   "Counter",
+   "Expose",
+   "Fracture",
+   "AoE",
+   "Stun",
+   "Vulnerable",
+   "Stagger",
+   "Remove Turn Meter",
+   "Fear",
+   "Dispel"
+  ],
+  "role": "Tank",
+  "ship": "",
+  "ship_slot": null,
+  "activate_shard_count": 330
+ },
+ {
+  "name": "Supreme Leader Kylo Ren",
+  "base_id": "SUPREMELEADERKYLOREN",
+  "url": "//swgoh.gg/units/supreme-leader-kylo-ren/",
+  "image": "https://game-assets.swgoh.gg/textures/tex.charui_kyloren_tros.png",
+  "power": 57429,
+  "description": "Destructive Leader of the First Order who overpowers his enemies with brutal attacks",
+  "combat_type": 1,
+  "gear_levels": [
+   {
+    "tier": 1,
+    "gear": [
+     "004",
+     "001",
+     "001",
+     "005",
+     "005",
+     "003"
+    ]
+   },
+   {
+    "tier": 2,
+    "gear": [
+     "019",
+     "017",
+     "015",
+     "028",
+     "025",
+     "034"
+    ]
+   },
+   {
+    "tier": 3,
+    "gear": [
+     "004",
+     "028",
+     "049",
+     "053",
+     "060",
+     "049"
+    ]
+   },
+   {
+    "tier": 4,
+    "gear": [
+     "061",
+     "051",
+     "056",
+     "068",
+     "073",
+     "074"
+    ]
+   },
+   {
+    "tier": 5,
+    "gear": [
+     "076",
+     "060",
+     "074",
+     "089",
+     "079",
+     "086"
+    ]
+   },
+   {
+    "tier": 6,
+    "gear": [
+     "079",
+     "089",
+     "079",
+     "086",
+     "091",
+     "092"
+    ]
+   },
+   {
+    "tier": 7,
+    "gear": [
+     "068",
+     "092",
+     "097",
+     "110",
+     "109",
+     "113"
+    ]
+   },
+   {
+    "tier": 8,
+    "gear": [
+     "112",
+     "117",
+     "109",
+     "106",
+     "117",
+     "118"
+    ]
+   },
+   {
+    "tier": 9,
+    "gear": [
+     "117",
+     "172",
+     "117",
+     "126",
+     "172",
+     "116"
+    ]
+   },
+   {
+    "tier": 10,
+    "gear": [
+     "172",
+     "144",
+     "172",
+     "145",
+     "138",
+     "139"
+    ]
+   },
+   {
+    "tier": 11,
+    "gear": [
+     "117",
+     "172",
+     "172",
+     "140",
+     "141",
+     "142"
+    ]
+   },
+   {
+    "tier": 12,
+    "gear": [
+     "158",
+     "160",
+     "165",
+     "171",
+     "171",
+     "G12Finisher_SUPREMELEADERKYLOREN_A"
+    ]
+   }
+  ],
+  "alignment": "Dark Side",
+  "categories": [
+   "Leader",
+   "First Order",
+   "Galactic Legend",
+   "Unaligned Force User"
+  ],
+  "ability_classes": [
+   "+Speed",
+   "Gain Turn Meter",
+   "Taunt",
+   "Revive",
+   "Stagger",
+   "Buff Immunity",
+   "Critical Damage Up",
+   "Bonus Turn",
+   "Dispel",
+   "Relic Scaling",
+   "Anti-Revive",
+   "Counter",
+   "Stun",
+   "Advantage",
+   "AoE"
+  ],
+  "role": "Attacker",
+  "ship": "",
+  "ship_slot": null,
+  "activate_shard_count": 330
+ }
+]

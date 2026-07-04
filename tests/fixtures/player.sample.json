@@ -1,0 +1,1031 @@
+{
+ "data": {
+  "ally_code": 355463284,
+  "name": "Yusepi",
+  "galactic_power": 9883300,
+  "arena_rank": 228,
+  "skill_rating": 2067,
+  "guild_id": "U6tWH0WuSDyl_g7lmgZm-w",
+  "guild_name": "Catalonian Republic",
+  "last_updated": "2026-07-03T13:05:58.510476+00:00"
+ },
+ "units": [
+  {
+   "data": {
+    "ability_data": [
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "basicskill_KIX",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Rapidfire Blast",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_KIX01",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Explosive Response",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "specialskill_KIX02",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Emergency Medpac",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 7,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "uniqueskill_KIX01",
+      "is_omega": false,
+      "is_omicron": true,
+      "is_zeta": true,
+      "name": "Republic Medic Corps",
+      "tier_max": 8
+     }
+    ],
+    "base_id": "KIX",
+    "combat_type": 1,
+    "gear": [
+     {
+      "base_id": "172",
+      "is_obtained": false,
+      "slot": 0
+     },
+     {
+      "base_id": "117",
+      "is_obtained": false,
+      "slot": 1
+     },
+     {
+      "base_id": "102",
+      "is_obtained": false,
+      "slot": 2
+     },
+     {
+      "base_id": "118",
+      "is_obtained": false,
+      "slot": 3
+     },
+     {
+      "base_id": "069",
+      "is_obtained": false,
+      "slot": 4
+     },
+     {
+      "base_id": "073",
+      "is_obtained": false,
+      "slot": 5
+     }
+    ],
+    "gear_level": 8,
+    "has_ultimate": false,
+    "is_galactic_legend": false,
+    "level": 85,
+    "mod_set_ids": [
+     "4",
+     "1"
+    ],
+    "name": "Kix",
+    "omicron_abilities": [],
+    "power": 13455,
+    "rarity": 5,
+    "relic_tier": 1,
+    "stat_diffs": {
+     "1": 1074,
+     "5": 18,
+     "6": 53,
+     "7": 60,
+     "8": 0.32256826746264267,
+     "9": 0.12826323035221243,
+     "17": 0.017620000000000025,
+     "18": 0.02122000000000003,
+     "28": 1444
+    },
+    "stats": {
+     "1": 14219,
+     "2": 4.1,
+     "3": 4.1,
+     "4": 5.4,
+     "5": 155,
+     "6": 1169,
+     "7": 1792,
+     "8": 17.368762151652625,
+     "9": 9.63855421686747,
+     "10": 33,
+     "11": 0,
+     "12": 0,
+     "13": 0,
+     "14": 21.833333333333332,
+     "15": 10.625000000000002,
+     "16": 1.5,
+     "17": 0.29762000000000005,
+     "18": 0.28122,
+     "27": 0.1,
+     "28": 14867,
+     "37": 0,
+     "38": 0,
+     "39": 0,
+     "40": 0,
+     "61": 0
+    },
+    "url": "/p/355463284/unit/KIX/",
+    "zeta_abilities": [
+     "specialskill_KIX02",
+     "uniqueskill_KIX01"
+    ]
+   }
+  },
+  {
+   "data": {
+    "ability_data": [
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "basicskill_SUPREMELEADERKYLOREN",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Brutal Assault",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "specialskill_SUPREMELEADERKYLOREN01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Stasis Strike",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "specialskill_SUPREMELEADERKYLOREN02",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Furious Onslaught",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "leaderskill_SUPREMELEADERKYLOREN",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Supreme Leader",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "uniqueskill_SUPREMELEADERKYLOREN01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Press the Advantage",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "uniqueskill_GALACTICLEGEND01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Galactic Legend",
+      "tier_max": 3
+     }
+    ],
+    "base_id": "SUPREMELEADERKYLOREN",
+    "combat_type": 1,
+    "gear": [
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 0
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 1
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 2
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 3
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 4
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 5
+     }
+    ],
+    "gear_level": 13,
+    "has_ultimate": true,
+    "is_galactic_legend": true,
+    "level": 85,
+    "mod_set_ids": [
+     "1",
+     "4"
+    ],
+    "name": "Supreme Leader Kylo Ren",
+    "omicron_abilities": [],
+    "power": 52036,
+    "rarity": 7,
+    "relic_tier": 10,
+    "stat_diffs": {
+     "1": 32977,
+     "5": 148,
+     "6": 2484,
+     "7": 1893,
+     "8": 5.500009682284109,
+     "9": 4.544252074179155,
+     "14": 20.744999999999976,
+     "15": 20.744999999999997,
+     "16": 0.42000000000000004,
+     "17": 0.1504700000000001,
+     "18": 0.3499999999999999,
+     "28": 6834
+    },
+    "stats": {
+     "1": 129195,
+     "2": 20.7,
+     "3": 26.6,
+     "4": 19.5,
+     "5": 541,
+     "6": 11406,
+     "7": 8467,
+     "8": 52.08568207440811,
+     "9": 31.561996779388085,
+     "10": 338,
+     "11": 5,
+     "12": 0,
+     "13": 0,
+     "14": 143.28666666666666,
+     "15": 55.745,
+     "16": 2.145,
+     "17": 1.54047,
+     "18": 0.83,
+     "27": 0.4,
+     "28": 52544,
+     "37": 0,
+     "38": 0,
+     "39": 0,
+     "40": 0,
+     "61": 75
+    },
+    "url": "/p/355463284/unit/SUPREMELEADERKYLOREN/",
+    "zeta_abilities": [
+     "basicskill_SUPREMELEADERKYLOREN",
+     "specialskill_SUPREMELEADERKYLOREN01",
+     "specialskill_SUPREMELEADERKYLOREN02",
+     "leaderskill_SUPREMELEADERKYLOREN",
+     "uniqueskill_SUPREMELEADERKYLOREN01",
+     "uniqueskill_GALACTICLEGEND01"
+    ]
+   }
+  },
+  {
+   "data": {
+    "ability_data": [
+     {
+      "ability_tier": 7,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "basicskill_FULCRUMAHSOKA",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Balanced Strike",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 7,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_FULCRUMAHSOKA01",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Meditate",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "uniqueskill_FULCRUMAHSOKA01",
+      "is_omega": false,
+      "is_omicron": true,
+      "is_zeta": false,
+      "name": "Perseverance",
+      "tier_max": 9
+     },
+     {
+      "ability_tier": 6,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_FULCRUMAHSOKA02",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Whirlwind",
+      "tier_max": 8
+     }
+    ],
+    "base_id": "FULCRUMAHSOKA",
+    "combat_type": 1,
+    "gear": [
+     {
+      "base_id": "144",
+      "is_obtained": false,
+      "slot": 0
+     },
+     {
+      "base_id": "138",
+      "is_obtained": false,
+      "slot": 1
+     },
+     {
+      "base_id": "139",
+      "is_obtained": false,
+      "slot": 2
+     },
+     {
+      "base_id": "129",
+      "is_obtained": false,
+      "slot": 3
+     },
+     {
+      "base_id": "121",
+      "is_obtained": false,
+      "slot": 4
+     },
+     {
+      "base_id": "149",
+      "is_obtained": false,
+      "slot": 5
+     }
+    ],
+    "gear_level": 11,
+    "has_ultimate": false,
+    "is_galactic_legend": false,
+    "level": 85,
+    "mod_set_ids": [
+     "6"
+    ],
+    "name": "Ahsoka Tano (Fulcrum)",
+    "omicron_abilities": [],
+    "power": 14484,
+    "rarity": 7,
+    "relic_tier": 1,
+    "stat_diffs": {
+     "1": 827,
+     "5": 8,
+     "6": 284,
+     "7": 241,
+     "8": 2.9558030732851677,
+     "9": 1.7882429786417688,
+     "16": 0.1499999999999999,
+     "17": 0.041080000000000005,
+     "18": 0.021290000000000003,
+     "28": 2581
+    },
+    "stats": {
+     "1": 17893,
+     "2": 5.4,
+     "3": 8.2,
+     "4": 4.5,
+     "5": 150,
+     "6": 2621,
+     "7": 1856,
+     "8": 27.01774470520893,
+     "9": 10.651716888577436,
+     "10": 30,
+     "11": 0,
+     "12": 0,
+     "13": 0,
+     "14": 37.416666666666664,
+     "15": 11.666666666666666,
+     "16": 1.65,
+     "17": 0.32108000000000003,
+     "18": 0.35129,
+     "27": 0.1,
+     "28": 26281,
+     "37": 0,
+     "38": 0,
+     "39": 0,
+     "40": 0,
+     "61": 0
+    },
+    "url": "/p/355463284/unit/FULCRUMAHSOKA/",
+    "zeta_abilities": []
+   }
+  },
+  {
+   "data": {
+    "ability_data": [
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "basicskill_HONDO",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "I Smell Profit",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 7,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_HONDO01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "I Don't Want to Kill You Per Se",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_HONDO02",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Insolence? We are Pirates",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 6,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "uniqueskill_HONDO01",
+      "is_omega": false,
+      "is_omicron": true,
+      "is_zeta": true,
+      "name": "That's Just Good Business",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "uniqueskill_HONDO02",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "I Guess We Won't Be Friends",
+      "tier_max": 8
+     }
+    ],
+    "base_id": "HONDO",
+    "combat_type": 1,
+    "gear": [
+     {
+      "base_id": "117",
+      "is_obtained": false,
+      "slot": 0
+     },
+     {
+      "base_id": "117",
+      "is_obtained": false,
+      "slot": 1
+     },
+     {
+      "base_id": "174",
+      "is_obtained": false,
+      "slot": 2
+     },
+     {
+      "base_id": "174",
+      "is_obtained": false,
+      "slot": 3
+     },
+     {
+      "base_id": "098",
+      "is_obtained": false,
+      "slot": 4
+     },
+     {
+      "base_id": "111",
+      "is_obtained": false,
+      "slot": 5
+     }
+    ],
+    "gear_level": 9,
+    "has_ultimate": false,
+    "is_galactic_legend": false,
+    "level": 85,
+    "mod_set_ids": [
+     "1",
+     "1"
+    ],
+    "name": "Hondo Ohnaka",
+    "omicron_abilities": [],
+    "power": 9472,
+    "rarity": 4,
+    "relic_tier": 1,
+    "stat_diffs": {
+     "1": 1609,
+     "5": 23,
+     "6": 44,
+     "7": 44,
+     "8": 1.6470378508675,
+     "9": 1.8044912726310312,
+     "14": 1.7269999999999968,
+     "15": 1.7270000000000003,
+     "17": 0.01151,
+     "18": 0.04882999999999996,
+     "28": 1554
+    },
+    "stats": {
+     "1": 14666,
+     "2": 3.4,
+     "3": 3.4,
+     "4": 4.5,
+     "5": 142,
+     "6": 1523,
+     "7": 1484,
+     "8": 17.15399610136452,
+     "9": 13.324269204622704,
+     "10": 28,
+     "11": 0,
+     "12": 0,
+     "13": 0,
+     "14": 23.685333333333332,
+     "15": 12.977,
+     "16": 1.5,
+     "17": 0.04151,
+     "18": 0.32882999999999996,
+     "27": 0.05,
+     "28": 20029,
+     "37": 0,
+     "38": 0,
+     "39": 0,
+     "40": 0,
+     "61": 0
+    },
+    "url": "/p/355463284/unit/HONDO/",
+    "zeta_abilities": []
+   }
+  },
+  {
+   "data": {
+    "ability_data": [
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "basicskill_REX",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Impeding Shot",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_REX01",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Form Up",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_REX02",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Aerial Advantage",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "leaderskill_REX",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Brothers in Arms",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "uniqueskill_REX01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Captain of the 501st",
+      "tier_max": 8
+     }
+    ],
+    "base_id": "CT7567",
+    "combat_type": 1,
+    "gear": [
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 0
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 1
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 2
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 3
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 4
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 5
+     }
+    ],
+    "gear_level": 13,
+    "has_ultimate": false,
+    "is_galactic_legend": false,
+    "level": 85,
+    "mod_set_ids": [
+     "4",
+     "1"
+    ],
+    "name": "CT-7567 \"Rex\"",
+    "omicron_abilities": [],
+    "power": 27640,
+    "rarity": 7,
+    "relic_tier": 8,
+    "stat_diffs": {
+     "1": 9858,
+     "5": 28,
+     "6": 809,
+     "7": 942,
+     "8": 3.341896249394381,
+     "9": 3.145441286909957,
+     "14": 3.930999999999983,
+     "15": 3.9309999999999974,
+     "17": 0.030059999999999976,
+     "18": 0.03605999999999998,
+     "28": 11755
+    },
+    "stats": {
+     "1": 56615,
+     "2": 14.8,
+     "3": 15.4,
+     "4": 19.1,
+     "5": 188,
+     "6": 5480,
+     "7": 6656,
+     "8": 44.39598778892281,
+     "9": 38.84892086330935,
+     "10": 103,
+     "11": 0,
+     "12": 0,
+     "13": 0,
+     "14": 68.30599999999998,
+     "15": 19.139333333333333,
+     "16": 1.5,
+     "17": 0.41006,
+     "18": 0.42606,
+     "27": 0.1,
+     "28": 42990,
+     "37": 0,
+     "38": 0,
+     "39": 0,
+     "40": 0,
+     "61": 35
+    },
+    "url": "/p/355463284/unit/CT7567/",
+    "zeta_abilities": [
+     "uniqueskill_REX01"
+    ]
+   }
+  },
+  {
+   "data": {
+    "ability_data": [
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "basicskill_GLLEIA",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Righteous Retribution",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "specialskill_GLLEIA01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Rebel Ambush",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "specialskill_GLLEIA02",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Tactical Offensive",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "leaderskill_GLLEIA",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "I Know",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "uniqueskill_GLLEIA01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Forever Our Princess",
+      "tier_max": 3
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": true,
+      "id": "uniqueskill_GALACTICLEGEND01",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": true,
+      "name": "Galactic Legend",
+      "tier_max": 3
+     }
+    ],
+    "base_id": "GLLEIA",
+    "combat_type": 1,
+    "gear": [
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 0
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 1
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 2
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 3
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 4
+     },
+     {
+      "base_id": "9999",
+      "is_obtained": false,
+      "slot": 5
+     }
+    ],
+    "gear_level": 13,
+    "has_ultimate": false,
+    "is_galactic_legend": true,
+    "level": 85,
+    "mod_set_ids": [
+     "4",
+     "1"
+    ],
+    "name": "Leia Organa",
+    "omicron_abilities": [],
+    "power": 34542,
+    "rarity": 7,
+    "relic_tier": 5,
+    "stat_diffs": {
+     "1": 5617,
+     "5": 35,
+     "6": 63,
+     "7": 69,
+     "8": 1.208213342326431,
+     "9": 1.2292459299305634,
+     "14": 1.4989999999999988,
+     "15": 1.4990000000000023,
+     "17": 0.01824999999999999,
+     "18": 0.07733000000000001
+    },
+    "stats": {
+     "1": 76018,
+     "2": 10.5,
+     "3": 10.100000000000001,
+     "4": 13,
+     "5": 407,
+     "6": 4069,
+     "7": 5071,
+     "8": 53.00405455215629,
+     "9": 53.95449620801733,
+     "10": 50,
+     "11": 107,
+     "12": 0,
+     "13": 0,
+     "14": 28.915666666666667,
+     "15": 17.957333333333338,
+     "16": 1.5,
+     "17": 0.64825,
+     "18": 0.93733,
+     "27": 0.5,
+     "28": 61000,
+     "37": 0,
+     "38": 0,
+     "39": 0,
+     "40": 0,
+     "61": 15
+    },
+    "url": "/p/355463284/unit/GLLEIA/",
+    "zeta_abilities": [
+     "basicskill_GLLEIA",
+     "specialskill_GLLEIA01",
+     "specialskill_GLLEIA02",
+     "leaderskill_GLLEIA",
+     "uniqueskill_GLLEIA01",
+     "uniqueskill_GALACTICLEGEND01"
+    ]
+   }
+  },
+  {
+   "data": {
+    "ability_data": [
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "specialskill_FIRSTORDERTIEECHELON01",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "The Galaxy's Edge",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "basicskill_FIRSTORDERTIEECHELON",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Initiate the Hunt",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 8,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "uniqueskill_FIRSTORDERTIEECHELON01",
+      "is_omega": true,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Might of the First Order",
+      "tier_max": 8
+     },
+     {
+      "ability_tier": 3,
+      "has_omicron_learned": false,
+      "has_zeta_learned": false,
+      "id": "hardwareskill_FIRSTORDERTIEECHELON",
+      "is_omega": false,
+      "is_omicron": false,
+      "is_zeta": false,
+      "name": "Vanguard of the First Order",
+      "tier_max": 3
+     }
+    ],
+    "base_id": "FIRSTORDERTIEECHELON",
+    "combat_type": 2,
+    "gear": [],
+    "gear_level": 1,
+    "has_ultimate": false,
+    "is_galactic_legend": false,
+    "level": 85,
+    "mod_set_ids": [],
+    "name": "TIE Echelon",
+    "omicron_abilities": [],
+    "power": 57360,
+    "rarity": 7,
+    "relic_tier": null,
+    "stat_diffs": {
+     "1": 43921,
+     "5": 58,
+     "6": 4857,
+     "8": 10.810297910122031,
+     "9": 27.073406327740933,
+     "17": 0.41519115,
+     "18": 0.41519114999999995,
+     "28": 47969
+    },
+    "stats": {
+     "1": 71479,
+     "2": 12.5,
+     "3": 6.2,
+     "4": 6.2,
+     "5": 158,
+     "6": 7000,
+     "7": 1939,
+     "8": 38.455008488964346,
+     "9": 37.011294526498695,
+     "10": 0,
+     "11": 0,
+     "12": 0,
+     "13": 0,
+     "14": 25,
+     "15": 10,
+     "16": 1.5,
+     "17": 0.41519115,
+     "18": 0.56519115,
+     "27": 0,
+     "28": 47969,
+     "37": 0,
+     "38": 0,
+     "39": 0,
+     "40": 0,
+     "61": 0
+    },
+    "url": "/p/355463284/unit/FIRSTORDERTIEECHELON/",
+    "zeta_abilities": []
+   }
+  }
+ ]
+}
