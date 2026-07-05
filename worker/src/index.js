@@ -36,8 +36,17 @@ export function queue(fn, gapMs = 1100) {
   _chain = run.catch(() => {});
   return run;
 }
+// Cabeceras de navegador real: swgoh.gg está tras Cloudflare y sirve un challenge JS a
+// clientes "raros". Esto ayuda con filtros por headers; si el bloqueo es por IP/ASN de
+// datacenter (egress del Worker), no basta y hay que pivotar (ver docs/CHANGELOG y README).
+const BROWSER_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept": "application/json, text/plain, */*",
+  "Accept-Language": "es-ES,es;q=0.9",
+  "Referer": "https://swgoh.gg/",
+};
 async function ggFetch(path, env) {
-  const headers = { accept: "application/json", "user-agent": "Mozilla/5.0 swgoh-consola/1.0" };
+  const headers = { ...BROWSER_HEADERS };
   if (env.SWGOH_GG_API_KEY) headers["x-gg-bot-access"] = env.SWGOH_GG_API_KEY;
   return queue(() => fetch(`${GG_BASE}${path}`, { headers }));
 }
