@@ -12,6 +12,10 @@ Objetivo del jugador: desbloquear **todos los Galactic Legends** (7/10; próximo
 - **Fase 1 (pipeline):** el roster puede venir **en vivo de swgoh.gg** vía un Cloudflare
   Worker (normaliza + persiste en Firestore), con **fallback al RD embebido** si algo falla. ✓
   Falta el deploy (cuenta Cloudflare + Firebase) — ver *Datos en vivo*.
+- **Fase 2 (progreso):** la ingesta guarda **snapshots históricos + eventos con dedup**; un
+  **diff engine puro** compara snapshots; nueva pestaña **"Progreso"** con línea temporal,
+  roadmap de Vader **auto-marcado** y comparativa de gremio. Endpoint de gremio arreglado
+  (`/api/guild-profile/{id}/`). ✓ 72 tests verdes.
 
 ## Datos en vivo (Fase 1)
 
@@ -47,15 +51,18 @@ Si `API_BASE` está vacío o el Worker falla, la consola usa el `RD` embebido (n
 web/
   src/
     data.js      # DATA, IMGBYNAME, RD, ENEMIES + constantes (datos embebidos)
-    engine.js    # lógica pura: assemble(), lookupByName(), portrait(), teamRow()
-    ui.js        # render del DOM: pestañas, roster, conquest, counters, meters
-    main.js      # entry: arranca la app
+    engine.js    # lógica pura: assemble(), lookupByName(), portrait(), teamRow() (+ re-export diff/vader)
+    diff.js      # diff engine puro (Fase 2): diffSnapshots, compactSnapshot, snapshotHash
+    vader.js     # auto-marcado del roadmap de Vader (Fase 2): vaderProgress
+    progress.js  # capa pura de la pestaña Progreso (estado vacío + formateo a español)
+    ui.js        # render del DOM: pestañas, roster, conquest, counters, progreso, meters
+    main.js      # entry: arranca la app (loadRoster/loadProgress/loadGuild con fallback)
     styles.css   # todos los estilos
   index.template.html   # esqueleto con marcadores <!--INJECT:CSS--> / <!--INJECT:JS-->
   dist/          # HTML final generado (no versionado)
 scripts/build.js # esbuild: bundlea src/ e inyecta en la plantilla
-tests/           # vitest: regresión del motor (assemble) + snapshot
-worker/          # scaffolding Cloudflare Worker para Fase 1 (no se despliega aún)
+tests/           # vitest: motor (assemble) + normalizador + diff/vader/progreso + render jsdom
+worker/          # Cloudflare Worker read-only: /api/roster|guild|meta|progress|snapshots
 firebase/        # reglas/plantilla Firestore para Fase 5 (deny-all por defecto)
 docs/CHANGELOG.md
 ```

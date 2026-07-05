@@ -2,6 +2,39 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 2 — Diff engine + pestaña "Progreso" (+ fix gremio)
+
+- **Diff engine puro** (`web/src/diff.js`, re-exportado desde `engine.js`): `diffSnapshots(prev,
+  curr)` devuelve deltas estructurados (relic/gear/stars/power/nuevo por unidad + GP y arena de
+  cuenta). Semántica de arena correcta: un rango **menor es mejor** (228 → 221 es mejora), así
+  que `arenaImproved=true` cuando el número baja. Vive en su propio módulo sin dependencias para
+  que la ingesta en Node no arrastre `data.js`. `compactSnapshot` + `snapshotHash` (FNV-1a) dan
+  el snapshot mínimo y el dedup. El formateo a español se hace en la UI, no en el engine.
+- **Snapshots + eventos con DEDUP** (`scripts/ingest.mjs`): cada run escribe
+  `snapshots/{ally}/history/{ts}` (compacto) y `snapshots/{ally}/events/{ts}` (diff ya calculado,
+  para leer barato en cliente). Un doc *head* (`snapshots/{ally}`) guarda el último hash: si
+  coincide, **no se escribe snapshot ni evento** (nada de spam en los runs de 8 h sin cambios).
+  `players/{ally}` se sigue sobrescribiendo siempre. Retención completa por ahora (documentado
+  cómo podar si crece).
+- **Fix del endpoint de gremio**: descubierto con `curl` (no adivinado) que el path real es
+  **`/api/guild-profile/{id}/`** (200); `/api/guild/{id}/` daba 404. `normalizeGuild` (puro)
+  produce un resumen por miembro ordenado por GP. Honestidad: `arena_rank` y el recuento de GL
+  por miembro **no vienen** en el guild-profile — se omiten en vez de estimarlos.
+- **Worker read-only, nuevos endpoints**: `/api/progress/:ally` (últimos N eventos + meta
+  reciente), `/api/snapshots/:ally` (meta compacta para gráficas). `listDocs()` en `firestore.js`
+  lista subcolecciones ordenadas por nombre desc. `/api/guild/:id` acepta ids con guiones.
+- **Pestaña "Progreso"** (aditiva, estética intocable): (1) línea temporal de eventos con
+  titulares en español y detalle expandible; (2) roadmap de Lord Vader **auto-marcado**
+  (`vaderProgress` cruza el RD en vivo con los objetivos de `DATA`: fases completada/en curso/
+  pendiente + anillo de %); (3) comparativa de gremio (ranking por GP con Yusepi destacado).
+  Estados de fallback imprescindibles: 0/1 snapshot → "Aún no hay histórico"; sin gremio →
+  bloque oculto con aviso suave; API caída → lo último conocido o vacío, y el resto de la
+  consola sigue con el RD embebido (nunca en blanco).
+- Tests: diff engine, dedup, auto-marcado de Vader, normalizeGuild, capa pura de Progreso y
+  **render real en jsdom** (estado vacío sin excepción) → **72 verdes** (27 previos + 45 nuevos).
+  Cero secrets. Build sigue produciendo un único HTML.
+- Tag: `v2-progreso`.
+
 ## Fase 1 — Pipeline de datos vía swgoh.gg
 
 - **Fuente en vivo:** el roster deja de estar solo embebido. Un Cloudflare Worker
