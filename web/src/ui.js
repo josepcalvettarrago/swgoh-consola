@@ -1,7 +1,8 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
 import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName } from "./engine.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress } from "./engine.js";
+import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
 
 // Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
 let RD = EMBEDDED_RD;
@@ -14,6 +15,9 @@ let lvpct = 0, ringDone = false, rmIO = null;
 const rm = typeof matchMedia !== "undefined" ? matchMedia("(prefers-reduced-motion:reduce)").matches : false;
 const rxState = { q: "", side: "", role: "", fac: "", ab: "", sort: "p" };
 let NAME2ID = {}, ID2U = {}; // se (re)construyen en init() a partir del roster activo.
+let PROGRESS = { events: [], snapshots: [] }; // datos de la pestaña Progreso (o vacío -> estado vacío).
+let GUILD = null;                              // resumen del gremio (o null -> bloque oculto).
+let pgRingDone = false;
 let cqCons = [];
 const CQTYPE_ES = { fac: "Facción", side: "Lado", role: "Rol", ab: "Mecánica", char: "Personaje" };
 const ROLE_ES = { Tank: "Tanque", Healer: "Sustain", Support: "Apoyo", Attacker: "Daño" };
@@ -251,13 +255,83 @@ function genCounter(ei) {
    <div class="simfoot">Heurístico (facción + fuerza + anti-mecánicas). No garantiza ganar: los counters reales dependen del kit y de los datacrons. Contrasta con las fuentes en vivo de abajo.</div>`;
 }
 
+// ===== Pestaña Progreso: línea temporal + Vader auto-marcado + comparativa de gremio =====
+const fmtDate = ts => { try { return new Date(ts).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch { return String(ts || ""); } };
+const VST = { completada: ["ok", "Completada"], "en curso": ["cur", "En curso"], pendiente: ["pend", "Pendiente"], manual: ["man", "Manual"] };
+let pgLvpct = 0;
+
+function renderProgress() {
+  // --- Bloque 1: línea temporal (fallback si no hay histórico) ---
+  const tl = $("#pg-timeline"), view = progressView(PROGRESS);
+  const nSnap = (PROGRESS.snapshots && PROGRESS.snapshots.length) || 0;
+  if (view.empty) {
+    tl.innerHTML = `<div class="pg-empty">${view.reason}</div>`;
+    $("#pg-tlnote").textContent = nSnap <= 1 ? `${nSnap} snapshot registrado` : `${nSnap} snapshots · sin cambios aún`;
+  } else {
+    tl.innerHTML = view.events.map(ev => {
+      const parts = eventHeadline(ev), head = parts.length ? parts.join(" · ") : "Cambios menores";
+      const changes = sortedUnitChanges(ev.units).filter(u => u.kind !== "power"); // detalle sin ruido de power
+      const detail = changes.length ? `<details class="pg-detail"><summary>${changes.length} ${changes.length === 1 ? "cambio" : "cambios"} en unidades</summary>
+       <div class="pg-changes">${changes.map(u => `<div class="pg-ch">${portrait(lookupByName(u.n))}<span class="cn">${u.n}</span><span class="cd">${unitChangeText(u)}</span></div>`).join("")}</div></details>` : "";
+      return `<div class="pg-ev"><div class="pg-ev-h"><span class="pg-date">${fmtDate(ev.ts)}</span><span class="pg-head">${head}</span></div>${detail}</div>`;
+    }).join("");
+    $("#pg-tlnote").textContent = `${view.events.length} ${view.events.length === 1 ? "evento" : "eventos"}`;
+  }
+
+  // --- Bloque 2: roadmap de Vader auto-marcado (cruce con el RD en vivo) ---
+  const vp = vaderProgress(RD); pgLvpct = vp.pct;
+  $("#pgv-facts").innerHTML = [
+    { v: `${vp.unitsDone}/${vp.unitsTotal}`, k: "unidades en su relic objetivo", cls: vp.unitsDone === vp.unitsTotal ? "zero" : "" },
+    { v: `${vp.pct}%`, k: "relic acumulado", cls: "" },
+    { v: `${vp.phases.filter(p => p.state === "completada").length}/${vp.phases.length}`, k: "fases completadas", cls: "" },
+    { v: vp.vaderUnlocked ? "✓" : "—", k: "Lord Vader desbloqueado", cls: vp.vaderUnlocked ? "zero" : "alert" },
+  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}</div><div class="k">${x.k}</div></div>`).join("");
+  $("#pg-vader").innerHTML = vp.phases.map(p => {
+    const [cls, lbl] = VST[p.state] || VST.manual;
+    const prog = p.total ? ` <span class="pgv-frac">${p.done}/${p.total}</span>` : "";
+    const targets = (p.targets || []).map(t =>
+      `<div class="pgv-t ${t.done ? "done" : ""}"><span class="tn">${t.done ? "✓" : "○"} ${t.name}</span><span class="tr">R${t.current} / R${t.target}</span></div>`).join("");
+    return `<div class="pgv-ph"><div class="pgv-ph-h"><div class="pgv-ph-t"><span class="wk">${p.weeks || "Fase " + String(p.n).padStart(2, "0")}</span><h4>${p.title}</h4></div>
+     <span class="pgv-badge ${cls}">${lbl}${prog}</span></div>${targets ? `<div class="pgv-ts">${targets}</div>` : ""}</div>`;
+  }).join("");
+
+  // --- Bloque 3: comparativa de gremio (oculta con aviso suave si no hay datos) ---
+  const card = $("#pg-guild-card"), box = $("#pg-guild"), gnote = $("#pg-gnote");
+  const gr = guildRanking(GUILD, DATA.player.ally);
+  if (!gr) {
+    card.classList.add("soft"); gnote.textContent = "sin datos";
+    box.innerHTML = `<div class="pg-empty soft">Aún no hay datos de gremio. Se poblarán en la próxima ingesta.</div>`;
+  } else {
+    card.classList.remove("soft");
+    const pos = gr.myIndex >= 0 ? gr.myIndex + 1 : null;
+    gnote.textContent = gr.name + (pos ? ` · Yusepi ${pos}/${gr.memberCount} por GP` : "");
+    const rows = gr.members.map((m, i) => {
+      const me = i === gr.myIndex;
+      return `<div class="pg-grow ${me ? "me" : ""}"><span class="gr-rk">${i + 1}</span>${portrait(lookupByName(m.name))}
+       <span class="gr-nm">${m.name}${me ? ' <b class="gr-you">TÚ</b>' : ""}</span><span class="gr-gp">${(m.gp / 1e6).toFixed(2)}M</span></div>`;
+    }).join("");
+    box.innerHTML = `<div class="pg-grid">${rows}</div>
+     <div class="simfoot">Ranking por GP (dato real de swgoh.gg). El recuento de Leyendas Galácticas y el rango de arena por miembro no vienen en el perfil de gremio de la API: se omiten en vez de estimarlos.</div>`;
+  }
+}
+
+function animatePgRing() {
+  const r = $("#pgv-ring"); if (!r) return;
+  if (rm) { r.style.setProperty("--p", pgLvpct); $("#pgv-pct").textContent = pgLvpct + "%"; return; }
+  const t0 = performance.now(); (function step(t) { const k = Math.min(1, (t - t0) / 1000), e = 1 - Math.pow(1 - k, 3), c = Math.round(pgLvpct * e); r.style.setProperty("--p", c); $("#pgv-pct").textContent = c + "%"; if (k < 1) requestAnimationFrame(step); })(t0);
+}
+
 // ===== cableado de eventos + arranque =====
-export function init(rd) {
+export function init(rd, extra = {}) {
   // Roster inyectado (en vivo) o embebido como fallback.
   RD = rd && Array.isArray(rd.R) && rd.V ? rd : EMBEDDED_RD;
   NAME2ID = {}; ID2U = {}; RD.R.forEach(u => { NAME2ID[u.n] = u.i; ID2U[u.i] = u; });
+  // Datos de la pestaña Progreso (opcionales; si faltan -> estados vacíos, nada roto).
+  PROGRESS = { events: (extra.progress && extra.progress.events) || [], snapshots: (extra.progress && extra.progress.snapshots) || [] };
+  GUILD = extra.guild || null;
 
   renderStatic();
+  renderProgress();
 
   // Roster explorer: poblar selects
   const role = $("#rx-role"), fac = $("#rx-fac"), ab = $("#rx-ab");
@@ -291,12 +365,13 @@ export function init(rd) {
   renderCounters();
 
   // Pestañas
-  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest" };
+  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso" };
   $$(".tab").forEach(tab => tab.onclick = () => {
     $$(".tab").forEach(t => t.setAttribute("aria-selected", t === tab));
     const key = tab.dataset.p; Object.entries(panels).forEach(([k, sel]) => $(sel).classList.toggle("on", k === key));
     const root = $(panels[key]); animateMeters(root);
     if (key === "vader") { initRoadmapMeters(); if (!ringDone) { ringDone = true; animateRing(); } }
+    if (key === "progreso" && !pgRingDone) { pgRingDone = true; animatePgRing(); }
   });
   animateMeters($("#p-mods"));
 }

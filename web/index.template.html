@@ -44,6 +44,7 @@
     <button class="tab" role="tab" aria-selected="false" data-p="roster"><span class="n">05</span> Roster</button>
     <button class="tab" role="tab" aria-selected="false" data-p="conquest"><span class="n">06</span> Conquest</button>
     <button class="tab" role="tab" aria-selected="false" data-p="next"><span class="n">07</span> Mejoras</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="progreso"><span class="n">08</span> Progreso</button>
   </nav>
 
   <!-- MODS -->
@@ -161,6 +162,18 @@
       </div>
       <div id="sim-out"></div>
     </div>
+  </section>
+
+  <!-- PROGRESO -->
+  <section class="panel" id="p-progreso" role="tabpanel">
+    <div class="card"><div class="head"><h3>Línea temporal</h3><span class="note" id="pg-tlnote">Cambios detectados entre ingestas</span></div>
+      <div id="pg-timeline"></div></div>
+    <div class="card"><div class="head"><h3>Roadmap de Lord Vader — auto-marcado</h3><span class="note" id="pg-vnote">Cruzado con tu roster en vivo</span></div>
+      <div class="pgv-top"><div class="ring" id="pgv-ring"><div class="lab"><b id="pgv-pct">0%</b><span>Relic</span></div></div>
+        <div class="pgv-facts" id="pgv-facts"></div></div>
+      <div id="pg-vader"></div></div>
+    <div class="card" id="pg-guild-card"><div class="head"><h3>Comparativa de gremio</h3><span class="note" id="pg-gnote">—</span></div>
+      <div id="pg-guild"></div></div>
   </section>
 
   <footer><span id="foot-updated">—</span><span>Actualiza: descarga swgoh.gg/api/player/355463284/ y súbelo de nuevo</span></footer>
