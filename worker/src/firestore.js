@@ -90,6 +90,23 @@ export async function getDoc(env, path) {
   return doc.fields ? Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [k, fromFirestore(v)])) : {};
 }
 
+// Lista los documentos de una colección/subcolección, ordenados por nombre DESCENDENTE
+// (los timestamps ISO como id ordenan lexicográficamente = cronológicamente, así que desc =
+// más reciente primero). Devuelve [{ _id, ...campos }]. Usado por los endpoints de progreso.
+export async function listDocs(env, collectionPath, { limit = 20 } = {}) {
+  const sa = parseSA(env), token = await getAccessToken(sa);
+  const url = `${docBase(sa)}/${collectionPath}?pageSize=${limit}&orderBy=${encodeURIComponent("__name__ desc")}`;
+  const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error(`listDocs ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return (data.documents || []).map(doc => {
+    const id = (doc.name || "").split("/").pop();
+    const obj = doc.fields ? Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [k, fromFirestore(v)])) : {};
+    return { _id: id, ...obj };
+  });
+}
+
 // Escribe (upsert) un documento. data = objeto plano. Usado post-gate por el normalizador.
 export async function setDoc(env, path, data) {
   const sa = parseSA(env), token = await getAccessToken(sa);

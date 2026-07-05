@@ -7,12 +7,20 @@
  *
  * Este Worker solo lee de Firestore y sirve el RD al frontend con CORS:
  *   GET /api/roster/:ally      -> RD {R,V} desde players/{ally}
- *   GET /api/guild/:id         -> guild/{id}
+ *   GET /api/guild/:id         -> guild/{id} (resumen de miembros)
  *   GET /api/meta/characters   -> mapa de metadata
+ *   GET /api/progress/:ally     -> últimos N eventos (diffs ya calculados) + meta más reciente
+ *   GET /api/snapshots/:ally    -> últimos N snapshots compactos (para gráficas futuras)
  *
  * Secret: FIREBASE_SERVICE_ACCOUNT (solo lectura de Firestore).
  */
-import { getDoc } from "./firestore.js";
+import { getDoc, listDocs } from "./firestore.js";
+
+// limit saneado de ?limit=N (1..100, por defecto 20).
+function limitOf(url, def = 20) {
+  const n = parseInt(url.searchParams.get("limit"), 10);
+  return Number.isFinite(n) ? Math.max(1, Math.min(100, n)) : def;
+}
 
 function cors(env) {
   const origin = env.PAGES_ORIGIN || "*";
@@ -24,6 +32,7 @@ function json(data, env, status = 200) {
 function raw(str, env, status = 200) {
   return new Response(str, { status, headers: { "content-type": "application/json; charset=utf-8", ...cors(env) } });
 }
+function safeParse(s) { try { return JSON.parse(s); } catch { return null; } }
 
 export default {
   async fetch(request, env) {
@@ -38,10 +47,30 @@ export default {
         if (doc && doc.rd) return raw(doc.rd, env); // ya es el JSON {R,V}
         return json({ error: "sin snapshot todavía — ejecuta la ingesta (GitHub Actions)" }, env, 503);
       }
-      if ((m = pathname.match(/^\/api\/guild\/(\w+)$/))) {
+      if ((m = pathname.match(/^\/api\/guild\/([\w-]+)$/))) {
         const doc = await getDoc(env, `guild/${m[1]}`);
         if (doc && doc.data) return raw(doc.data, env);
         return json({ error: "sin datos de gremio todavía" }, env, 503);
+      }
+      if ((m = pathname.match(/^\/api\/progress\/(\d+)$/))) {
+        const limit = limitOf(url);
+        const docs = await listDocs(env, `snapshots/${m[1]}/events`, { limit });
+        // Cada evento guarda el diff ya calculado (JSON string) -> lo devolvemos parseado para
+        // que el cliente lo pinte sin recalcular nada.
+        const events = docs.map(d => ({ ts: d.ts || d._id, meta: d.meta ? safeParse(d.meta) : null, ...(d.diff ? safeParse(d.diff) : {}) }));
+        const player = await getDoc(env, `players/${m[1]}`).catch(() => null);
+        const latest = { meta: player && player.meta ? safeParse(player.meta) : null };
+        return json({ events, latest }, env);
+      }
+      if ((m = pathname.match(/^\/api\/snapshots\/(\d+)$/))) {
+        const limit = limitOf(url);
+        const docs = await listDocs(env, `snapshots/${m[1]}/history`, { limit });
+        // Solo la meta (gp/arena/name) + ts: suficiente para gráficas, sin arrastrar unidades.
+        const snapshots = docs.map(d => {
+          const s = d.snapshot ? safeParse(d.snapshot) : null;
+          return { ts: d.ts || d._id, meta: s && s.meta ? s.meta : null };
+        });
+        return json({ snapshots }, env);
       }
       if (pathname === "/api/meta/characters") {
         const doc = await getDoc(env, "meta/characters");
@@ -49,7 +78,7 @@ export default {
         return json({ error: "metadata no cacheada todavía" }, env, 503);
       }
 
-      return json({ ok: true, phase: 1, role: "read-only (ingesta en GitHub Actions)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters"] }, env);
+      return json({ ok: true, phase: 2, role: "read-only (ingesta en GitHub Actions)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally"] }, env);
     } catch (err) {
       return json({ error: String((err && err.message) || err) }, env, 500);
     }
