@@ -2,10 +2,9 @@ name = "swgoh-consola"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
-# Fase 1 (post-gate): cron cada 8 h para refrescar Yusepi + gremio y escribir snapshots.
-# Descomentar cuando el normalizador + escritura en Firestore estén listos.
-# [triggers]
-# crons = ["0 */8 * * *"]
+# Cron: refresca characters + Yusepi (+ gremio) cada 8 h, encolando a ~1 req/seg.
+[triggers]
+crons = ["0 */8 * * *"]
 
 # Variables NO secretas.
 [vars]

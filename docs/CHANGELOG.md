@@ -2,6 +2,34 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 1 — Pipeline de datos vía swgoh.gg
+
+- **Fuente en vivo:** el roster deja de estar solo embebido. Un Cloudflare Worker
+  (`worker/src/index.js`) llama al endpoint **público** de swgoh.gg (`/api/player`,
+  `/api/characters`, `/api/guild`) — sin API key, con cabecera user-agent — encolando a
+  ~1 req/seg (`queue()`), normaliza y persiste en Firestore. Comlink queda como plan B
+  opcional (Fase 6.5) si el rate limit aprieta.
+- **Normalizador** (`worker/src/normalize.js`, puro/testeable): une player × characters por
+  `base_id` y produce el esquema RD `{i,n,s,r,c,a,t,g,rl,p,gl,ld,im}`. Reglas verificadas
+  contra la API real: `s = alignment→L/D/N`, `rl = max(0, relic_tier−2)`, `im` = slug de
+  `image`, `ld = categories.includes("Leader")`, filtro `combat_type===1` (fuera naves).
+  Validado contra el JSON real completo: **298 = 298 unidades**, idéntico salvo `power` de
+  1 unidad (deriva real del roster desde el snapshot embebido — comportamiento deseado).
+- **Firestore** (`worker/src/firestore.js`): REST API con JWT RS256 firmado con Web Crypto.
+  Esquema: `players/{ally}` (RD + meta), `snapshots/{ally}/history/{ts}`, `guild/{id}`,
+  `meta/characters`.
+- **Frontend con fallback** (`main.js` `loadRoster()` + `ui.js` `init(rd)`): intenta el roster
+  en vivo desde el Worker y cae SIEMPRE al RD embebido si algo falla (red caída, backend sin
+  configurar, forma inesperada). La consola nunca se queda en blanco.
+- **Cron** cada 8 h (`wrangler.toml`) refresca Yusepi + gremio.
+- Tests: normalizador contra fixtures reales + fallback → **27 verdes**. Cero secrets en git.
+- Diferencia menor documentada: `V.abilities` = top-35 por frecuencia (el embebido tenía 34);
+  solo afecta al desplegable de filtros del roster, no a la lógica.
+- **Pendiente de deploy por el usuario** (necesita cuenta Cloudflare + Firebase):
+  `wrangler secret put FIREBASE_SERVICE_ACCOUNT`, `wrangler deploy`, `GET /debug/refresh`
+  para poblar Firestore, y fijar `API_BASE` en `main.js` a la URL del Worker.
+- Tag: `v1-pipeline`.
+
 ## Fase 0.1 — Hotfix: máximo una Leyenda Galáctica por equipo
 
 - `assemble()` (engine.js) podía proponer equipos con varias unidades `gl:1` (imposible en

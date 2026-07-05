@@ -7,9 +7,27 @@ Objetivo del jugador: desbloquear **todos los Galactic Legends** (7/10; próximo
 
 ## Estado
 
-**Fase 0 (estructura)** completada: el monolito `SWGOH_Consola_Yusepi.html` se ha troceado
-en módulos con un build que reproduce un único HTML. Sin cambios visuales ni de lógica.
-Los datos siguen embebidos (`data.js`); la conexión a swgoh.gg llega en la Fase 1.
+- **Fase 0 (estructura):** monolito troceado en módulos + build a un solo HTML. ✓
+- **Fase 0.1 (hotfix):** `assemble()` garantiza máximo una Leyenda Galáctica por equipo. ✓
+- **Fase 1 (pipeline):** el roster puede venir **en vivo de swgoh.gg** vía un Cloudflare
+  Worker (normaliza + persiste en Firestore), con **fallback al RD embebido** si algo falla. ✓
+  Falta el deploy (cuenta Cloudflare + Firebase) — ver *Datos en vivo*.
+
+## Datos en vivo (Fase 1)
+
+El Worker (`worker/`) llama al endpoint público de swgoh.gg, normaliza al esquema `RD` y
+escribe en Firestore; el frontend lo consume con fallback al embebido.
+
+```bash
+cd worker
+wrangler secret put FIREBASE_SERVICE_ACCOUNT   # JSON del service account (una línea)
+# opcional: wrangler secret put SWGOH_GG_API_KEY
+wrangler deploy
+curl "https://<tu-worker>.workers.dev/debug/refresh"   # pobla Firestore (o espera al cron 8h)
+```
+
+Luego fija `API_BASE` en [web/src/main.js](web/src/main.js) a la URL del Worker y `npm run build`.
+Si `API_BASE` está vacío o el Worker falla, la consola usa el `RD` embebido.
 
 ## Estructura
 
