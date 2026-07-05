@@ -11,8 +11,31 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 - Objetivo del jugador: desbloquear **TODOS los Galactic Legends** (7/10; próximo: **Lord Vader**).
 - Estética: consola Sith/holotable (Chakra Petch / Rajdhani / Share Tech Mono; `--ember #ff3546`, `--holo #3ad6e6`, gold; fondo *void* con scanlines). **MANTENERLA SIEMPRE.**
 - Idioma de toda la UI y de la comunicación: **ESPAÑOL**.
-- Estado actual: 7 tabs funcionales (Mods, Lord Vader roadmap, GLs, Counters, Roster, Conquest, Mejoras). Motor de sinergias `assemble()` compartido entre Counters y Conquest. Avatares vía CDN de swgoh.gg en todas las tabs.
-- Datos actuales: JSON estáticos **embebidos** en el HTML (`RD` = roster 298 chars, `DATA` = plan/mods/gremio, `IMGBYNAME` = 333 imágenes). Provienen de swgoh.gg — el esquema ya encaja con su API.
+- Estado actual: 8 tabs funcionales (Mods, Lord Vader roadmap, GLs, Counters, Roster, Conquest, Mejoras, **Progreso**). Motor de sinergias `assemble()` compartido entre Counters y Conquest. Avatares vía CDN de swgoh.gg en todas las tabs.
+- Datos actuales: JSON estáticos **embebidos** en el HTML como fallback (`RD` = roster 298 chars, `DATA` = plan/mods/gremio, `IMGBYNAME` = 333 imágenes). En vivo llegan de swgoh.gg vía GitHub Actions → Firestore → Worker read-only.
+
+---
+
+## ESTADO ACTUAL (2026-07-05)
+
+| Fase | Estado | Tag | Notas |
+|---|---|---|---|
+| **0 — Estructura** | ✅ Hecha | `v0-estructura` | Monolito troceado en módulos + build a un solo HTML. |
+| **0.1 — Hotfix GL** | ✅ Hecha | `v0.1-hotfix-gl` | `assemble()` garantiza máx. 1 Leyenda Galáctica por equipo. |
+| **1 — Pipeline** | ✅ Hecha | `v1-pipeline` | swgoh.gg → normalizador → Firestore + Worker + fetch con fallback. |
+| **1.1 — Ingesta a Actions** | ✅ Hecha | `v1.1-ingesta-actions` | Cloudflare bloquea el egress del Worker (managed challenge + fingerprint TLS). La ingesta se mueve a **GitHub Actions** con `curl` (cron 8 h). Worker pasa a **solo lectura**. |
+| **2 — Diff engine + Progreso** | ✅ Hecha | `v2-progreso` | Ver detalle abajo. **72 tests verdes.** |
+| **3 — Counter Generator GAC** | ⏭️ Siguiente | — | — |
+| 4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
+
+**⚠️ Pendiente transversal (lo hace el usuario):** el **deploy** aún no está hecho. Falta:
+cuenta Cloudflare + Firebase, `wrangler secret put FIREBASE_SERVICE_ACCOUNT`, `wrangler deploy`,
+fijar `API_BASE` en `web/src/main.js` a la URL del Worker, y añadir el secret
+`FIREBASE_SERVICE_ACCOUNT` al repo para el workflow de Actions. Hasta entonces la consola
+funciona con el `RD` embebido (nunca en blanco) y la pestaña Progreso muestra su estado vacío.
+
+**🔒 Nota de seguridad:** el service-account JSON de Firebase estaba suelto en `Downloads/`.
+Sacarlo de cualquier carpeta versionable y **rotarlo** si llegó a exponerse. Nunca en el repo.
 
 ---
 
@@ -42,7 +65,8 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 |---|---|---|
 | Código / CI | **GitHub** | repo privado `swgoh-consola`, acciones para lint + tests + deploy |
 | Frontend (HTML) | **Cloudflare Pages** | build produce un único HTML; deploy automático desde GitHub |
-| API / cron | **Cloudflare Worker** | llama a `api.swgoh.gg`, normaliza, escribe en Firestore; cron cada 6-12 h (respeta rate limit 1/seg) |
+| Ingesta / cron | **GitHub Actions** | `scripts/ingest.mjs` baja swgoh.gg con `curl`, normaliza y escribe en Firestore; cron 8 h (Cloudflare bloquea el egress del Worker → ver Fase 1.1) |
+| API de lectura | **Cloudflare Worker** | solo lee de Firestore y sirve el RD/gremio/progreso con CORS (no hace egress a swgoh.gg) |
 | Persistencia | **Firebase Firestore** | snapshots por ally code; NO usamos D1 (evitamos duplicar backend) |
 | Auth (Fase 5) | **Firebase Auth** | login del gremio sin construirlo a mano |
 | Comlink (opcional) | Railway / Fly.io | solo si algún día se necesita tiempo real (Fase 6.5) |
@@ -60,7 +84,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 
 ---
 
-## FASE 0 — Repo y estructura (1 sesión) — EMPEZAMOS AQUÍ
+## FASE 0 — Repo y estructura (1 sesión) — ✅ HECHA (`v0-estructura`)
 Ver `PHASE0.md` para el paso a paso detallado. Resumen:
 - Repo GitHub privado `swgoh-consola`.
 - Estructura: `/web` (HTML + assets), `/worker` (Cloudflare Worker, preparado para credenciales swgoh.gg y Firebase), `/firebase` (config + reglas Firestore), `/scripts` (parsers Python/Node existentes), `/tests`, `/docs`.
@@ -68,17 +92,36 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
 - Suite **vitest** para `assemble()`, `cqRun`, `genCounter` (regresión antes de tocar nada).
 - **Definición de hecho:** el HTML resultante renderiza idéntico al actual; tests verdes; deploy de prueba en Cloudflare Pages.
 
-## FASE 1 — Pipeline de datos vía swgoh.gg (1-2 sesiones) — más simple ahora
-- **Sin infra extra.** Cloudflare Worker con **cron (cada 6-12 h)**: llama a `api.swgoh.gg/player/{allyCode}` y `/guild/{id}` con header `x-gg-bot-access` → normalizar al esquema `RD` `{i,n,s,r,c,a,t,g,rl,p,gl,ld,im}` → escribir en **Firestore** (colecciones: `players`, `snapshots`, `guild`).
-- Respetar rate limit ~1 req/seg (encolar las llamadas del gremio; no en paralelo).
-- Endpoints del Worker: `/api/roster/:ally`, `/api/guild/:id`, `/api/meta/characters`.
-- El HTML pasa de `RD` embebido a `fetch()` con **fallback** al embebido si no hay red.
+## FASE 1 — Pipeline de datos vía swgoh.gg (1-2 sesiones) — ✅ HECHA (`v1-pipeline` + `v1.1-ingesta-actions`)
+- Plan original: Cloudflare Worker con cron llamando a swgoh.gg. **Realidad (Fase 1.1):** Cloudflare
+  bloquea el egress del Worker hacia swgoh.gg (managed challenge + fingerprint TLS JA3/JA4 que
+  rechaza a undici/Node con 403; `curl` sí pasa). Por eso la **ingesta se movió a GitHub Actions**
+  (`scripts/ingest.mjs`, `curl`, cron 8 h + manual) y el **Worker quedó solo-lectura**.
+- Normalizador (`worker/src/normalize.js`, puro): player × characters por `base_id` → esquema `RD`
+  `{i,n,s,r,c,a,t,g,rl,p,gl,ld,im}`. Validado: 298 = 298 unidades.
+- Firestore (`worker/src/firestore.js`): REST + JWT RS256 (Web Crypto). Colecciones: `players/{ally}`,
+  `snapshots/{ally}/…`, `guild/{id}`, `meta/characters`.
+- Endpoints del Worker (read-only): `/api/roster/:ally`, `/api/guild/:id`, `/api/meta/characters`.
+- El HTML consume el Worker con **fallback** al `RD` embebido si algo falla. Nunca en blanco.
 
-## FASE 2 — Diff engine + tracker (1-2 sesiones)
-- Cada snapshot calcula diff vs anterior: relics subidos, gear, GP, mods nivelados, rango de arena.
-- Nueva tab **"Progreso"**: línea temporal de snapshots, fases del roadmap Vader **auto-marcadas**, comparativa con los 49 del gremio.
+## FASE 2 — Diff engine + pestaña "Progreso" (+ fix gremio) — ✅ HECHA (`v2-progreso`)
+- **Diff engine puro** (`web/src/diff.js`, re-exportado desde `engine.js`): `diffSnapshots(prev,curr)`
+  con deltas estructurados (relic/gear/stars/power/nuevo + GP y arena). Semántica de arena correcta:
+  rango menor = mejora. `compactSnapshot` + `snapshotHash` (FNV-1a) para el **dedup**.
+- **Ingesta con snapshots + eventos + dedup**: escribe `history/{ts}` (compacto) y `events/{ts}`
+  (diff ya calculado, se lee barato). Doc *head* con el último hash: si coincide, no escribe nada
+  (cero spam en runs sin cambios).
+- **Fix del gremio** (descubierto con `curl`, no adivinado): el path real es
+  **`/api/guild-profile/{id}/`** (200); `/api/guild/{id}/` daba 404. Resumen por miembro ordenado
+  por GP. *Honestidad:* `arena_rank` y el nº de GL por miembro **no vienen** en la API → se omiten.
+- **Worker read-only, nuevos endpoints**: `/api/progress/:ally`, `/api/snapshots/:ally`.
+- **Pestaña "Progreso"** (aditiva, estética intocable): línea temporal de eventos en español,
+  roadmap de Vader **auto-marcado** (cruce con el RD en vivo), comparativa de gremio con Yusepi
+  destacado. Fallbacks: 0/1 snapshot → "Aún no hay histórico"; sin gremio → oculto; API caída →
+  RD embebido.
+- Tests: diff, dedup, Vader, gremio, capa pura de Progreso y **render real en jsdom** → 72 verdes.
 
-## FASE 3 — Advanced Counter Generator GAC 3v3/5v5 (2-3 sesiones) ⭐ GAMECHANGER
+## FASE 3 — Advanced Counter Generator GAC 3v3/5v5 (2-3 sesiones) ⭐ GAMECHANGER — ⏭️ SIGUIENTE
 - Input: ally code del rival → Worker trae su roster de swgoh.gg → `RD_ENEMY` (mismo esquema).
 - UI: selector de la defensa del rival (**3 o 5** chars, datalist como Conquest).
 - Motor: leer el kit real de la defensa (`ability_classes` + factions) → detectar amenazas (revive, TM-train, contraataque, buffs, sigilo…) → cruzar con **base curada** `/data/counter_db.json` (~30 arquetipos meta; fuente swgoh.gg/gac/counters) → proponer **mi mejor counter** con explicación por amenaza neutralizada.
