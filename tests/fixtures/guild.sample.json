@@ -1,0 +1,41 @@
+{
+  "data": {
+    "guild_id": "U6tWH0WuSDyl_g7lmgZm-w",
+    "name": "Catalonian Republic",
+    "galactic_power": 495216104,
+    "member_count": 3,
+    "avg_galactic_power": 9904322,
+    "members": [
+      {
+        "player_id": "7K3QpflYSW6Ny8dAeQv_Vw",
+        "galactic_power": 13519797,
+        "squad_power": 177596,
+        "ally_code": 769313198,
+        "player_level": 85,
+        "player_name": "Squitx",
+        "league_name": "Aurodium",
+        "lifetime_season_score": 582933
+      },
+      {
+        "player_id": "x9FZkpBXR3ChwbMLin__xg",
+        "galactic_power": 9883300,
+        "squad_power": 159158,
+        "ally_code": 355463284,
+        "player_level": 85,
+        "player_name": "Yusepi",
+        "league_name": "Bronzium",
+        "lifetime_season_score": 184977
+      },
+      {
+        "player_id": "043F1r7IT4KCQ0UEfvK2xw",
+        "galactic_power": 4862568,
+        "squad_power": 134473,
+        "ally_code": 358897349,
+        "player_level": 85,
+        "player_name": "AJRD",
+        "league_name": "Carbonite",
+        "lifetime_season_score": 416490
+      }
+    ]
+  }
+}

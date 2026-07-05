@@ -7,8 +7,9 @@
 //   node scripts/ingest.mjs --dry      # solo fetch + normaliza + imprime (sin escribir)
 //
 // Env: ALLY_CODE (opcional), FIREBASE_SERVICE_ACCOUNT (JSON del service account, obligatorio salvo --dry).
-import { buildCharMap, normalizeRoster, playerMeta } from "../worker/src/normalize.js";
-import { setDoc } from "../worker/src/firestore.js";
+import { buildCharMap, normalizeRoster, playerMeta, normalizeGuild } from "../worker/src/normalize.js";
+import { setDoc, getDoc } from "../worker/src/firestore.js";
+import { compactSnapshot, snapshotHash, diffSnapshots, isEmptyDiff } from "../web/src/diff.js";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 const pexec = promisify(execFile);
@@ -60,15 +61,59 @@ async function main() {
   const player = await ggJSON(`/player/${ALLY}/`);
   const rd = normalizeRoster(player, charMap);
   const meta = playerMeta(player);
-  const doc = { rd: JSON.stringify(rd), meta: JSON.stringify(meta), updatedAt: now };
-  await write(`players/${ALLY}`, doc);
-  await write(`snapshots/${ALLY}/history/${now.replace(/[:.]/g, "-")}`, doc);
+  // players/{ally} siempre se sobrescribe con el último estado (lo sirve el Worker read-only).
+  await write(`players/${ALLY}`, { rd: JSON.stringify(rd), meta: JSON.stringify(meta), updatedAt: now });
+
+  // --- Snapshots históricos + eventos, con DEDUP ---
+  // El doc "head" (snapshots/{ally}) guarda el último snapshot compacto + su hash. Una sola
+  // lectura por run: si el hash coincide, NO escribimos ni snapshot ni evento (evita ensuciar
+  // la línea temporal en los runs de 8 h sin cambios reales).
+  const tsSafe = now.replace(/[:.]/g, "-");
+  const snapshot = compactSnapshot(rd, { ...meta, ts: now });
+  const hash = snapshotHash(snapshot);
+  const head = DRY ? null : await getDoc(env, `snapshots/${ALLY}`).catch(() => null);
+
+  if (head && head.hash === hash) {
+    console.log(`  sin cambios (hash ${hash}) — no se escribe snapshot ni evento`);
+  } else {
+    // Retención: histórico completo por ahora (es ligero). Si crece, podar a los últimos N
+    // borrando los docs más antiguos de snapshots/{ally}/history y /events.
+    await write(`snapshots/${ALLY}/history/${tsSafe}`, { snapshot: JSON.stringify(snapshot), hash, ts: now });
+    // Evento = diff vs el snapshot anterior (si lo hay y no es vacío). Se guarda ya calculado
+    // para que la línea temporal se lea barata en cliente (no se recalcula en el navegador).
+    const prev = head && head.snapshot ? JSON.parse(head.snapshot) : null;
+    if (prev) {
+      const diff = diffSnapshots(prev, snapshot);
+      if (!isEmptyDiff(diff)) {
+        await write(`snapshots/${ALLY}/events/${tsSafe}`, {
+          diff: JSON.stringify(diff), ts: now,
+          gpDelta: diff.account.gpDelta, arenaDelta: diff.account.arenaDelta,
+          relics: diff.summary.relicsGanados, nuevas: diff.summary.unidadesNuevas,
+          meta: JSON.stringify(snapshot.meta),
+        });
+        console.log(`  evento · +${diff.summary.relicsGanados} relic · ${diff.summary.gpGanado} GP · arena ${diff.account.arenaDelta}`);
+      } else {
+        console.log("  snapshot nuevo pero diff vacío — sin evento");
+      }
+    } else {
+      console.log("  primer snapshot — sin evento (no hay anterior con qué comparar)");
+    }
+    // Actualiza el head para el próximo run.
+    await write(`snapshots/${ALLY}`, { hash, snapshot: JSON.stringify(snapshot), ts: now });
+  }
 
   if (meta.guildId) {
     try {
-      console.log(`Fetch /guild/${meta.guildId}/ …`);
-      const g = await ggJSON(`/guild/${meta.guildId}/`);
-      await write(`guild/${meta.guildId}`, { data: JSON.stringify(g.data || g), updatedAt: now });
+      // ⚠️ El path correcto es /api/guild-profile/{id}/ (descubierto con curl en Fase 2);
+      // /api/guild/{id}/ daba 404. Guardamos un RESUMEN por miembro para la comparativa.
+      console.log(`Fetch /guild-profile/${meta.guildId}/ …`);
+      const g = await ggJSON(`/guild-profile/${meta.guildId}/`);
+      const summary = normalizeGuild(g);
+      await write(`guild/${meta.guildId}`, {
+        data: JSON.stringify(summary),
+        name: summary.name, gp: summary.gp, memberCount: summary.memberCount, updatedAt: now,
+      });
+      console.log(`  gremio · ${summary.memberCount} miembros · GP ${summary.gp}`);
     } catch (e) { console.warn("gremio (no bloquea):", e.message); }
   }
 

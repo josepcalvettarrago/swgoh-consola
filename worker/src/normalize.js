@@ -65,6 +65,37 @@ export function buildFacets(R) {
   return { factions: sortEnt(facCount), roles: [...ROLES], abilities: sortEnt(abCount).slice(0, 35) };
 }
 
+// Normalizador de GREMIO (Fase 2). Entrada: JSON de swgoh.gg /api/guild-profile/{id}/
+// (forma { data: { name, galactic_power, member_count, members:[…] } }). Produce un RESUMEN
+// compacto por miembro para la comparativa, ordenado por GP descendente.
+//
+// ⚠️ Honestidad: el guild-profile NO trae arena_rank ni recuento de GL por miembro — así que
+// NO se inventan. El ranking honesto es por GP (y season score / squad power, que sí vienen).
+// glCount/arenaRank por miembro requerirían tirar del roster completo de cada uno (best-effort
+// opcional, fuera del mínimo de la fase).
+export function normalizeGuild(guildJson) {
+  const G = (guildJson && guildJson.data) || guildJson || {};
+  const members = (G.members || [])
+    .map(m => ({
+      ally: m.ally_code,
+      name: m.player_name,
+      gp: m.galactic_power || 0,
+      squad: m.squad_power || 0,
+      league: m.league_name || null,
+      season: m.lifetime_season_score || 0,
+      level: m.player_level || 0,
+    }))
+    .sort((a, b) => b.gp - a.gp);
+  return {
+    guildId: G.guild_id || null,
+    name: G.name || null,
+    gp: G.galactic_power || 0,
+    avgGp: G.avg_galactic_power || 0,
+    memberCount: G.member_count || members.length,
+    members,
+  };
+}
+
 // Meta del jugador para players/{ally} (y cabecera en fases futuras).
 export function playerMeta(playerJson) {
   const d = (playerJson && playerJson.data) || {};
