@@ -15,19 +15,31 @@ Objetivo del jugador: desbloquear **todos los Galactic Legends** (7/10; próximo
 
 ## Datos en vivo (Fase 1)
 
-El Worker (`worker/`) llama al endpoint público de swgoh.gg, normaliza al esquema `RD` y
-escribe en Firestore; el frontend lo consume con fallback al embebido.
+Cloudflare bloquea el egress de un Worker hacia swgoh.gg (managed challenge + fingerprint TLS
+que rechaza a undici/Node con 403). Por eso el flujo es:
+
+- **Ingesta → GitHub Actions** (`.github/workflows/ingest.yml`, cron 8 h + manual): corre
+  `scripts/ingest.mjs`, que baja swgoh.gg con **`curl`**, normaliza y escribe en **Firestore**.
+- **Worker → solo lectura** (`worker/`): sirve el `RD` desde Firestore con CORS.
+- **Frontend → fetch con fallback**: consume el Worker y cae al `RD` embebido si algo falla.
+
+Puesta en marcha:
 
 ```bash
+# 1) Ingesta (GitHub): añade el secret del repo FIREBASE_SERVICE_ACCOUNT (service account JSON)
+#    y lanza el workflow "Ingesta swgoh.gg -> Firestore" (Actions -> Run workflow).
+node scripts/ingest.mjs --dry        # prueba local sin escribir (solo fetch + normaliza)
+
+# 2) Worker de lectura
 cd worker
-wrangler secret put FIREBASE_SERVICE_ACCOUNT   # JSON del service account (una línea)
-# opcional: wrangler secret put SWGOH_GG_API_KEY
+wrangler secret put FIREBASE_SERVICE_ACCOUNT   # mismo service account
 wrangler deploy
-curl "https://<tu-worker>.workers.dev/debug/refresh"   # pobla Firestore (o espera al cron 8h)
+
+# 3) Frontend: fija API_BASE en web/src/main.js a la URL del Worker y:
+npm run build
 ```
 
-Luego fija `API_BASE` en [web/src/main.js](web/src/main.js) a la URL del Worker y `npm run build`.
-Si `API_BASE` está vacío o el Worker falla, la consola usa el `RD` embebido.
+Si `API_BASE` está vacío o el Worker falla, la consola usa el `RD` embebido (nunca queda en blanco).
 
 ## Estructura
 

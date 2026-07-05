@@ -1,0 +1,23 @@
+name: Ingesta swgoh.gg -> Firestore
+
+# El egress de un Cloudflare Worker hacia swgoh.gg recibe el managed challenge de Cloudflare.
+# Los runners de GitHub (datacenter normal) SÍ obtienen 200, así que la ingesta corre aquí.
+on:
+  schedule:
+    - cron: "0 */8 * * *"   # cada 8 h
+  workflow_dispatch:          # ejecución manual desde la pestaña Actions
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Sin `npm install`: el script solo usa built-ins de Node + módulos locales (normalize.js, firestore.js).
+      - name: Ejecutar ingesta
+        run: node scripts/ingest.mjs
+        env:
+          ALLY_CODE: "355463284"
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}

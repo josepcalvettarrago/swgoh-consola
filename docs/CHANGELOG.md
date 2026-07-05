@@ -30,6 +30,22 @@ Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en
   para poblar Firestore, y fijar `API_BASE` en `main.js` a la URL del Worker.
 - Tag: `v1-pipeline`.
 
+## Fase 1.1 — Ingesta movida a GitHub Actions (bloqueo de Cloudflare)
+
+- **Problema:** el egress de un Cloudflare Worker hacia swgoh.gg (también en Cloudflare)
+  recibe el *managed challenge* (`Just a moment…`). Además, Cloudflare hace **fingerprinting
+  TLS (JA3/JA4)**: con cabeceras de navegador idénticas, `curl` obtiene 200 pero el `fetch`
+  de Node (undici) recibe **403**.
+- **Solución:** la ingesta se traslada a **GitHub Actions** (`.github/workflows/ingest.yml`,
+  cron 8 h + ejecución manual). El script `scripts/ingest.mjs` **reutiliza** `normalize.js` y
+  `firestore.js`, y usa **`curl`** (preinstalado en los runners; huella TLS que sí pasa) para
+  swgoh.gg — Firestore sigue por `fetch` (Google no aplica ese bloqueo). Validado en dry-run:
+  298 unidades normalizadas, meta de Yusepi correcta.
+- **Worker read-only:** ya no hace egress a swgoh.gg; solo lee de Firestore y sirve el RD con
+  CORS (`/api/roster|guild|meta`). Se elimina el cron del Worker (lo orquesta GitHub Actions).
+- Pendiente: endpoint de **gremio** devuelve 404 (el path/id de swgoh.gg difiere) — best-effort,
+  no bloquea; se resuelve en Fase 2. 27 tests verdes.
+
 ## Fase 0.1 — Hotfix: máximo una Leyenda Galáctica por equipo
 
 - `assemble()` (engine.js) podía proponer equipos con varias unidades `gl:1` (imposible en

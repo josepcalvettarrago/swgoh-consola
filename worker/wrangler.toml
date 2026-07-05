@@ -2,17 +2,13 @@ name = "swgoh-consola"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
-# Cron: refresca characters + Yusepi (+ gremio) cada 8 h, encolando a ~1 req/seg.
-[triggers]
-crons = ["0 */8 * * *"]
+# Sin cron: la ingesta corre en GitHub Actions (el egress del Worker a swgoh.gg está
+# bloqueado por el managed challenge de Cloudflare). Este Worker solo LEE de Firestore.
 
 # Variables NO secretas.
 [vars]
-ALLY_CODE = "355463284"
-GUILD_ID = ""                 # se rellena tras leer el perfil de Yusepi
 PAGES_ORIGIN = "*"            # en prod: https://<tu-proyecto>.pages.dev
 
-# Secrets (NUNCA en el repo). Configurar con:
+# Secret (NUNCA en el repo). Solo lectura de Firestore:
 #   wrangler secret put FIREBASE_SERVICE_ACCOUNT   # JSON del service account en una línea
-#   wrangler secret put SWGOH_GG_API_KEY           # opcional, header x-gg-bot-access
 # En local: usar .dev.vars (ya está en .gitignore).

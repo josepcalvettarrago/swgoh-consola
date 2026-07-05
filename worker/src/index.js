@@ -1,21 +1,18 @@
 /**
- * Cloudflare Worker — SWGOH Consola (Fase 1: pipeline swgoh.gg -> Firestore).
+ * Cloudflare Worker — SWGOH Consola (Fase 1: API de LECTURA).
  *
- * Rutas:
- *   GET /api/roster/:ally      -> RD {R,V} desde players/{ally} en Firestore (503 si no hay dato)
+ * La INGESTA (fetch a swgoh.gg + normalizado + escritura en Firestore) NO vive aquí:
+ * el egress de un Worker hacia swgoh.gg (también en Cloudflare) recibe el managed challenge.
+ * La ingesta corre en GitHub Actions (scripts/ingest.mjs, cron). Ver README / docs/CHANGELOG.
+ *
+ * Este Worker solo lee de Firestore y sirve el RD al frontend con CORS:
+ *   GET /api/roster/:ally      -> RD {R,V} desde players/{ally}
  *   GET /api/guild/:id         -> guild/{id}
- *   GET /api/meta/characters   -> mapa de metadata cacheado
- *   GET /debug/raw?ally=NNN     -> proxy al endpoint público de swgoh.gg (captura de forma real)
- *   GET /debug/refresh          -> ejecuta el refresh manualmente (dev; poblar Firestore sin esperar al cron)
+ *   GET /api/meta/characters   -> mapa de metadata
  *
- * cron `scheduled` (cada 8 h): refresca characters + Yusepi (+ gremio), encolando a ~1 req/seg,
- * normaliza y escribe en Firestore. Fuente: endpoint PÚBLICO de swgoh.gg (sin key; header UA).
- * Secrets: FIREBASE_SERVICE_ACCOUNT (obligatorio para escribir), SWGOH_GG_API_KEY (opcional).
+ * Secret: FIREBASE_SERVICE_ACCOUNT (solo lectura de Firestore).
  */
-import { getDoc, setDoc } from "./firestore.js";
-import { buildCharMap, normalizeRoster, playerMeta } from "./normalize.js";
-
-const GG_BASE = "https://swgoh.gg/api";
+import { getDoc } from "./firestore.js";
 
 function cors(env) {
   const origin = env.PAGES_ORIGIN || "*";
@@ -28,60 +25,6 @@ function raw(str, env, status = 200) {
   return new Response(str, { status, headers: { "content-type": "application/json; charset=utf-8", ...cors(env) } });
 }
 
-// --- cola serie a ~1 req/seg (rate limit de swgoh.gg): nunca en paralelo ---
-let _chain = Promise.resolve();
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-export function queue(fn, gapMs = 1100) {
-  const run = _chain.then(async () => { const r = await fn(); await sleep(gapMs); return r; });
-  _chain = run.catch(() => {});
-  return run;
-}
-// Cabeceras de navegador real: swgoh.gg está tras Cloudflare y sirve un challenge JS a
-// clientes "raros". Esto ayuda con filtros por headers; si el bloqueo es por IP/ASN de
-// datacenter (egress del Worker), no basta y hay que pivotar (ver docs/CHANGELOG y README).
-const BROWSER_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-  "Accept": "application/json, text/plain, */*",
-  "Accept-Language": "es-ES,es;q=0.9",
-  "Referer": "https://swgoh.gg/",
-};
-async function ggFetch(path, env) {
-  const headers = { ...BROWSER_HEADERS };
-  if (env.SWGOH_GG_API_KEY) headers["x-gg-bot-access"] = env.SWGOH_GG_API_KEY;
-  return queue(() => fetch(`${GG_BASE}${path}`, { headers }));
-}
-async function ggJSON(path, env) {
-  const res = await ggFetch(path, env);
-  if (!res.ok) throw new Error(`swgoh.gg ${path} -> ${res.status}`);
-  return res.json();
-}
-
-// --- pipeline: characters + player (+ gremio) -> normaliza -> Firestore ---
-export async function refresh(env) {
-  const ally = String(env.ALLY_CODE);
-  const now = new Date().toISOString();
-
-  const characters = await ggJSON("/characters/", env);
-  const charMap = buildCharMap(characters);
-  await setDoc(env, "meta/characters", { map: JSON.stringify(charMap), updatedAt: now });
-
-  const player = await ggJSON(`/player/${ally}/`, env);
-  const rd = normalizeRoster(player, charMap);
-  const meta = playerMeta(player);
-  const doc = { rd: JSON.stringify(rd), meta: JSON.stringify(meta), updatedAt: now };
-  await setDoc(env, `players/${ally}`, doc);
-  await setDoc(env, `snapshots/${ally}/history/${now.replace(/[:.]/g, "-")}`, doc);
-
-  // Gremio: 1 sola llamada (resumen). Los rosters completos de los 50 son Fase 2.
-  if (meta.guildId) {
-    try {
-      const g = await ggJSON(`/guild/${meta.guildId}/`, env);
-      await setDoc(env, `guild/${meta.guildId}`, { data: JSON.stringify(g.data || g), updatedAt: now });
-    } catch { /* el gremio no bloquea el refresh del jugador */ }
-  }
-  return { units: rd.R.length, updatedAt: now, meta };
-}
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -89,20 +32,11 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { headers: cors(env) });
 
     try {
-      if (pathname === "/debug/raw") {
-        const ally = url.searchParams.get("ally") || env.ALLY_CODE;
-        const res = await ggFetch(`/player/${ally}/`, env);
-        return raw(await res.text(), env, res.status);
-      }
-      if (pathname === "/debug/refresh") {
-        return json(await refresh(env), env);
-      }
-
       let m;
       if ((m = pathname.match(/^\/api\/roster\/(\d+)$/))) {
         const doc = await getDoc(env, `players/${m[1]}`);
         if (doc && doc.rd) return raw(doc.rd, env); // ya es el JSON {R,V}
-        return json({ error: "sin snapshot todavía — ejecuta /debug/refresh o espera al cron" }, env, 503);
+        return json({ error: "sin snapshot todavía — ejecuta la ingesta (GitHub Actions)" }, env, 503);
       }
       if ((m = pathname.match(/^\/api\/guild\/(\w+)$/))) {
         const doc = await getDoc(env, `guild/${m[1]}`);
@@ -115,13 +49,9 @@ export default {
         return json({ error: "metadata no cacheada todavía" }, env, 503);
       }
 
-      return json({ ok: true, phase: 1, routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/debug/raw?ally=", "/debug/refresh"] }, env);
+      return json({ ok: true, phase: 1, role: "read-only (ingesta en GitHub Actions)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters"] }, env);
     } catch (err) {
       return json({ error: String((err && err.message) || err) }, env, 500);
     }
-  },
-
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(refresh(env).catch(err => console.error("refresh cron:", err && err.message)));
   },
 };
