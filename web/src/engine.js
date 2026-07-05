@@ -2,6 +2,12 @@
 // Testeable directamente con vitest. No importar nada de ui.js aquí.
 import { IMGBYNAME, KEYMECH, ROLE_ES, SIDES } from "./data.js";
 
+// Diff engine (Fase 2): vive en su propio módulo puro y sin dependencias (para que la ingesta
+// en Node no arrastre data.js). Se re-exporta aquí para que la UI lo consuma desde engine.js.
+export { diffSnapshots, compactSnapshot, snapshotHash, isEmptyDiff } from "./diff.js";
+// Auto-marcado del roadmap de Lord Vader (Fase 2): también puro.
+export { vaderProgress } from "./vader.js";
+
 // ---- avatares (devuelven strings HTML; no tocan el DOM) ----
 const IMGPRE = "https://game-assets.swgoh.gg/textures/tex.charui_", IMGSUF = ".png";
 export function unitImg(u) { return u && u.im ? IMGPRE + u.im + IMGSUF : ""; }
