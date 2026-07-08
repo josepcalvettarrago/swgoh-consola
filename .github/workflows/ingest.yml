@@ -15,9 +15,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      # curl normal desde el IP de datacenter de GitHub recibe 403 de Cloudflare (swgoh.gg).
+      # curl-impersonate replica la huella TLS/HTTP2 de Chrome para pasar el filtro.
+      - name: Instalar curl-impersonate (huella TLS de Chrome)
+        run: |
+          set -e
+          VER=v0.6.1
+          URL="https://github.com/lwthiker/curl-impersonate/releases/download/$VER/curl-impersonate-$VER.x86_64-linux-gnu.tar.gz"
+          mkdir -p "$HOME/curl-impersonate"
+          curl -sL "$URL" | tar -xz -C "$HOME/curl-impersonate"
+          chmod +x "$HOME/curl-impersonate/"* || true
+          echo "$HOME/curl-impersonate" >> "$GITHUB_PATH"
       # Sin `npm install`: el script solo usa built-ins de Node + módulos locales (normalize.js, firestore.js).
       - name: Ejecutar ingesta
         run: node scripts/ingest.mjs
         env:
           ALLY_CODE: "355463284"
+          CURL_BIN: curl_chrome116
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
