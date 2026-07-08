@@ -53,8 +53,11 @@ function parseSA(env) {
   return typeof raw === "string" ? JSON.parse(raw) : raw;
 }
 
-function docBase(sa) {
-  return `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/(default)/documents`;
+// La base Firestore del proyecto se llama "swgohapi" (no la "(default)"): se creó con nombre
+// propio en la consola (europe-west3). Es configurable con FIRESTORE_DB por si cambia.
+function dbId(env) { return (env && env.FIRESTORE_DB) || "swgohapi"; }
+function docBase(sa, env) {
+  return `https://firestore.googleapis.com/v1/projects/${sa.project_id}/databases/${dbId(env)}/documents`;
 }
 
 // --- conversión valores Firestore <-> JS (subset suficiente para RD/meta) ---
@@ -83,7 +86,7 @@ function fromFirestore(field) {
 // Lee un documento. path relativo, p. ej. "players/355463284". Devuelve objeto plano o null.
 export async function getDoc(env, path) {
   const sa = parseSA(env), token = await getAccessToken(sa);
-  const res = await fetch(`${docBase(sa)}/${path}`, { headers: { authorization: `Bearer ${token}` } });
+  const res = await fetch(`${docBase(sa, env)}/${path}`, { headers: { authorization: `Bearer ${token}` } });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`getDoc ${res.status}: ${await res.text()}`);
   const doc = await res.json();
@@ -95,7 +98,7 @@ export async function getDoc(env, path) {
 // más reciente primero). Devuelve [{ _id, ...campos }]. Usado por los endpoints de progreso.
 export async function listDocs(env, collectionPath, { limit = 20 } = {}) {
   const sa = parseSA(env), token = await getAccessToken(sa);
-  const url = `${docBase(sa)}/${collectionPath}?pageSize=${limit}&orderBy=${encodeURIComponent("__name__ desc")}`;
+  const url = `${docBase(sa, env)}/${collectionPath}?pageSize=${limit}&orderBy=${encodeURIComponent("__name__ desc")}`;
   const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
   if (res.status === 404) return [];
   if (!res.ok) throw new Error(`listDocs ${res.status}: ${await res.text()}`);
@@ -111,7 +114,7 @@ export async function listDocs(env, collectionPath, { limit = 20 } = {}) {
 export async function setDoc(env, path, data) {
   const sa = parseSA(env), token = await getAccessToken(sa);
   const fields = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, toFirestore(v)]));
-  const res = await fetch(`${docBase(sa)}/${path}`, {
+  const res = await fetch(`${docBase(sa, env)}/${path}`, {
     method: "PATCH",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
     body: JSON.stringify({ fields }),
