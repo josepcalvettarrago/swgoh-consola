@@ -1,10 +1,13 @@
 name: Ingesta swgoh.gg -> Firestore
 
-# El egress de un Cloudflare Worker hacia swgoh.gg recibe el managed challenge de Cloudflare.
-# Los runners de GitHub (datacenter normal) SÍ obtienen 200, así que la ingesta corre aquí.
+# NOTA (Fase 2): swgoh.gg (Cloudflare) devuelve 403 al IP de datacenter de GitHub Actions —
+# ni con cabeceras de navegador ni con curl-impersonate (huella TLS de Chrome) se esquiva:
+# el bloqueo es por reputación de IP. Por eso la ingesta REAL corre en local (Task Scheduler
+# de Windows -> scripts/ingest-local.ps1), desde una IP que sí pasa. El cron de aquí queda
+# DESACTIVADO; se conserva el disparo manual por si algún día cambia el bloqueo.
 on:
-  schedule:
-    - cron: "0 */8 * * *"   # cada 8 h
+  # schedule:
+  #   - cron: "0 */8 * * *"   # DESACTIVADO: 403 desde datacenter (ver nota arriba)
   workflow_dispatch:          # ejecución manual desde la pestaña Actions
 
 jobs:
