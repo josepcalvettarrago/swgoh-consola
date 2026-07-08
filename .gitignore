@@ -4,3 +4,10 @@ web/dist/
 *.local
 .DS_Store
 .wrangler/
+
+# Service account de Firebase — NUNCA subir (contiene la clave privada de admin)
+firebase/*adminsdk*.json
+firebase/*service*account*.json
+*serviceAccount*.json
+# Logs de la ingesta local
+*.log
