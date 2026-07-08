@@ -16,26 +16,34 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 
 ---
 
-## ESTADO ACTUAL (2026-07-05)
+## ESTADO ACTUAL (2026-07-08)
 
 | Fase | Estado | Tag | Notas |
 |---|---|---|---|
 | **0 — Estructura** | ✅ Hecha | `v0-estructura` | Monolito troceado en módulos + build a un solo HTML. |
 | **0.1 — Hotfix GL** | ✅ Hecha | `v0.1-hotfix-gl` | `assemble()` garantiza máx. 1 Leyenda Galáctica por equipo. |
 | **1 — Pipeline** | ✅ Hecha | `v1-pipeline` | swgoh.gg → normalizador → Firestore + Worker + fetch con fallback. |
-| **1.1 — Ingesta a Actions** | ✅ Hecha | `v1.1-ingesta-actions` | Cloudflare bloquea el egress del Worker (managed challenge + fingerprint TLS). La ingesta se mueve a **GitHub Actions** con `curl` (cron 8 h). Worker pasa a **solo lectura**. |
-| **2 — Diff engine + Progreso** | ✅ Hecha | `v2-progreso` | Ver detalle abajo. **72 tests verdes.** |
+| **1.1 — Ingesta a Actions** | ✅ Hecha | `v1.1-ingesta-actions` | Cloudflare bloquea el egress del Worker. La ingesta se movió a **GitHub Actions** con `curl`. (Ver 1.2: Actions tampoco sirve.) |
+| **2 — Diff engine + Progreso** | ✅ Hecha | `v2-progreso` | Diff engine puro + dedup, pestaña Progreso, fix gremio. **72 tests verdes.** |
+| **1.2 — Ingesta LOCAL (write path live)** | ✅ Operativa | — | swgoh.gg también da **403 al IP de datacenter de GitHub Actions** (ni curl-impersonate lo esquiva → bloqueo por IP). La ingesta corre **en local** (`scripts/ingest-local.ps1`) al **iniciar sesión** (acceso directo en la carpeta de Inicio; cron de Actions desactivado). Escribe en **Firestore live**. |
 | **3 — Counter Generator GAC** | ⏭️ Siguiente | — | — |
 | 4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
-**⚠️ Pendiente transversal (lo hace el usuario):** el **deploy** aún no está hecho. Falta:
-cuenta Cloudflare + Firebase, `wrangler secret put FIREBASE_SERVICE_ACCOUNT`, `wrangler deploy`,
-fijar `API_BASE` en `web/src/main.js` a la URL del Worker, y añadir el secret
-`FIREBASE_SERVICE_ACCOUNT` al repo para el workflow de Actions. Hasta entonces la consola
-funciona con el `RD` embebido (nunca en blanco) y la pestaña Progreso muestra su estado vacío.
+**✅ Ingesta (write path) — OPERATIVA en local:**
+- swgoh.gg → normaliza → **Firestore** (base con nombre **`swgohapi`**, `europe-west3`, proyecto `swgoh-13551`).
+- Corre al iniciar sesión desde tu IP (Cloudflare bloquea tanto el Worker como el datacenter de Actions). Log en `%LOCALAPPDATA%\swgoh-consola\ingest.log`.
+- Dedup por hash: los runs sin cambios no escriben snapshot ni evento (los eventos ya escritos **persisten**; la línea temporal es un registro permanente, no un "desde la última vez que miraste").
+- Service account en `firebase/*adminsdk*.json` (**gitignored**, nunca subido).
+- Coste **0** (Firestore plan Spark: 20k escrituras/día gratis; consumo real ~6/run).
 
-**🔒 Nota de seguridad:** el service-account JSON de Firebase estaba suelto en `Downloads/`.
-Sacarlo de cualquier carpeta versionable y **rotarlo** si llegó a exponerse. Nunca en el repo.
+**⚠️ Pendiente para VER el progreso en la web (read path):** desplegar el **Worker de lectura**
+(`wrangler deploy` con el secret `FIREBASE_SERVICE_ACCOUNT`) y fijar `API_BASE` en `web/src/main.js`
+a su URL. Hasta entonces la consola usa el `RD` embebido (nunca en blanco) y la pestaña Progreso
+muestra su estado vacío **aunque los datos ya estén en Firestore**. Nota: el Worker lee la base
+`swgohapi` por defecto (`FIRESTORE_DB` override).
+
+**🔒 Seguridad:** service-account rotado y guardado en `firebase/` (gitignored). El repo GitHub
+(`josepcalvettarrago/swgoh-consola`, privado) no contiene secretos.
 
 ---
 
