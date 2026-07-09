@@ -5,7 +5,7 @@ import { init } from "./ui.js";
 import { RD } from "./data.js";
 
 // Configurable en build/deploy. Vacío = sin backend -> se usa directamente el embebido.
-const API_BASE = "";
+const API_BASE = "swgoh-consola.josep-calvet-tarrago.workers.dev";
 const ALLY = "355463284";
 const GUILD_ID = "U6tWH0WuSDyl_g7lmgZm-w"; // Catalonian Republic (descubierto en Fase 2).
 

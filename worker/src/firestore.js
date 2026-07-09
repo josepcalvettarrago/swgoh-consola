@@ -98,7 +98,7 @@ export async function getDoc(env, path) {
 // más reciente primero). Devuelve [{ _id, ...campos }]. Usado por los endpoints de progreso.
 export async function listDocs(env, collectionPath, { limit = 20 } = {}) {
   const sa = parseSA(env), token = await getAccessToken(sa);
-  const url = `${docBase(sa, env)}/${collectionPath}?pageSize=${limit}&orderBy=${encodeURIComponent("__name__ desc")}`;
+  const url = `${docBase(sa, env)}/${collectionPath}?pageSize=300`;
   const res = await fetch(url, { headers: { authorization: `Bearer ${token}` } });
   if (res.status === 404) return [];
   if (!res.ok) throw new Error(`listDocs ${res.status}: ${await res.text()}`);
@@ -107,7 +107,7 @@ export async function listDocs(env, collectionPath, { limit = 20 } = {}) {
     const id = (doc.name || "").split("/").pop();
     const obj = doc.fields ? Object.fromEntries(Object.entries(doc.fields).map(([k, v]) => [k, fromFirestore(v)])) : {};
     return { _id: id, ...obj };
-  });
+  }).sort((a, b) => (a._id < b._id ? 1 : a._id > b._id ? -1 : 0)).slice(0, limit);
 }
 
 // Escribe (upsert) un documento. data = objeto plano. Usado post-gate por el normalizador.
