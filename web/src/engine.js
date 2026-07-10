@@ -8,7 +8,7 @@ export { diffSnapshots, compactSnapshot, snapshotHash, isEmptyDiff } from "./dif
 // Auto-marcado del roadmap de Lord Vader (Fase 2): también puro.
 export { vaderProgress } from "./vader.js";
 // Scout de counters (Fase 3): motor puro sin DOM; `genScout` recibe `assemble` inyectada.
-export { THREAT_MAP, detectThreats, threatsToNeeds, matchArchetype, genScout, resolveUnit } from "./counters.js";
+export { THREAT_MAP, detectThreats, threatsToNeeds, matchArchetype, genScout, resolveUnit, teamDifficulty, genBoard } from "./counters.js";
 
 // ---- avatares (devuelven strings HTML; no tocan el DOM) ----
 const IMGPRE = "https://game-assets.swgoh.gg/textures/tex.charui_", IMGSUF = ".png";
@@ -28,8 +28,11 @@ export function lookupByName(name) {
 }
 
 // ---- núcleo compartido: motor de ensamblado de equipos ----
-export function assemble(pool, forced, needs) {
-  forced = (forced || []).slice(0, 5);
+// size = tamaño del equipo (3 para 3v3, 5 para 5v5). Default 5 -> comportamiento histórico
+// intacto (lo garantizan los snapshots de engine.test.js / snapshot.test.js).
+export function assemble(pool, forced, needs, size = 5) {
+  size = Math.max(1, size | 0);
+  forced = (forced || []).slice(0, size);
   const universe = pool.slice(); forced.forEach(f => { if (!universe.includes(f)) universe.push(f); });
   if (!universe.length) return null;
   const maxP = Math.max(...universe.map(u => u.p)), norm = u => u.p / maxP;
@@ -45,7 +48,7 @@ export function assemble(pool, forced, needs) {
   const teamHasGL = () => team.some(u => u.gl);
   const covered = new Set(leader.a.filter(a => KEYMECH.includes(a)));
   const roleCnt = {}; roleCnt[leader.r] = 1;
-  forced.forEach(f => { if (team.length < 5 && !team.includes(f) && !(f.gl && teamHasGL())) { team.push(f); f.a.forEach(a => { if (KEYMECH.includes(a)) covered.add(a); }); roleCnt[f.r] = (roleCnt[f.r] || 0) + 1; } });
+  forced.forEach(f => { if (team.length < size && !team.includes(f) && !(f.gl && teamHasGL())) { team.push(f); f.a.forEach(a => { if (KEYMECH.includes(a)) covered.add(a); }); roleCnt[f.r] = (roleCnt[f.r] || 0) + 1; } });
   function marginal(u) {
     const strengthW = norm(u) * 1.0;
     let coh = 0; team.forEach(t => { coh += u.c.filter(c => c !== "Leader" && t.c.includes(c)).length; });
@@ -59,7 +62,7 @@ export function assemble(pool, forced, needs) {
     const needB = needs && needs.length ? needCov(u) * 1.5 : 0;
     return strengthW + coh + roleB + cov + needB;
   }
-  while (team.length < 5) {
+  while (team.length < size) {
     const rest = pool.filter(u => !team.includes(u) && !(teamHasGL() && u.gl)); if (!rest.length) break;
     const pick = rest.slice().sort((a, b) => marginal(b) - marginal(a))[0]; team.push(pick);
     pick.a.forEach(a => { if (KEYMECH.includes(a)) covered.add(a); }); roleCnt[pick.r] = (roleCnt[pick.r] || 0) + 1;

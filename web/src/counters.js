@@ -94,12 +94,17 @@ export function matchArchetype(defenseUnits, counterDb) {
 }
 
 // genScout: orquesta todo. `assemble` se inyecta (evita ciclo con engine.js).
-//   opts = { defenseIds:[base_id], roster:{R,V}, meta:CHAR_META, counterDb, assemble }
+//   opts = { defenseIds:[base_id], roster:{R,V}, meta:CHAR_META, counterDb, assemble, pool?, size? }
+//   pool = subconjunto de unidades disponibles para montar el counter (default roster.R). El War
+//          Room (genBoard) pasa un pool que MENGUA a medida que gasta personajes en otros equipos.
+//   size = tamaño del counter (3 o 5). Default 5.
 // Devuelve un objeto plano y determinista para que la UI lo pinte y los tests lo comparen.
-export function genScout({ defenseIds, roster, meta, counterDb, assemble } = {}) {
+export function genScout({ defenseIds, roster, meta, counterDb, assemble, pool, size = 5 } = {}) {
   const R = (roster && roster.R) || [];
+  const AVAIL = Array.isArray(pool) ? pool : R;         // pool disponible para el counter
   const byId = {};
-  for (const u of R) byId[u.i] = u;
+  for (const u of R) byId[u.i] = u;                     // resolución/propiedad: siempre el roster completo
+  const availSet = new Set(AVAIL.map(u => u.i));
   // Resuelve la defensa: mis unidades traen kit en RD; el resto, desde la metadata. Ids sin
   // metadata se listan aparte (unknown) y no rompen nada.
   const defense = [], unknown = [];
@@ -114,12 +119,13 @@ export function genScout({ defenseIds, roster, meta, counterDb, assemble } = {})
   const needs = threatsToNeeds(threats).slice();
   if (archetype) for (const n of archetype.needs || []) if (!needs.includes(n)) needs.push(n);
 
-  // Del mejor team curado, fijo como `forced` los base_ids que SÍ poseo; assemble rellena el resto.
+  // Del mejor team curado, fijo como `forced` los base_ids que poseo Y que siguen DISPONIBLES
+  // en el pool (no gastados en otro equipo del tablero).
   let forced = [];
   if (archetype && archetype.counters && archetype.counters[0]) {
-    forced = archetype.counters[0].team.map(id => byId[id]).filter(Boolean);
+    forced = archetype.counters[0].team.map(id => byId[id]).filter(u => u && availSet.has(u.i));
   }
-  const heuristic = typeof assemble === "function" ? assemble(R, forced, needs) : null;
+  const heuristic = typeof assemble === "function" ? assemble(AVAIL, forced, needs, size) : null;
 
   // curated: por cada team del arquetipo, qué % poseo (para avisar si me faltan unidades).
   const curated = archetype ? (archetype.counters || []).map(c => {
@@ -138,4 +144,54 @@ export function genScout({ defenseIds, roster, meta, counterDb, assemble } = {})
   }
 
   return { defense, unknown, threats, archetype, curated, needs, heuristic, neutralized, missing };
+}
+
+// teamDifficulty: cuánto "cuesta" contrarrestar una defensa. Sirve para el reparto auto del tablero
+// (gastar las unidades escasas en lo más difícil primero). Nº de amenazas + peso de confianza del
+// arquetipo reconocido (alto=2, medio=1, ninguno=0). Puro y determinista.
+export function teamDifficulty(defenseUnits, meta, counterDb) {
+  const threats = detectThreats(defenseUnits, meta);
+  const a = matchArchetype(defenseUnits, counterDb);
+  const confW = a ? (a.confidence === "alto" ? 2 : 1) : 0;
+  return threats.length + confW;
+}
+
+// genBoard: planifica el TABLERO de GAC completo (War Room). Contrarresta 2-6 equipos enemigos con
+// un PRESUPUESTO de roster compartido: cada personaje usado en un counter se "gasta" y no puede
+// reaparecer en otro; las unidades bloqueadas (mi defensa fija) salen del pool desde el principio.
+//   opts = { enemyTeams:[{defenseIds:[...]}], roster, meta, counterDb, assemble,
+//            size=5, lockedIds=[], order="auto" }  (order: "auto" difíciles primero | "manual" orden tablero)
+// Determinista y puro. Reutiliza genScout/assemble (unicidad de GL intacta).
+export function genBoard({ enemyTeams, roster, meta, counterDb, assemble, size = 5, lockedIds = [], order = "auto" } = {}) {
+  const R = (roster && roster.R) || [];
+  const teams = (enemyTeams || []).map((t, i) => ({ i, defenseIds: (t && t.defenseIds) || [] }));
+  const spent = new Set(lockedIds || []);   // el bloqueo (mi defensa) ya no está disponible
+  const lockedCount = new Set((lockedIds || []).filter(id => R.some(u => u.i === id))).size;
+
+  // Orden de PROCESO: "auto" -> más difíciles primero (desempate por índice de tablero, estable);
+  // "manual" -> tal cual el tablero. Resolvemos la defensa una vez para medir dificultad.
+  const withDiff = teams.map(t => {
+    const def = t.defenseIds.map(id => {
+      const ru = R.find(u => u.i === id);
+      return ru ? resolveUnit(ru, meta) : resolveUnit(id, meta);
+    }).filter(Boolean);
+    return { ...t, diff: teamDifficulty(def, meta, counterDb) };
+  });
+  const procOrder = order === "manual"
+    ? withDiff.slice()
+    : withDiff.slice().sort((a, b) => (b.diff - a.diff) || (a.i - b.i));
+
+  const byIndex = {};
+  for (const t of procOrder) {
+    const pool = R.filter(u => !spent.has(u.i));
+    const scout = genScout({ defenseIds: t.defenseIds, roster, meta, counterDb, assemble, pool, size });
+    const usedIds = ((scout.heuristic && scout.heuristic.team) || []).map(u => u.i);
+    usedIds.forEach(id => spent.add(id));
+    const wanted = t.defenseIds.length ? size : 0;
+    byIndex[t.i] = { enemyIndex: t.i, defenseIds: t.defenseIds, difficulty: t.diff, scout, usedIds, shortfall: usedIds.length < wanted };
+  }
+  // Resultados en ORDEN DE TABLERO (aunque se procesen difíciles primero) para render estable.
+  const results = teams.map(t => byIndex[t.i]);
+  const spentCount = [...spent].filter(id => !(lockedIds || []).includes(id)).length;
+  return { size, order, results, budget: { total: R.length, lockedCount, spentCount, remaining: R.length - spent.size } };
 }
