@@ -1,8 +1,9 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
-import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress } from "./engine.js";
+import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META } from "./data.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genScout } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
+import COUNTER_DB from "./data/counter_db.json";
 
 // Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
 let RD = EMBEDDED_RD;
@@ -23,6 +24,11 @@ const CQTYPE_ES = { fac: "Facción", side: "Lado", role: "Rol", ab: "Mecánica",
 const ROLE_ES = { Tank: "Tanque", Healer: "Sustain", Support: "Apoyo", Attacker: "Daño" };
 const KEYMECH = ["Taunt", "Dispel", "Revive", "Gain Turn Meter", "Remove Turn Meter", "Stun", "Ability Block", "Offense Up", "Assist", "Buff Immunity", "Defense Down", "AoE"];
 const cxState = { q: "", side: "", fac: "" };
+// Scout de counters (Fase 3): metadata global (live o embebida), datalist y estado del constructor.
+let META = EMBEDDED_META;         // mapa base_id -> {n,s,r,c,a,im,ld} (se refresca en init desde extra.charMeta)
+let SCOUT_NAME2ID = {};           // nombre exacto -> base_id, para el datalist global
+const scoutState = { size: 3, ids: [] };
+const THREAT_ES = { revive: "Revive", plague: "Plaga", tm_train: "Turn-Meter train", counter: "Contraataque", wall: "Muro / Taunt", buffs: "Buffs", stealth: "Sigilo", control: "Control (aturde/bloqueo)", dot: "DoT / veneno", isolate: "Aislamiento" };
 
 // ===== header + mods + Lord Vader + roadmap + legends + proposals =====
 function renderStatic() {
@@ -255,6 +261,101 @@ function genCounter(ei) {
    <div class="simfoot">Heurístico (facción + fuerza + anti-mecánicas). No garantiza ganar: los counters reales dependen del kit y de los datacrons. Contrasta con las fuentes en vivo de abajo.</div>`;
 }
 
+// ===== Scout de defensa (Fase 3): constructor 3v3/5v5 + genScout con mi roster =====
+// Resuelve un base_id a un objeto-unidad para portrait()/teamRow(): primero mi roster (kit real),
+// si no la metadata global, y como último recurso lookupByName para no quedarnos sin avatar.
+function scoutUnit(id) {
+  if (ID2U[id]) return ID2U[id];
+  const m = META[id];
+  if (m) return { i: id, n: m.n, s: m.s, r: m.r, c: m.c || [], a: m.a || [], im: m.im, gl: m.gl ? 1 : 0, ld: m.ld };
+  return lookupByName(id);
+}
+function scoutBuildDatalist() {
+  SCOUT_NAME2ID = {};
+  const dl = $("#scout-dl"); if (!dl) return;
+  const names = [];
+  for (const [id, m] of Object.entries(META)) { if (m && m.n) { SCOUT_NAME2ID[m.n] = id; names.push(m.n); } }
+  // Incluye también los nombres de mi roster por si la metadata live no llegara (fallback robusto).
+  RD.R.forEach(u => { if (!(u.n in SCOUT_NAME2ID)) { SCOUT_NAME2ID[u.n] = u.i; names.push(u.n); } });
+  dl.innerHTML = names.sort((a, b) => a.localeCompare(b)).map(n => `<option value="${n.replace(/"/g, "&quot;")}">`).join("");
+}
+function scoutWarn(msg) { const w = $("#scout-warn"); if (!w) return; if (!msg) { w.style.display = "none"; return; } w.textContent = msg; w.style.display = "block"; }
+function scoutRenderChips() {
+  const box = $("#scout-chips"); if (!box) return;
+  if (!scoutState.ids.length) { box.innerHTML = '<span class="cq-empty">Añade los defensores que ves en la pantalla del rival (3 o 5). El Scout leerá sus amenazas.</span>'; return; }
+  box.innerHTML = scoutState.ids.map((id, i) => {
+    const u = scoutUnit(id), src = unitImg(u), av = src ? `<img class="cqav" src="${src}" loading="lazy" alt="" onerror="this.remove()">` : "";
+    return `<span class="cq-chip cq-char">${av}${u.n}<button data-i="${i}" aria-label="quitar">×</button></span>`;
+  }).join("");
+  $$("#scout-chips button").forEach(b => b.onclick = () => { scoutState.ids.splice(+b.dataset.i, 1); scoutRenderChips(); });
+}
+function scoutAdd() {
+  const inp = $("#scout-in"); if (!inp) return;
+  const nm = inp.value.trim(), id = SCOUT_NAME2ID[nm];
+  if (!id) { scoutWarn("Ese personaje no está en la metadata (usa el nombre exacto de la lista)."); return; }
+  if (scoutState.ids.length >= scoutState.size) { scoutWarn(`Máximo ${scoutState.size} defensores en ${scoutState.size}v${scoutState.size}.`); return; }
+  if (scoutState.ids.includes(id)) { inp.value = ""; return; }
+  scoutState.ids.push(id); inp.value = ""; scoutWarn(""); scoutRenderChips();
+}
+function scoutSetSize(n) {
+  scoutState.size = n;
+  if (scoutState.ids.length > n) scoutState.ids = scoutState.ids.slice(0, n);
+  $$("#scout-size button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.n === n)));
+  scoutRenderChips();
+}
+function renderScout() {
+  const out = $("#scout-out"); if (!out) return;
+  scoutWarn("");
+  if (!scoutState.ids.length) { out.innerHTML = '<div class="simwarn">Añade al menos un defensor y pulsa «⚡ Generar counter».</div>'; return; }
+  const R = genScout({ defenseIds: scoutState.ids, roster: RD, meta: META, counterDb: COUNTER_DB, assemble });
+  const chip = (t, l) => `<span class="rc rc-${t}">${l}</span>`;
+  const H = R.heuristic;
+  if (!H) { out.innerHTML = '<div class="simwarn">No he podido montar un counter con tu roster.</div>'; return; }
+  const band = H.score >= 72 ? "hi" : H.score >= 50 ? "mid" : "lo";
+  const ctx = { reqTags: null, forcedIds: [], needs: R.needs };
+  const threatChips = R.threats.length ? R.threats.map(t => chip("need", THREAT_ES[t] || t)).join("") : chip("gap", "sin amenazas claras");
+  const unknownNote = R.unknown.length ? `<div class="simwarn">Sin metadata para: ${R.unknown.join(", ")} — se ignoran (kit desconocido).</div>` : "";
+  // Bloque de counter curado (si hay arquetipo reconocido).
+  let curatedHtml = "";
+  if (R.archetype) {
+    const c0 = R.curated[0];
+    const missUnits = c0 && c0.ownedPct < 100;
+    const teamAvatars = c0 ? c0.team.map(id => { const u = scoutUnit(id); const own = !!ID2U[id]; return `<span class="cq-chip ${own ? "cq-char" : "cq-ab"}" title="${own ? "lo tienes" : "no lo tienes"}">${portrait(u)} ${u.n}${own ? "" : " ✗"}</span>`; }).join("") : "";
+    curatedHtml = `
+     <div class="slabel">Counter curado · ${R.archetype.label} <span class="rc rc-${R.archetype.confidence === "alto" ? "ok" : "mech"}">confianza ${R.archetype.confidence}</span></div>
+     <div class="scout-curated">${teamAvatars}</div>
+     ${c0 ? `<div class="efocus">${c0.note}</div>` : ""}
+     ${missUnits ? `<div class="simwarn">Te faltan unidades de este counter curado (${c0.ownedPct}% en tu roster). Abajo tienes la alternativa montada con lo que SÍ tienes.</div>` : ""}
+     <div class="simfoot" style="margin-top:6px">Curado a mano (no scrapeado). Fuente: ${R.archetype.source}.</div>`;
+  }
+  // Neutralizado / sin cubrir.
+  const neutHtml = R.neutralized.length ? R.neutralized.map(n => {
+    const names = n.byUnitIds.map(i => (ID2U[i] ? ID2U[i].n : i)).join(", ");
+    return `<div class="pg-ch"><span class="cn">${THREAT_ES[n.threat] || n.threat}</span><span class="cd">✓ ${names}</span></div>`;
+  }).join("") : '<span class="cq-empty">—</span>';
+  out.innerHTML = `
+   <div class="simhead"><div class="sq">${R.defense.length} defensor(es) · amenazas: ${threatChips}</div>
+     <div class="synergy ${band}"><b>${H.score}</b><span>SINERGIA</span></div></div>
+   ${unknownNote}
+   ${curatedHtml}
+   <div class="slabel">Counter con tu roster (heurístico)</div>
+   ${H.team.map((u, i) => teamRow(u, i, H, ctx, false)).join("")}
+   <div class="coverage">
+     <span class="cv-h">Neutralizado</span></div>
+   <div class="pg-changes">${neutHtml}</div>
+   ${R.missing.length ? `<div class="coverage"><span class="cv-h">Sin cubrir</span>${R.missing.map(t => chip("gap", THREAT_ES[t] || t)).join("")}</div>` : ""}
+   ${H.subs && H.subs.length ? `<div class="slabel">Suplentes</div>${H.subs.map((u, i) => teamRow(u, i, H, ctx, true)).join("")}` : ""}
+   <div class="simfoot">Heurístico por amenazas del kit. <b>No modela</b> los mods, datacrons ni el orden de turnos reales del rival (eso es su INVERSIÓN, no está en la metadata). Contrasta con las fuentes en vivo del Tablero meta.</div>`;
+}
+function cxSetMode(m) {
+  const scout = $("#cx-scout"), board = $("#cx-board"); if (!scout || !board) return;
+  scout.style.display = m === "scout" ? "" : "none";
+  board.style.display = m === "board" ? "" : "none";
+  $$("#cx-mode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === m)));
+  const cc = $("#cx-count");
+  if (cc) cc.textContent = m === "scout" ? "Scout: monta la defensa del rival y genera tu counter" : `${ENEMIES.length} defensas del meta · pulsa para generar tu counter`;
+}
+
 // ===== Pestaña Progreso: línea temporal + Vader auto-marcado + comparativa de gremio =====
 const fmtDate = ts => { try { return new Date(ts).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); } catch { return String(ts || ""); } };
 const VST = { completada: ["ok", "Completada"], "en curso": ["cur", "En curso"], pendiente: ["pend", "Pendiente"], manual: ["man", "Manual"] };
@@ -357,12 +458,22 @@ export function init(rd, extra = {}) {
   $("#cq-char") && ($("#cq-char").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); cqAdd(); } });
   cqFillVal(); cqRenderChips();
 
-  // Counters: poblar filtro de facción + wiring
+  // Counters — Tablero meta (existente): poblar filtro de facción + wiring
   const csel = $("#cx-fac"); if (csel) [...new Set(ENEMIES.map(e => e.fac))].sort().forEach(f => csel.insertAdjacentHTML("beforeend", `<option value="${f}">${f}</option>`));
   $("#cx-q") && ($("#cx-q").oninput = function () { cxState.q = this.value.toLowerCase().trim(); renderCounters(); });
   $$("#cx-side button").forEach(b => b.onclick = () => { cxState.side = b.dataset.v; $$("#cx-side button").forEach(x => x.setAttribute("aria-pressed", x === b)); renderCounters(); });
   $("#cx-fac") && ($("#cx-fac").onchange = function () { cxState.fac = this.value; renderCounters(); });
   renderCounters();
+
+  // Counters — Scout (Fase 3): metadata global (live o embebida), datalist y constructor.
+  META = (extra.charMeta && typeof extra.charMeta === "object" && Object.keys(extra.charMeta).length) ? extra.charMeta : EMBEDDED_META;
+  scoutBuildDatalist(); scoutRenderChips();
+  $$("#cx-mode button").forEach(b => b.onclick = () => cxSetMode(b.dataset.m));
+  $$("#scout-size button").forEach(b => b.onclick = () => scoutSetSize(+b.dataset.n));
+  $("#scout-add") && ($("#scout-add").onclick = scoutAdd);
+  $("#scout-go") && ($("#scout-go").onclick = renderScout);
+  $("#scout-in") && ($("#scout-in").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); scoutAdd(); } });
+  cxSetMode("scout");
 
   // Pestañas
   const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso" };

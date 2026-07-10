@@ -2,7 +2,7 @@
 // (red caída, backend sin configurar, forma inesperada), cae al RD embebido del bundle.
 // La consola nunca se queda en blanco. Los motores ya son agnósticos del roster.
 import { init } from "./ui.js";
-import { RD } from "./data.js";
+import { RD, CHAR_META } from "./data.js";
 
 // Configurable en build/deploy. Vacío = sin backend -> se usa directamente el embebido.
 const API_BASE = "swgoh-consola.josep-calvet-tarrago.workers.dev";
@@ -50,9 +50,25 @@ export async function loadGuild({ apiBase = API_BASE, guildId = GUILD_ID, fetchI
   } catch { return null; }
 }
 
+// Metadata GLOBAL de personajes para el Scout de counters (Fase 3): intenta el endpoint en vivo
+// del Worker y cae SIEMPRE al CHAR_META embebido si falla (datalist del Scout nunca vacío).
+export async function loadCharMeta({ apiBase = API_BASE, fetchImpl } = {}) {
+  const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
+  if (!apiBase || !f) return CHAR_META;
+  try {
+    const res = await f(`${apiBase}/api/meta/characters`);
+    if (!res || !res.ok) throw new Error(`status ${res && res.status}`);
+    const data = await res.json();
+    // Forma esperada: mapa base_id -> {n,s,r,c,a,im,ld}. Si viene raro, usa el embebido.
+    return data && typeof data === "object" && !Array.isArray(data) && Object.keys(data).length ? data : CHAR_META;
+  } catch {
+    return CHAR_META; // fallback embebido
+  }
+}
+
 async function boot() {
-  const [rd, progress, guild] = await Promise.all([loadRoster(), loadProgress(), loadGuild()]);
-  init(rd, { progress, guild });
+  const [rd, progress, guild, charMeta] = await Promise.all([loadRoster(), loadProgress(), loadGuild(), loadCharMeta()]);
+  init(rd, { progress, guild, charMeta });
 }
 
 // Solo arranca en navegador (evita efectos secundarios al importar en tests).

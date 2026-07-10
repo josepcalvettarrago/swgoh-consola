@@ -99,19 +99,46 @@
   <section class="panel" id="p-counters" role="tabpanel">
     <div class="card"><div class="head"><h3>Counters GAC / TW</h3>
       <span class="note" id="cx-count">—</span></div>
-      <div class="rx-controls">
-        <input id="cx-q" class="rx-in" type="text" placeholder="Buscar rival…" autocomplete="off">
-        <div class="seg-btns" id="cx-side">
-          <button data-v="" aria-pressed="true">Todos</button>
-          <button data-v="L">Luz</button><button data-v="D">Oscuro</button></div>
-        <select id="cx-fac" class="rx-sel"><option value="">Cualquier facción</option></select>
+
+      <div class="seg-btns" id="cx-mode" style="margin-bottom:12px">
+        <button data-m="scout" aria-pressed="true">🎯 Scout de defensa</button>
+        <button data-m="board" aria-pressed="false">📋 Tablero meta</button>
       </div>
-      <div id="counters"></div>
-      <div class="clive">
-        <span class="cll">Datos en vivo del meta (se actualizan cada semana)</span>
-        <div class="cllinks">
-          <a href="https://swgoh.gg/gac/counters/" target="_blank" rel="noopener">swgoh.gg · Counters GAC</a>
-          <a href="https://swgoh-cantina.com/en/gac-counters" target="_blank" rel="noopener">swgoh-cantina · 3v3 / 5v5 / flota</a>
+
+      <div id="cx-scout">
+        <div class="rx-controls">
+          <div class="seg-btns" id="scout-size">
+            <button data-n="3" aria-pressed="true">3v3</button>
+            <button data-n="5" aria-pressed="false">5v5</button>
+          </div>
+          <input id="scout-in" class="rx-in" type="text" list="scout-dl" placeholder="Añade un defensor (nombre exacto)…" autocomplete="off">
+          <datalist id="scout-dl"></datalist>
+          <button class="cgen" id="scout-add">+ Añadir</button>
+          <button class="cgen" id="scout-go">⚡ Generar counter</button>
+        </div>
+        <div id="scout-chips" class="cq-chips"></div>
+        <div id="scout-warn" class="simwarn" style="display:none"></div>
+        <div id="scout-out"></div>
+        <div class="clive">
+          <span class="cll">Scout por metadata: lee el kit de la defensa (fijo por personaje). No usa el roster en vivo del rival — resuelve qué counter llevar, no su nivel real.</span>
+        </div>
+      </div>
+
+      <div id="cx-board" style="display:none">
+        <div class="rx-controls">
+          <input id="cx-q" class="rx-in" type="text" placeholder="Buscar rival…" autocomplete="off">
+          <div class="seg-btns" id="cx-side">
+            <button data-v="" aria-pressed="true">Todos</button>
+            <button data-v="L">Luz</button><button data-v="D">Oscuro</button></div>
+          <select id="cx-fac" class="rx-sel"><option value="">Cualquier facción</option></select>
+        </div>
+        <div id="counters"></div>
+        <div class="clive">
+          <span class="cll">Datos en vivo del meta (se actualizan cada semana)</span>
+          <div class="cllinks">
+            <a href="https://swgoh.gg/gac/counters/" target="_blank" rel="noopener">swgoh.gg · Counters GAC</a>
+            <a href="https://swgoh-cantina.com/en/gac-counters" target="_blank" rel="noopener">swgoh-cantina · 3v3 / 5v5 / flota</a>
+          </div>
         </div>
       </div>
     </div>
