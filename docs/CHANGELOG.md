@@ -2,6 +2,29 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 3.1 — GAC War Room (tablero multi-equipo) — `v3.1-warroom`
+
+- **Bug 3v3 corregido:** el counter salía con 5 unidades en 3v3. `assemble()` gana un parámetro
+  `size` (default 5 → comportamiento histórico intacto, garantizado por los snapshots). En 3v3
+  el equipo es de 3; en 5v5, de 5.
+- **War Room** (el sub-modo Scout deja de ser de un equipo): montas el **tablero de defensa**
+  del rival con **2–6 equipos** (uniforme 3v3/5v5; nº de equipos configurable) y el motor
+  **reparte tu roster** entre ellos. **`genBoard`** (puro, reutiliza `assemble()`):
+  - **Exclusividad estricta:** cada personaje se gasta una sola vez — nunca aparece en dos counters.
+  - **Reparto auto** (los más difíciles primero, por amenazas + confianza del arquetipo) o **manual**
+    (orden del tablero); resultados siempre en orden de tablero.
+  - **`shortfall`** cuando el presupuesto se agota (counter incompleto por unidades ya gastadas).
+- **Defensa fija (bloqueo):** marcas unidades **tuyas** como siempre-en-defensa; salen del pool de
+  ataque. Persistente y editable.
+- **Presupuesto de roster** visible: total / en defensa / gastados / libres.
+- **Persistencia** `web/src/store.js` → `localStorage` (bloqueo + tablero), con **resetear tablero**
+  (no borra el bloqueo). **Cero cambios en el Worker/Firestore.**
+- El **Tablero meta** `ENEMIES[]` anterior se conserva intacto como sub-modo. Estética sin cambios
+  (CSS aditivo con las vars del tema).
+- Tests: `board.test.js` (12) + `store.test.js` (11) + `counters-render.test.js` reescrito (8) →
+  **116 verdes** (95 previos + 21). Snapshots de `assemble()` sin regresión. Build → 1 HTML (377 KB).
+- Tag: `v3.1-warroom`.
+
 ## Fase 3 — Advanced Counter Generator (Scout GAC 3v3/5v5) — `v3-counters`
 
 - **Scout de defensa** (nuevo, pestaña Counters): montas la defensa que ves en tu pantalla de

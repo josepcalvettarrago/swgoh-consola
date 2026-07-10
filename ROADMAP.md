@@ -28,6 +28,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **2 — Diff engine + Progreso** | ✅ Hecha | `v2-progreso` | Diff engine puro + dedup, pestaña Progreso, fix gremio. **72 tests verdes.** Read path ya operativo en prod (ver Fase 1.3) → la pestaña Progreso lee datos en vivo, no el `RD` embebido. |
 | **1.2 — Ingesta LOCAL (write path live)** | ✅ Operativa | — | swgoh.gg también da **403 al IP de datacenter de GitHub Actions** (ni curl-impersonate lo esquiva → bloqueo por IP). La ingesta corre **en local** (`scripts/ingest-local.ps1`) al **iniciar sesión** (acceso directo en la carpeta de Inicio; cron de Actions desactivado). Escribe en **Firestore live**. |
 | **3 — Counter Generator GAC (Scout)** | ✅ Hecha | `v3-counters` | Scout 3v3/5v5 dirigido por metadata (kit fijo por personaje): `detectThreats` + `counter_db` curado (27) + `assemble()`. Tablero meta previo intacto. §5 (nivel del rival) descartado: swgoh.gg da challenge+sin CORS. **95 tests verdes.** |
+| **3.1 — GAC War Room** | ✅ Hecha | `v3.1-warroom` | Tablero multi-equipo (2–6) con presupuesto de roster compartido (exclusividad), fix del bug 3v3 (`assemble(size)`), bloqueo de mi defensa fija y persistencia `localStorage`. **116 tests verdes.** |
 | 4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
@@ -162,6 +163,17 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
 - **§5 (nivel real del rival) descartado por sonda:** swgoh.gg responde 403 `Cf-Mitigated: challenge`
   y **sin CORS** incluso desde IP residencial → capa oculta, Scout en manual, **cero cambios en el Worker**.
 - Tests: motor + render jsdom → **95 verdes** (72 previos + 23).
+
+### Fase 3.1 — GAC War Room (`v3.1-warroom`)
+- **Fix bug 3v3:** `assemble(pool, forced, needs, size = 5)` — parámetro con default; los snapshots
+  del motor quedan idénticos. En 3v3 el counter es de 3; en 5v5, de 5.
+- **`genBoard`** (puro, reutiliza `assemble()`): tablero de **2–6 equipos** enemigos con **presupuesto
+  de roster compartido** → cada personaje se gasta una sola vez (**exclusividad**). Reparto **auto**
+  (difíciles primero) o **manual**; `shortfall` cuando el pool se agota.
+- **Bloqueo de mi defensa fija** (mis unidades fuera del pool de ataque), **presupuesto** visible
+  (roster/en defensa/gastados/libres) y **persistencia** `localStorage` (`web/src/store.js`) con
+  **resetear tablero**. **Cero cambios en el Worker.**
+- El "Tablero meta" `ENEMIES[]` sigue intacto como sub-modo. Tests: `board`+`store`+render → **116 verdes**.
 
 ## FASE 4 — Módulos de valor (1 sesión c/u, orden por impacto)
 - **Datacrones + auditoría de mods** completa (swgoh.gg da inventario de crons y eficiencia por tirada — *exclusivo de esta fuente*) + **export a Grandivory Mod Optimizer**.
