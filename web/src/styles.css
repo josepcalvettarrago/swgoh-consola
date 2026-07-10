@@ -401,3 +401,29 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .gr-you{font-family:'Chakra Petch';font-size:9px;letter-spacing:.12em;background:var(--ember);color:#fff;padding:2px 6px;border-radius:20px;margin-left:6px}
 @media(max-width:520px){.pg-grow{grid-template-columns:26px auto 1fr auto}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== War Room (Fase 3.1): tablero GAC multi-equipo ===== */
+.wr-toolbar{flex-wrap:wrap;align-items:center;gap:8px}
+.wr-budget{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin:12px 0}
+.wr-b{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface2);text-align:center}
+.wr-b b{display:block;font-family:'Chakra Petch';font-weight:700;font-size:20px;color:var(--text);line-height:1.1}
+.wr-b span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.wr-b.lock b{color:var(--gold)}.wr-b.spent b{color:var(--holo)}.wr-b.ok b{color:var(--green)}.wr-b.alert b{color:var(--ember)}
+.wr-locked{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px;background:var(--surface2)}
+.wr-locked summary{cursor:pointer;font-family:'Chakra Petch';font-weight:600;font-size:13px;color:var(--gold)}
+.wr-locked summary::marker{color:var(--gold)}
+.wr-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.wr-zone{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column}
+.wr-zhead{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:linear-gradient(180deg,rgba(255,53,70,.12),transparent);border-bottom:1px solid var(--line)}
+.wr-zn{font-family:'Chakra Petch';font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ember)}
+.wr-rmteam{background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;font-size:11px;padding:2px 8px;cursor:pointer}
+.wr-rmteam:hover{border-color:var(--ember);color:var(--ember)}
+.wr-enemy{padding:10px 12px;border-bottom:1px dashed var(--line)}
+.wr-zlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.wr-zlabel span{color:var(--holo);font-family:'Share Tech Mono'}
+.wr-mine{padding:10px 12px}
+.wr-cur{font-size:12.5px;color:var(--muted);border-left:2px solid var(--gold);padding-left:8px;margin-bottom:8px}
+.wr-cur b{color:var(--gold)}
+.wr-mine .simrow{grid-template-columns:26px 34px 1fr 54px;padding:7px 0}
+.wr-mine .simrow .savw{width:34px;height:34px}
+@media(max-width:520px){.wr-board{grid-template-columns:1fr}}

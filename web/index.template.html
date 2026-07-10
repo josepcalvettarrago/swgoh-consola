@@ -106,21 +106,38 @@
       </div>
 
       <div id="cx-scout">
-        <div class="rx-controls">
+        <div class="rx-controls wr-toolbar">
           <div class="seg-btns" id="scout-size">
-            <button data-n="3" aria-pressed="true">3v3</button>
-            <button data-n="5" aria-pressed="false">5v5</button>
+            <button data-n="3" aria-pressed="false">3v3</button>
+            <button data-n="5" aria-pressed="true">5v5</button>
           </div>
-          <input id="scout-in" class="rx-in" type="text" list="scout-dl" placeholder="Añade un defensor (nombre exacto)…" autocomplete="off">
-          <datalist id="scout-dl"></datalist>
-          <button class="cgen" id="scout-add">+ Añadir</button>
-          <button class="cgen" id="scout-go">⚡ Generar counter</button>
+          <div class="seg-btns" id="scout-order" title="Cómo repartir cuando escasean las unidades">
+            <button data-o="auto" aria-pressed="true">Auto ⚡</button>
+            <button data-o="manual" aria-pressed="false">Manual</button>
+          </div>
+          <button class="cgen" id="scout-addteam">+ Equipo enemigo</button>
+          <button class="cgen" id="scout-go">⚡ Generar plan</button>
+          <button class="cgen" id="scout-reset">♻️ Resetear tablero</button>
         </div>
-        <div id="scout-chips" class="cq-chips"></div>
+
+        <div id="scout-budget" class="wr-budget"></div>
+
+        <details class="wr-locked" id="scout-lockbox">
+          <summary>🛡️ Defensa fija — mis unidades que NO se usan en ataques</summary>
+          <div class="rx-controls">
+            <input id="lock-in" class="rx-in" type="text" list="lock-dl" placeholder="Añade una unidad tuya…" autocomplete="off">
+            <datalist id="lock-dl"></datalist>
+            <button class="cgen" id="lock-add">+ Bloquear</button>
+          </div>
+          <div id="lock-chips" class="cq-chips"></div>
+        </details>
+
+        <datalist id="scout-dl"></datalist>
         <div id="scout-warn" class="simwarn" style="display:none"></div>
-        <div id="scout-out"></div>
+        <div id="scout-board" class="wr-board"></div>
+
         <div class="clive">
-          <span class="cll">Scout por metadata: lee el kit de la defensa (fijo por personaje). No usa el roster en vivo del rival — resuelve qué counter llevar, no su nivel real.</span>
+          <span class="cll">War Room por metadata: lee el kit de cada defensa (fijo por personaje) y reparte tu roster entre los equipos — cada personaje se gasta una sola vez. No usa el roster en vivo del rival ni su nivel real (mods/relic).</span>
         </div>
       </div>
 

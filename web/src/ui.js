@@ -1,8 +1,9 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
 import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genScout } from "./engine.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
+import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
 
 // Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
@@ -24,10 +25,12 @@ const CQTYPE_ES = { fac: "Facción", side: "Lado", role: "Rol", ab: "Mecánica",
 const ROLE_ES = { Tank: "Tanque", Healer: "Sustain", Support: "Apoyo", Attacker: "Daño" };
 const KEYMECH = ["Taunt", "Dispel", "Revive", "Gain Turn Meter", "Remove Turn Meter", "Stun", "Ability Block", "Offense Up", "Assist", "Buff Immunity", "Defense Down", "AoE"];
 const cxState = { q: "", side: "", fac: "" };
-// Scout de counters (Fase 3): metadata global (live o embebida), datalist y estado del constructor.
+// War Room de counters (Fase 3.1): metadata global (live o embebida) + tablero multi-equipo.
 let META = EMBEDDED_META;         // mapa base_id -> {n,s,r,c,a,im,ld} (se refresca en init desde extra.charMeta)
 let SCOUT_NAME2ID = {};           // nombre exacto -> base_id, para el datalist global
-const scoutState = { size: 3, ids: [] };
+// Estado del tablero: tamaño uniforme (3/5), orden de reparto, 2-6 equipos enemigos, bloqueo de mi
+// defensa fija y el último plan generado. Se persiste en localStorage (store.js).
+const boardState = { size: 5, order: "auto", teams: [{ defenseIds: [] }, { defenseIds: [] }], locked: [], plan: null };
 const THREAT_ES = { revive: "Revive", plague: "Plaga", tm_train: "Turn-Meter train", counter: "Contraataque", wall: "Muro / Taunt", buffs: "Buffs", stealth: "Sigilo", control: "Control (aturde/bloqueo)", dot: "DoT / veneno", isolate: "Aislamiento" };
 
 // ===== header + mods + Lord Vader + roadmap + legends + proposals =====
@@ -261,7 +264,7 @@ function genCounter(ei) {
    <div class="simfoot">Heurístico (facción + fuerza + anti-mecánicas). No garantiza ganar: los counters reales dependen del kit y de los datacrons. Contrasta con las fuentes en vivo de abajo.</div>`;
 }
 
-// ===== Scout de defensa (Fase 3): constructor 3v3/5v5 + genScout con mi roster =====
+// ===== War Room (Fase 3.1): tablero GAC multi-equipo con presupuesto de roster compartido =====
 // Resuelve un base_id a un objeto-unidad para portrait()/teamRow(): primero mi roster (kit real),
 // si no la metadata global, y como último recurso lookupByName para no quedarnos sin avatar.
 function scoutUnit(id) {
@@ -272,80 +275,132 @@ function scoutUnit(id) {
 }
 function scoutBuildDatalist() {
   SCOUT_NAME2ID = {};
-  const dl = $("#scout-dl"); if (!dl) return;
   const names = [];
   for (const [id, m] of Object.entries(META)) { if (m && m.n) { SCOUT_NAME2ID[m.n] = id; names.push(m.n); } }
-  // Incluye también los nombres de mi roster por si la metadata live no llegara (fallback robusto).
   RD.R.forEach(u => { if (!(u.n in SCOUT_NAME2ID)) { SCOUT_NAME2ID[u.n] = u.i; names.push(u.n); } });
-  dl.innerHTML = names.sort((a, b) => a.localeCompare(b)).map(n => `<option value="${n.replace(/"/g, "&quot;")}">`).join("");
+  const opts = names.sort((a, b) => a.localeCompare(b)).map(n => `<option value="${n.replace(/"/g, "&quot;")}">`).join("");
+  const dl = $("#scout-dl"); if (dl) dl.innerHTML = opts;
+  // Datalist del bloqueo: SOLO mi roster (defensa fija es cosa mía).
+  const ldl = $("#lock-dl");
+  if (ldl) ldl.innerHTML = RD.R.slice().sort((a, b) => a.n.localeCompare(b.n)).map(u => `<option value="${u.n.replace(/"/g, "&quot;")}">`).join("");
 }
-function scoutWarn(msg) { const w = $("#scout-warn"); if (!w) return; if (!msg) { w.style.display = "none"; return; } w.textContent = msg; w.style.display = "block"; }
-function scoutRenderChips() {
-  const box = $("#scout-chips"); if (!box) return;
-  if (!scoutState.ids.length) { box.innerHTML = '<span class="cq-empty">Añade los defensores que ves en la pantalla del rival (3 o 5). El Scout leerá sus amenazas.</span>'; return; }
-  box.innerHTML = scoutState.ids.map((id, i) => {
+function scoutWarn(msg) { const w = $("#scout-warn"); if (!w) return; if (!msg) { w.style.display = "none"; return; } w.textContent = msg; w.style.display = "block"; clearTimeout(scoutWarn._t); scoutWarn._t = setTimeout(() => { w.style.display = "none"; }, 4200); }
+function persistBoard() { saveBoard({ size: boardState.size, order: boardState.order, teams: boardState.teams }, null); }
+function persistLocked() { saveLocked(boardState.locked, null); }
+
+// --- bloqueo (mi defensa fija) ---
+function lockRenderChips() {
+  const box = $("#lock-chips"); if (!box) return;
+  if (!boardState.locked.length) { box.innerHTML = '<span class="cq-empty">Sin unidades bloqueadas. Las que añadas aquí no se usarán en ningún counter del tablero.</span>'; return; }
+  box.innerHTML = boardState.locked.map((id, i) => {
     const u = scoutUnit(id), src = unitImg(u), av = src ? `<img class="cqav" src="${src}" loading="lazy" alt="" onerror="this.remove()">` : "";
     return `<span class="cq-chip cq-char">${av}${u.n}<button data-i="${i}" aria-label="quitar">×</button></span>`;
   }).join("");
-  $$("#scout-chips button").forEach(b => b.onclick = () => { scoutState.ids.splice(+b.dataset.i, 1); scoutRenderChips(); });
+  $$("#lock-chips button").forEach(b => b.onclick = () => { boardState.locked.splice(+b.dataset.i, 1); persistLocked(); lockRenderChips(); renderBudget(); });
 }
-function scoutAdd() {
-  const inp = $("#scout-in"); if (!inp) return;
+function lockAdd() {
+  const inp = $("#lock-in"); if (!inp) return;
   const nm = inp.value.trim(), id = SCOUT_NAME2ID[nm];
-  if (!id) { scoutWarn("Ese personaje no está en la metadata (usa el nombre exacto de la lista)."); return; }
-  if (scoutState.ids.length >= scoutState.size) { scoutWarn(`Máximo ${scoutState.size} defensores en ${scoutState.size}v${scoutState.size}.`); return; }
-  if (scoutState.ids.includes(id)) { inp.value = ""; return; }
-  scoutState.ids.push(id); inp.value = ""; scoutWarn(""); scoutRenderChips();
+  if (!id || !ID2U[id]) { scoutWarn("Para bloquear en defensa usa una unidad de TU roster (nombre exacto)."); return; }
+  if (!boardState.locked.includes(id)) { boardState.locked.push(id); persistLocked(); lockRenderChips(); renderBudget(); }
+  inp.value = "";
 }
-function scoutSetSize(n) {
-  scoutState.size = n;
-  if (scoutState.ids.length > n) scoutState.ids = scoutState.ids.slice(0, n);
-  $$("#scout-size button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.n === n)));
-  scoutRenderChips();
+
+// --- presupuesto de roster ---
+function renderBudget() {
+  const el = $("#scout-budget"); if (!el) return;
+  const plan = boardState.plan;
+  const total = RD.R.length, locked = boardState.locked.length;
+  const spent = plan ? plan.budget.spentCount : 0;
+  const free = total - locked - spent;
+  const stat = (v, k, cls) => `<div class="wr-b ${cls || ""}"><b>${v}</b><span>${k}</span></div>`;
+  el.innerHTML = stat(total, "roster", "") + stat(locked, "en defensa", locked ? "lock" : "") + stat(spent, "gastados", spent ? "spent" : "") + stat(Math.max(0, free), "libres", free < 0 ? "alert" : "ok");
 }
-function renderScout() {
-  const out = $("#scout-out"); if (!out) return;
-  scoutWarn("");
-  if (!scoutState.ids.length) { out.innerHTML = '<div class="simwarn">Añade al menos un defensor y pulsa «⚡ Generar counter».</div>'; return; }
-  const R = genScout({ defenseIds: scoutState.ids, roster: RD, meta: META, counterDb: COUNTER_DB, assemble });
+
+// --- tablero de equipos enemigos ---
+function boardCanRemove() { return boardState.teams.length > 2; }
+function zoneEnemyBuilder(z, i) {
+  const chips = z.defenseIds.map((id, k) => {
+    const u = scoutUnit(id), src = unitImg(u), av = src ? `<img class="cqav" src="${src}" loading="lazy" alt="" onerror="this.remove()">` : "";
+    return `<span class="cq-chip cq-char">${av}${u.n}<button class="wr-def-rm" data-z="${i}" data-k="${k}" aria-label="quitar">×</button></span>`;
+  }).join("");
+  const full = z.defenseIds.length >= boardState.size;
+  return `<div class="wr-enemy">
+     <div class="wr-zlabel">Defensa enemiga <span>${z.defenseIds.length}/${boardState.size}</span></div>
+     <div class="cq-chips">${chips || '<span class="cq-empty">Añade los defensores de esta zona.</span>'}</div>
+     ${full ? "" : `<div class="rx-controls"><input class="rx-in wr-def-in" data-z="${i}" list="scout-dl" type="text" placeholder="+ defensor…" autocomplete="off"></div>`}
+   </div>`;
+}
+function zoneCounter(i) {
+  const plan = boardState.plan; if (!plan || !plan.results[i]) return "";
+  const res = plan.results[i], sc = res.scout, H = sc.heuristic;
+  if (!res.defenseIds.length) return '<div class="wr-mine"><div class="cq-empty">Sin defensa en esta zona.</div></div>';
+  if (!H || !H.team.length) return '<div class="wr-mine"><div class="simwarn">Sin unidades libres para esta zona (presupuesto agotado).</div></div>';
   const chip = (t, l) => `<span class="rc rc-${t}">${l}</span>`;
-  const H = R.heuristic;
-  if (!H) { out.innerHTML = '<div class="simwarn">No he podido montar un counter con tu roster.</div>'; return; }
   const band = H.score >= 72 ? "hi" : H.score >= 50 ? "mid" : "lo";
-  const ctx = { reqTags: null, forcedIds: [], needs: R.needs };
-  const threatChips = R.threats.length ? R.threats.map(t => chip("need", THREAT_ES[t] || t)).join("") : chip("gap", "sin amenazas claras");
-  const unknownNote = R.unknown.length ? `<div class="simwarn">Sin metadata para: ${R.unknown.join(", ")} — se ignoran (kit desconocido).</div>` : "";
-  // Bloque de counter curado (si hay arquetipo reconocido).
-  let curatedHtml = "";
-  if (R.archetype) {
-    const c0 = R.curated[0];
-    const missUnits = c0 && c0.ownedPct < 100;
-    const teamAvatars = c0 ? c0.team.map(id => { const u = scoutUnit(id); const own = !!ID2U[id]; return `<span class="cq-chip ${own ? "cq-char" : "cq-ab"}" title="${own ? "lo tienes" : "no lo tienes"}">${portrait(u)} ${u.n}${own ? "" : " ✗"}</span>`; }).join("") : "";
-    curatedHtml = `
-     <div class="slabel">Counter curado · ${R.archetype.label} <span class="rc rc-${R.archetype.confidence === "alto" ? "ok" : "mech"}">confianza ${R.archetype.confidence}</span></div>
-     <div class="scout-curated">${teamAvatars}</div>
-     ${c0 ? `<div class="efocus">${c0.note}</div>` : ""}
-     ${missUnits ? `<div class="simwarn">Te faltan unidades de este counter curado (${c0.ownedPct}% en tu roster). Abajo tienes la alternativa montada con lo que SÍ tienes.</div>` : ""}
-     <div class="simfoot" style="margin-top:6px">Curado a mano (no scrapeado). Fuente: ${R.archetype.source}.</div>`;
-  }
-  // Neutralizado / sin cubrir.
-  const neutHtml = R.neutralized.length ? R.neutralized.map(n => {
-    const names = n.byUnitIds.map(i => (ID2U[i] ? ID2U[i].n : i)).join(", ");
-    return `<div class="pg-ch"><span class="cn">${THREAT_ES[n.threat] || n.threat}</span><span class="cd">✓ ${names}</span></div>`;
-  }).join("") : '<span class="cq-empty">—</span>';
-  out.innerHTML = `
-   <div class="simhead"><div class="sq">${R.defense.length} defensor(es) · amenazas: ${threatChips}</div>
-     <div class="synergy ${band}"><b>${H.score}</b><span>SINERGIA</span></div></div>
-   ${unknownNote}
-   ${curatedHtml}
-   <div class="slabel">Counter con tu roster (heurístico)</div>
-   ${H.team.map((u, i) => teamRow(u, i, H, ctx, false)).join("")}
-   <div class="coverage">
-     <span class="cv-h">Neutralizado</span></div>
-   <div class="pg-changes">${neutHtml}</div>
-   ${R.missing.length ? `<div class="coverage"><span class="cv-h">Sin cubrir</span>${R.missing.map(t => chip("gap", THREAT_ES[t] || t)).join("")}</div>` : ""}
-   ${H.subs && H.subs.length ? `<div class="slabel">Suplentes</div>${H.subs.map((u, i) => teamRow(u, i, H, ctx, true)).join("")}` : ""}
-   <div class="simfoot">Heurístico por amenazas del kit. <b>No modela</b> los mods, datacrons ni el orden de turnos reales del rival (eso es su INVERSIÓN, no está en la metadata). Contrasta con las fuentes en vivo del Tablero meta.</div>`;
+  const ctx = { reqTags: null, forcedIds: [], needs: sc.needs };
+  const threatChips = sc.threats.length ? sc.threats.map(t => chip("need", THREAT_ES[t] || t)).join("") : chip("gap", "sin amenazas claras");
+  const cur = sc.archetype && sc.curated[0]
+    ? `<div class="wr-cur">📋 <b>${sc.archetype.label}</b> · confianza ${sc.archetype.confidence} — ${sc.curated[0].note}</div>` : "";
+  const neut = sc.neutralized.length ? sc.neutralized.map(n => `${THREAT_ES[n.threat] || n.threat}`).join(" · ") : "—";
+  const shortNote = res.shortfall ? '<div class="simwarn">Presupuesto justo: este counter salió incompleto (unidades ya gastadas en otras zonas).</div>' : "";
+  return `<div class="wr-mine">
+     <div class="simhead"><div class="sq">Amenazas: ${threatChips}</div><div class="synergy ${band}"><b>${H.score}</b><span>SINERGIA</span></div></div>
+     ${cur}
+     ${H.team.map((u, k) => teamRow(u, k, H, ctx, false)).join("")}
+     <div class="coverage"><span class="cv-h">Neutraliza</span>${sc.neutralized.length ? sc.neutralized.map(n => chip("need", THREAT_ES[n.threat] || n.threat)).join("") : chip("gap", "—")}${sc.missing.length ? `<span class="cv-h">Sin cubrir</span>${sc.missing.map(t => chip("gap", THREAT_ES[t] || t)).join("")}` : ""}</div>
+     ${shortNote}</div>`;
+}
+function renderBoard() {
+  const wrap = $("#scout-board"); if (!wrap) return;
+  wrap.innerHTML = boardState.teams.map((z, i) =>
+    `<div class="wr-zone" data-z="${i}">
+       <div class="wr-zhead"><span class="wr-zn">Zona ${i + 1}</span>${boardCanRemove() ? `<button class="wr-rmteam" data-z="${i}" aria-label="quitar zona">× quitar</button>` : ""}</div>
+       ${zoneEnemyBuilder(z, i)}
+       ${zoneCounter(i)}
+     </div>`).join("");
+  // Wiring por delegación tras cada render.
+  $$(".wr-def-in", wrap).forEach(inp => inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); defenderAdd(+inp.dataset.z, inp.value.trim()); } });
+  $$(".wr-def-rm", wrap).forEach(b => b.onclick = () => { boardState.teams[+b.dataset.z].defenseIds.splice(+b.dataset.k, 1); persistBoard(); renderBoard(); });
+  $$(".wr-rmteam", wrap).forEach(b => b.onclick = () => { if (boardCanRemove()) { boardState.teams.splice(+b.dataset.z, 1); boardState.plan = null; persistBoard(); renderBoard(); renderBudget(); } });
+  renderBudget();
+}
+function defenderAdd(z, nm) {
+  const id = SCOUT_NAME2ID[nm];
+  if (!id) { scoutWarn("Ese personaje no está en la metadata (usa el nombre exacto de la lista)."); return; }
+  const team = boardState.teams[z]; if (!team) return;
+  if (team.defenseIds.length >= boardState.size) { scoutWarn(`Máximo ${boardState.size} en ${boardState.size}v${boardState.size}.`); return; }
+  if (team.defenseIds.includes(id)) return;
+  team.defenseIds.push(id); persistBoard(); renderBoard();
+}
+function boardAddTeam() {
+  if (boardState.teams.length >= 6) { scoutWarn("Máximo 6 equipos enemigos en el tablero."); return; }
+  boardState.teams.push({ defenseIds: [] }); persistBoard(); renderBoard();
+}
+function boardSetSize(n) {
+  boardState.size = n;
+  boardState.teams.forEach(t => { if (t.defenseIds.length > n) t.defenseIds = t.defenseIds.slice(0, n); });
+  boardState.plan = null;
+  $$("#scout-size button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.n === n)));
+  persistBoard(); renderBoard();
+}
+function boardSetOrder(o) {
+  boardState.order = o;
+  $$("#scout-order button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.o === o)));
+  persistBoard();
+  if (boardState.plan) boardGenerate();
+}
+function boardGenerate() {
+  const filled = boardState.teams.filter(t => t.defenseIds.length).length;
+  if (!filled) { scoutWarn("Añade defensores a al menos una zona antes de generar el plan."); return; }
+  boardState.plan = genBoard({ enemyTeams: boardState.teams, roster: RD, meta: META, counterDb: COUNTER_DB, assemble, size: boardState.size, lockedIds: boardState.locked, order: boardState.order });
+  scoutWarn(""); renderBoard();
+}
+function boardReset() {
+  boardState.teams = [{ defenseIds: [] }, { defenseIds: [] }];
+  boardState.plan = null;
+  clearBoard(null);
+  renderBoard();
 }
 function cxSetMode(m) {
   const scout = $("#cx-scout"), board = $("#cx-board"); if (!scout || !board) return;
@@ -353,7 +408,7 @@ function cxSetMode(m) {
   board.style.display = m === "board" ? "" : "none";
   $$("#cx-mode button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.m === m)));
   const cc = $("#cx-count");
-  if (cc) cc.textContent = m === "scout" ? "Scout: monta la defensa del rival y genera tu counter" : `${ENEMIES.length} defensas del meta · pulsa para generar tu counter`;
+  if (cc) cc.textContent = m === "scout" ? "War Room: monta el tablero enemigo y reparte tu roster" : `${ENEMIES.length} defensas del meta · pulsa para generar tu counter`;
 }
 
 // ===== Pestaña Progreso: línea temporal + Vader auto-marcado + comparativa de gremio =====
@@ -465,14 +520,25 @@ export function init(rd, extra = {}) {
   $("#cx-fac") && ($("#cx-fac").onchange = function () { cxState.fac = this.value; renderCounters(); });
   renderCounters();
 
-  // Counters — Scout (Fase 3): metadata global (live o embebida), datalist y constructor.
+  // Counters — War Room (Fase 3.1): metadata global (live o embebida) + tablero persistente.
   META = (extra.charMeta && typeof extra.charMeta === "object" && Object.keys(extra.charMeta).length) ? extra.charMeta : EMBEDDED_META;
-  scoutBuildDatalist(); scoutRenderChips();
+  scoutBuildDatalist();
+  // Restaura bloqueo + tablero desde localStorage (si los hay).
+  boardState.locked = loadLocked(null);
+  const savedBoard = loadBoard(null);
+  if (savedBoard) { boardState.size = savedBoard.size; boardState.order = savedBoard.order; boardState.teams = savedBoard.teams.length ? savedBoard.teams : boardState.teams; }
+  boardState.plan = null;
+  $$("#scout-size button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.n === boardState.size)));
+  $$("#scout-order button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.o === boardState.order)));
   $$("#cx-mode button").forEach(b => b.onclick = () => cxSetMode(b.dataset.m));
-  $$("#scout-size button").forEach(b => b.onclick = () => scoutSetSize(+b.dataset.n));
-  $("#scout-add") && ($("#scout-add").onclick = scoutAdd);
-  $("#scout-go") && ($("#scout-go").onclick = renderScout);
-  $("#scout-in") && ($("#scout-in").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); scoutAdd(); } });
+  $$("#scout-size button").forEach(b => b.onclick = () => boardSetSize(+b.dataset.n));
+  $$("#scout-order button").forEach(b => b.onclick = () => boardSetOrder(b.dataset.o));
+  $("#scout-addteam") && ($("#scout-addteam").onclick = boardAddTeam);
+  $("#scout-go") && ($("#scout-go").onclick = boardGenerate);
+  $("#scout-reset") && ($("#scout-reset").onclick = boardReset);
+  $("#lock-add") && ($("#lock-add").onclick = lockAdd);
+  $("#lock-in") && ($("#lock-in").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); lockAdd(); } });
+  lockRenderChips(); renderBoard();
   cxSetMode("scout");
 
   // Pestañas
