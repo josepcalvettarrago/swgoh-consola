@@ -1,0 +1,345 @@
+{
+  "_meta": {
+    "about": "Base CURADA a mano de arquetipos meta de GAC/TW y sus counters. NO es un scrapeo: swgoh.gg no expone un feed de counters y su egress está bloqueado para nuestra infraestructura (ver ROADMAP Fase 1.1/3). Cada entrada lleva 'source' honesto. Los base_id de 'counters[].team' son los que YO podría poseer; si no los tengo, el motor cae a 'needs' + assemble(). El nivel real del rival (mods/relic/velocidad) NO está aquí: esto resuelve la ELECCIÓN del counter, no la INVERSIÓN del rival.",
+    "updated": "2026-07-10",
+    "schema": "id,label,match{leader,faction,anyOf,minFaction},threats[],counters[{team,note}],needs[],confidence,source"
+  },
+  "archetypes": [
+    {
+      "id": "ns_greatmothers",
+      "label": "Nightsisters (Great Mothers / Talzin)",
+      "match": { "leader": ["GREATMOTHERS", "MOTHERTALZIN"], "faction": ["Nightsister"], "anyOf": ["MERRIN", "MORGANELSBETH", "TALIA", "DAKA", "ASAJVENTRESS", "NIGHTSISTERZOMBIE"], "minFaction": 3 },
+      "threats": ["revive", "plague", "tm_train", "control"],
+      "counters": [
+        { "team": ["GLREY", "HANSOLO", "CHEWBACCALEGENDARY", "C3POLEGENDARY", "REYJEDITRAINING"], "note": "Rey rompe el ciclo de revive con burst y Han abre con daño masivo antes de que Talzin plaguee." },
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "SEE fractura al líder y anula el turn-meter mientras el aislamiento corta el revive." }
+      ],
+      "needs": ["Anti-Revive", "Buff Immunity", "Remove Turn Meter"],
+      "confidence": "alto",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "sith_see",
+      "label": "Sith Eternal Emperor (SEE lead)",
+      "match": { "leader": ["SITHPALPATINE"], "faction": ["Sith"], "anyOf": ["DARTHNIHILUS", "DARTHSION", "DARTHTRAYA", "EMPERORPALPATINE", "DARTHSIDIOUS", "MAULS7", "COUNTDOOKU"], "minFaction": 3 },
+      "threats": ["buffs", "control", "isolate", "dot"],
+      "counters": [
+        { "team": ["JEDIMASTERKENOBI", "GENERALSKYWALKER", "CT7567", "ARCTROOPER501ST", "CT5555"], "note": "JMK sube tenacidad y limpia; el 501st presiona el turn-meter antes de que SEE marque a todo el equipo." },
+        { "team": ["GRANDMASTERLUKE", "JEDIKNIGHTLUKE", "JOLEEBINDO", "GRANDMASTERYODA", "GENERALKENOBI"], "note": "JML esquiva el aniquilado con protección y Jolee mantiene al equipo fuera del rango de la marca." }
+      ],
+      "needs": ["Tenacity Up", "Buff Immunity", "Dispel"],
+      "confidence": "alto",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "sith_triumvirate",
+      "label": "Triunvirato Sith (Nihilus / Traya lead)",
+      "match": { "leader": ["DARTHTRAYA", "DARTHNIHILUS"], "faction": ["Sith"], "anyOf": ["DARTHSION", "DARTHNIHILUS", "DARTHTRAYA"], "minFaction": 3 },
+      "threats": ["isolate", "control", "dot"],
+      "counters": [
+        { "team": ["JEDIKNIGHTREVAN", "BASTILASHAN", "GENERALKENOBI", "JOLEEBINDO", "GRANDMASTERYODA"], "note": "JKR aturde y bloquea antes del fracture; Jolee revive lo que caiga por Deathmark." }
+      ],
+      "needs": ["Tenacity Up", "Protection Up", "Dispel"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "fo_slkr",
+      "label": "First Order (Supreme Leader Kylo Ren lead)",
+      "match": { "leader": ["SUPREMELEADERKYLOREN"], "faction": ["First Order"], "anyOf": ["KYLORENUNMASKED", "FIRSTORDEROFFICERMALE", "GENERALHUX"], "minFaction": 3 },
+      "threats": ["tm_train", "revive", "control", "buffs"],
+      "counters": [
+        { "team": ["GLREY", "HANSOLO", "CHEWBACCALEGENDARY", "C3POLEGENDARY", "REYJEDITRAINING"], "note": "Rey rompe la Ventaja de SLKR y le quita el turn-meter para cortar su ciclo de revive." },
+        { "team": ["GRANDMASTERLUKE", "JEDIKNIGHTLUKE", "GENERALKENOBI", "JOLEEBINDO", "GRANDMASTERYODA"], "note": "JML aguanta el burst inicial y devuelve control mientras Yoda dispel-ea sus buffs." }
+      ],
+      "needs": ["Buff Immunity", "Remove Turn Meter", "Stun"],
+      "confidence": "alto",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "jedi_jmk",
+      "label": "Jedi (Jedi Master Kenobi lead)",
+      "match": { "leader": ["JEDIMASTERKENOBI"], "faction": ["Jedi", "Galactic Republic"], "anyOf": ["GENERALKENOBI", "AHSOKATANO", "SHAAKTI", "COMMANDERLUKESKYWALKER", "GRANDMASTERYODA"], "minFaction": 3 },
+      "threats": ["buffs", "counter", "control"],
+      "counters": [
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "SEE bloquea habilidades y quita turn-meter; anula la previsión de JMK con Buff Immunity." },
+        { "team": ["LORDVADER", "GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "note": "Vader mete DoT y Thrawn fractura al líder para romper el enlace de protección Jedi." }
+      ],
+      "needs": ["Ability Block", "Buff Immunity", "Remove Turn Meter"],
+      "confidence": "alto",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "gr_gas",
+      "label": "501st (General Skywalker lead)",
+      "match": { "leader": ["GENERALSKYWALKER"], "faction": ["501st", "Galactic Republic"], "anyOf": ["CT7567", "ARCTROOPER501ST", "CT5555", "BADBATCHECHO"], "minFaction": 3 },
+      "threats": ["counter", "tm_train", "control"],
+      "counters": [
+        { "team": ["JEDIMASTERKENOBI", "GENERALKENOBI", "AHSOKATANO", "SHAAKTI", "GRANDMASTERYODA"], "note": "JMK bloquea a GAS y controla su turn-meter para que no encadene los cooldowns del 501st." },
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "SEE anula el contraataque con Ability Block y aturde antes del Zealous Ambition." }
+      ],
+      "needs": ["Ability Block", "Buff Immunity", "Stun"],
+      "confidence": "alto",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "bh_jabba",
+      "label": "Bounty Hunters / Hutt Cartel (Jabba lead)",
+      "match": { "leader": ["JABBATHEHUTT"], "faction": ["Bounty Hunter", "Hutt Cartel"], "anyOf": ["BOSSK", "BOBAFETT"], "minFaction": 3 },
+      "threats": ["revive", "dot", "counter", "tm_train"],
+      "counters": [
+        { "team": ["GLREY", "HANSOLO", "CHEWBACCALEGENDARY", "C3POLEGENDARY", "REYJEDITRAINING"], "note": "Rey impide el revive de Jabba con Anti-Revive y remata antes de que gire el TM." },
+        { "team": ["GRANDMASTERLUKE", "JEDIKNIGHTLUKE", "JOLEEBINDO", "GRANDMASTERYODA", "GENERALKENOBI"], "note": "JML aguanta el DoT en cadena y corta la curación con Healing Immunity." }
+      ],
+      "needs": ["Anti-Revive", "Healing Immunity", "Buff Immunity"],
+      "confidence": "alto",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "rebel_glleia",
+      "label": "Rebeldes (GL Leia lead)",
+      "match": { "leader": ["GLLEIA"], "faction": ["Rebel"], "anyOf": ["HANSOLO", "CHEWBACCALEGENDARY", "C3POCHEWBACCA", "HOTHHAN"], "minFaction": 3 },
+      "threats": ["stealth", "dot", "revive", "tm_train"],
+      "counters": [
+        { "team": ["SUPREMELEADERKYLOREN", "KYLORENUNMASKED", "GENERALHUX", "FIRSTORDEROFFICERMALE", "STARKILLER"], "note": "SLKR con AoE saca a Leia de sigilo y anula su ciclo de revive con burst." },
+        { "team": ["LORDVADER", "GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "note": "Vader mete DoT masivo y AoE para romper el sigilo antes de que Leia marque." }
+      ],
+      "needs": ["AoE", "Dispel", "Healing Immunity"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "resistance_grey",
+      "label": "Resistencia (GL Rey lead)",
+      "match": { "leader": ["GLREY"], "faction": ["Resistance"], "anyOf": ["HANSOLO", "REYJEDITRAINING", "CHEWBACCALEGENDARY"], "minFaction": 2 },
+      "threats": ["buffs", "counter", "tm_train"],
+      "counters": [
+        { "team": ["SUPREMELEADERKYLOREN", "KYLORENUNMASKED", "GENERALHUX", "FIRSTORDEROFFICERMALE", "STARKILLER"], "note": "SLKR anula sus buffs con Buff Immunity, la bloquea y le quita el turn-meter." },
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "SEE la fractura y aturde antes de que encadene contraataques." }
+      ],
+      "needs": ["Buff Immunity", "Stun", "Ability Block"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "empire_lv",
+      "label": "Imperio (Lord Vader lead)",
+      "match": { "leader": ["LORDVADER"], "faction": ["Empire", "Sith"], "anyOf": ["GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "minFaction": 3 },
+      "threats": ["dot", "control", "buffs"],
+      "counters": [
+        { "team": ["JEDIMASTERKENOBI", "GENERALKENOBI", "AHSOKATANO", "SHAAKTI", "GRANDMASTERYODA"], "note": "JMK sube tenacidad, limpia el DoT propio y aturde a Vader antes del Culling Blade." },
+        { "team": ["GRANDMASTERLUKE", "JEDIKNIGHTLUKE", "JOLEEBINDO", "GRANDMASTERYODA", "GENERALKENOBI"], "note": "JML dispel-ea el DoT y aguanta con Damage Immunity mientras Yoda controla los turnos." }
+      ],
+      "needs": ["Buff Immunity", "Tenacity Up", "Dispel"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "sith_malgus",
+      "label": "Sith Empire (Darth Malgus lead)",
+      "match": { "leader": ["DARTHMALGUS"], "faction": ["Sith Empire", "Sith"], "anyOf": ["DARTHREVAN", "DARTHMALAK", "BASTILASHANDARK", "DARTHNIHILUS"], "minFaction": 2 },
+      "threats": ["buffs", "control", "dot"],
+      "counters": [
+        { "team": ["SUPREMELEADERKYLOREN", "KYLORENUNMASKED", "GENERALHUX", "FIRSTORDEROFFICERMALE", "STARKILLER"], "note": "Malgus se CURA de tus debuffs: usa Buff Immunity en vez de debuffear, aturde y bloquea." }
+      ],
+      "needs": ["Buff Immunity", "Stun", "Ability Block"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "gr_padme",
+      "label": "Galactic Republic (Padmé lead)",
+      "match": { "leader": ["PADMEAMIDALA"], "faction": ["Galactic Republic"], "anyOf": ["ANAKINKNIGHT", "AHSOKATANO", "GENERALKENOBI", "SHAAKTI", "C3POLEGENDARY"], "minFaction": 3 },
+      "threats": ["buffs", "counter", "control"],
+      "counters": [
+        { "team": ["LORDVADER", "GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "note": "Buff Immunity contra el Coraje, Thrawn fractura a Padmé y Vader baja defensa con AoE." },
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "SEE anula el enlace de protección con Ability Block y aturde a Anakin." }
+      ],
+      "needs": ["Buff Immunity", "Defense Down", "Ability Block"],
+      "confidence": "alto",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "mando_bokatan",
+      "label": "Mandalorianos (Bo-Katan Mand'alor lead)",
+      "match": { "leader": ["MANDALORBOKATAN"], "faction": ["Mandalorian"], "anyOf": ["SABINEWRENS3", "EZRABRIDGERS3", "MAULS7", "PADAWANSABINE"], "minFaction": 3 },
+      "threats": ["buffs", "counter", "tm_train"],
+      "counters": [
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "Rompe la pila de buffs mandaloriana con Buff Immunity, aturde a la líder y AoE." }
+      ],
+      "needs": ["Buff Immunity", "AoE", "Stun"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "rebel_glahsoka",
+      "label": "GL Ahsoka (Spectre / Rebeldes)",
+      "match": { "leader": ["GLAHSOKATANO"], "faction": ["Rebel", "Spectre"], "anyOf": ["EZRAEXILE", "HERASYNDULLAS3", "EZRABRIDGERS3"], "minFaction": 2 },
+      "threats": ["stealth", "counter", "tm_train"],
+      "counters": [
+        { "team": ["SUPREMELEADERKYLOREN", "KYLORENUNMASKED", "GENERALHUX", "FIRSTORDEROFFICERMALE", "STARKILLER"], "note": "Bloquea a Ahsoka y no le des material para contraatacar; AoE para su evasión." },
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "Ability Block + Remove Turn Meter cortan su ciclo antes de que gire." }
+      ],
+      "needs": ["Ability Block", "Buff Immunity", "Remove Turn Meter"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "sep_grievous",
+      "label": "Separatistas (General Grievous lead)",
+      "match": { "leader": ["GRIEVOUS"], "faction": ["Separatist", "Droid"], "anyOf": ["B1BATTLEDROIDV2", "B2SUPERBATTLEDROID", "DROIDEKA", "MAGNAGUARD", "COUNTDOOKU"], "minFaction": 3 },
+      "threats": ["wall", "counter", "buffs"],
+      "counters": [
+        { "team": ["GLREY", "HANSOLO", "CHEWBACCALEGENDARY", "C3POLEGENDARY", "REYJEDITRAINING"], "note": "AoE derriba la muralla de droides y baja su protección; limpia sus buffs." },
+        { "team": ["GRANDMASTERLUKE", "JEDIKNIGHTLUKE", "JOLEEBINDO", "GRANDMASTERYODA", "GENERALKENOBI"], "note": "JML con AoE y Dispel rompe la fila de B1 antes de que Grievous acumule." }
+      ],
+      "needs": ["Buff Immunity", "AoE", "Defense Down"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "gungan_qa",
+      "label": "Gungans (Queen Amidala lead)",
+      "match": { "leader": ["QUEENAMIDALA"], "faction": ["Gungan", "Galactic Republic"], "anyOf": ["BOOMADIER", "JARJARBINKS"], "minFaction": 2 },
+      "threats": ["wall", "buffs", "counter"],
+      "counters": [
+        { "team": ["LORDVADER", "GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "note": "Buff Immunity contra la muralla gungan, baja defensa y AoE para romper la protección." }
+      ],
+      "needs": ["Buff Immunity", "Defense Down", "AoE"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "empire_iden",
+      "label": "Imperio (Iden Versio lead / tropas)",
+      "match": { "leader": ["IDENVERSIOEMPIRE"], "faction": ["Empire", "Imperial Trooper"], "anyOf": ["VADER", "VEERS", "DEATHTROOPER", "GRANDADMIRALTHRAWN"], "minFaction": 3 },
+      "threats": ["counter", "buffs", "tm_train"],
+      "counters": [
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "SEE aturde a Iden antes de que reparta contraataque y anula sus buffs de tropa." }
+      ],
+      "needs": ["Buff Immunity", "Stun", "Ability Block"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "inq_gi",
+      "label": "Inquisitorius (Grand Inquisitor lead)",
+      "match": { "leader": ["GRANDINQUISITOR", "INQUISITORBARRISS"], "faction": ["Inquisitorius", "Empire"], "anyOf": ["SECONDSISTER", "NINTHSISTER", "FIFTHBROTHER", "EIGHTHBROTHER"], "minFaction": 3 },
+      "threats": ["buffs", "control", "tm_train"],
+      "counters": [
+        { "team": ["GLREY", "HANSOLO", "CHEWBACCALEGENDARY", "C3POLEGENDARY", "REYJEDITRAINING"], "note": "Rey rompe el enlace de buffs de los inquisidores y les quita el turn-meter." }
+      ],
+      "needs": ["Buff Immunity", "Dispel", "Remove Turn Meter"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "jedi_jkl",
+      "label": "Jedi (Jedi Knight Luke lead)",
+      "match": { "leader": ["JEDIKNIGHTLUKE"], "faction": ["Jedi"], "anyOf": ["GENERALKENOBI", "GRANDMASTERYODA", "JOLEEBINDO", "MASTERQUIGON"], "minFaction": 3 },
+      "threats": ["counter", "buffs", "control"],
+      "counters": [
+        { "team": ["LORDVADER", "GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "note": "Thrawn fractura a JKL y Vader mete DoT que ignora su previsión." }
+      ],
+      "needs": ["Buff Immunity", "Ability Block", "Dispel"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "jml_jedi",
+      "label": "Jedi (Jedi Master Luke lead)",
+      "match": { "leader": ["GRANDMASTERLUKE"], "faction": ["Jedi"], "anyOf": ["JEDIKNIGHTLUKE", "GENERALKENOBI", "JOLEEBINDO", "GRANDMASTERYODA"], "minFaction": 3 },
+      "threats": ["buffs", "counter", "revive"],
+      "counters": [
+        { "team": ["SUPREMELEADERKYLOREN", "KYLORENUNMASKED", "GENERALHUX", "FIRSTORDEROFFICERMALE", "STARKILLER"], "note": "SLKR ignora la previsión con daño garantizado y rompe la protección de JML." }
+      ],
+      "needs": ["Buff Immunity", "Anti-Revive", "Ability Block"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "jedi_cere",
+      "label": "Jedi (Cere / Cal — Nueva Jedi Order)",
+      "match": { "leader": ["CEREJUNDA", "JEDIKNIGHTCAL"], "faction": ["Jedi"], "anyOf": ["CALKESTIS", "MASTERQUIGON", "GRANDMASTERYODA"], "minFaction": 3 },
+      "threats": ["buffs", "control", "counter"],
+      "counters": [
+        { "team": ["LORDVADER", "GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "note": "DoT + fracture rompen la sinergia de protección de la Nueva Orden Jedi." }
+      ],
+      "needs": ["Buff Immunity", "Dispel", "Ability Block"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "sith_brothers",
+      "label": "Hermanos Sith (Maul & Savage)",
+      "match": { "leader": ["MAUL"], "faction": ["Sith", "Nightbrother"], "anyOf": ["SAVAGEOPRESS", "MOTHERTALZIN"], "minFaction": 2 },
+      "threats": ["dot", "control", "buffs"],
+      "counters": [
+        { "team": ["GRANDMASTERLUKE", "JEDIKNIGHTLUKE", "JOLEEBINDO", "GRANDMASTERYODA", "GENERALKENOBI"], "note": "JML dispel-ea el DoT y aguanta el burst de Maul con Damage Immunity." }
+      ],
+      "needs": ["Dispel", "Tenacity Up", "Healing"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "tusken_urorrurr",
+      "label": "Tuskens (Uror'Ruur / Chieftain lead)",
+      "match": { "leader": ["URORRURRR", "TUSKENCHIEFTAIN"], "faction": ["Tusken"], "anyOf": ["TUSKENRAIDER", "TUSKENCHIEFTAIN"], "minFaction": 3 },
+      "threats": ["dot", "counter", "buffs"],
+      "counters": [
+        { "team": ["GRANDMASTERLUKE", "JEDIKNIGHTLUKE", "JOLEEBINDO", "GRANDMASTERYODA", "GENERALKENOBI"], "note": "Dispel del DoT tusken y control para que no encadenen sus contraataques." }
+      ],
+      "needs": ["Dispel", "Healing", "Tenacity Up"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "sith_darthrevan",
+      "label": "Sith Empire (Darth Revan lead)",
+      "match": { "leader": ["DARTHREVAN"], "faction": ["Sith Empire", "Sith"], "anyOf": ["DARTHMALAK", "BASTILASHANDARK", "DARTHNIHILUS", "DARTHSION"], "minFaction": 3 },
+      "threats": ["tm_train", "buffs", "isolate"],
+      "counters": [
+        { "team": ["SUPREMELEADERKYLOREN", "KYLORENUNMASKED", "GENERALHUX", "FIRSTORDEROFFICERMALE", "STARKILLER"], "note": "SLKR corta el turn-meter train con Remove Turn Meter y rompe su ventaja." }
+      ],
+      "needs": ["Remove Turn Meter", "Buff Immunity", "Stun"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "jedi_jkr",
+      "label": "Jedi (Jedi Knight Revan lead)",
+      "match": { "leader": ["JEDIKNIGHTREVAN"], "faction": ["Jedi", "Old Republic"], "anyOf": ["BASTILASHAN", "GENERALKENOBI", "JOLEEBINDO", "GRANDMASTERYODA"], "minFaction": 3 },
+      "threats": ["tm_train", "control", "buffs"],
+      "counters": [
+        { "team": ["LORDVADER", "GRANDADMIRALTHRAWN", "VADER", "VEERS", "DEATHTROOPER"], "note": "Thrawn fractura a JKR y frena su turn-meter train antes de que el equipo gire." }
+      ],
+      "needs": ["Remove Turn Meter", "Buff Immunity", "Ability Block"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "badbatch",
+      "label": "Bad Batch (Hunter lead)",
+      "match": { "leader": ["BADBATCHHUNTER"], "faction": ["Bad Batch"], "anyOf": ["BADBATCHECHO", "BADBATCHTECH", "BADBATCHOMEGA", "BADBATCHWRECKER"], "minFaction": 3 },
+      "threats": ["control", "counter", "tm_train"],
+      "counters": [
+        { "team": ["SITHPALPATINE", "DARTHREVAN", "BASTILASHANDARK", "DARTHMALAK", "DARTHNIHILUS"], "note": "SEE sube tenacidad contra su control y aturde antes de que Tech marque objetivos." }
+      ],
+      "needs": ["Tenacity Up", "Buff Immunity", "Dispel"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    },
+    {
+      "id": "empire_thrawn",
+      "label": "Imperio (Grand Admiral Thrawn lead)",
+      "match": { "leader": ["GRANDADMIRALTHRAWN"], "faction": ["Empire", "Imperial Trooper"], "anyOf": ["VADER", "VEERS", "DEATHTROOPER", "LORDVADER"], "minFaction": 3 },
+      "threats": ["isolate", "control", "tm_train"],
+      "counters": [
+        { "team": ["GLREY", "HANSOLO", "CHEWBACCALEGENDARY", "C3POLEGENDARY", "REYJEDITRAINING"], "note": "Rey aguanta el fracture de Thrawn y devuelve el turn-meter que él roba." }
+      ],
+      "needs": ["Tenacity Up", "Remove Turn Meter", "Protection Up"],
+      "confidence": "medio",
+      "source": "swgoh.gg/gac/counters + comunidad (curado manualmente)"
+    }
+  ]
+}
