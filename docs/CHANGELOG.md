@@ -2,6 +2,22 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 3.3 — Rediseño visual "holomesa GAC" — `v3.3-holotable`
+
+- **El War Room parece la Grand Arena del juego** (todo CSS, sin imágenes del juego — restricción
+  single-file/CSP): marco de **holomesa** con barra de **nodos** luminosos, **brackets** de esquina,
+  **escaneo** y un **emblema GAC** central (SVG inline). Zonas como **territorios cian biselados**.
+- **Ranuras circulares tipo "Edit Defenses":** cada zona muestra `size` huecos — llenos con **retrato
+  circular** (anillo por lado, ya nativo del tema: Luz=azul, Oscuro=rojo, Neutral=oro) y vacíos
+  **punteados con `+`** que abren el selector de personajes. Contador `N/size` estilo pastilla.
+- El bisel de cada territorio va en un **pseudo-elemento** (`::before` con `clip-path`), así que **no
+  recorta** el desplegable del selector. **Cero cambios de motor/estado**: `genBoard`, persistencia,
+  exclusividad, unicidad de GL y el picker (Fase 3.2) intactos; solo presentación + markup de ranuras.
+- Alcance honesto: holomesa **plana** (sin 3D isométrico ni arte del juego); se parece en estilo, no
+  es una réplica pixel a pixel.
+- Tests: render jsdom actualizado (ranuras, clic en hueco revela el picker) → **118 verdes**.
+- Tag: `v3.3-holotable`.
+
 ## Fase 3.2 — Selector de personajes con avatares — `v3.2-picker`
 
 - **UX del War Room, operable con ratón:** las zonas enemigas y el bloqueo de defensa dejan de

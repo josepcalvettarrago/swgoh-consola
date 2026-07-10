@@ -182,6 +182,13 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
 - Índice precomputado (`buildPickIndex`) + filtro con tope de 30 y avatares vía `portrait()`. Estética
   y motor intactos. Tests render a la ruta ratón → **117 verdes**.
 
+### Fase 3.3 — Rediseño visual "holomesa GAC" (`v3.3-holotable`)
+- El War Room se re-skinea para **parecerse a la Grand Arena del juego** (todo CSS): marco de holomesa
+  (nodos, brackets, escaneo, emblema GAC en SVG inline) y zonas como **territorios cian biselados**.
+- **Ranuras circulares tipo "Edit Defenses"**: huecos vacíos con `+` (abren el selector) y llenos con
+  retrato de anillo por lado. Bisel en `::before` (no recorta el picker). **Cero cambios de motor.**
+- Holomesa **plana** (sin 3D). Tests render → **118 verdes**.
+
 ---
 
 ## DEUDA TÉCNICA / BACKLOG
