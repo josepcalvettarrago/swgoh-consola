@@ -7,6 +7,8 @@ import { IMGBYNAME, KEYMECH, ROLE_ES, SIDES } from "./data.js";
 export { diffSnapshots, compactSnapshot, snapshotHash, isEmptyDiff } from "./diff.js";
 // Auto-marcado del roadmap de Lord Vader (Fase 2): también puro.
 export { vaderProgress } from "./vader.js";
+// Scout de counters (Fase 3): motor puro sin DOM; `genScout` recibe `assemble` inyectada.
+export { THREAT_MAP, detectThreats, threatsToNeeds, matchArchetype, genScout, resolveUnit } from "./counters.js";
 
 // ---- avatares (devuelven strings HTML; no tocan el DOM) ----
 const IMGPRE = "https://game-assets.swgoh.gg/textures/tex.charui_", IMGSUF = ".png";
