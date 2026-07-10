@@ -2,6 +2,21 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 3.2 — Selector de personajes con avatares — `v3.2-picker`
+
+- **UX del War Room, operable con ratón:** las zonas enemigas y el bloqueo de defensa dejan de
+  depender de teclear el nombre + Enter. Nuevo **selector clicable con avatares** (`.wr-picker`):
+  buscas por texto y **haces clic** en la fila del personaje (con retrato, lado y facción) para
+  añadirlo. Clic = añadir (no hace falta botón aparte ni Enter, aunque Enter sigue eligiendo el primero).
+- Reutilizable en zonas (los 333 personajes) y bloqueo (solo mi roster). Índice precomputado
+  (`buildPickIndex`), filtro con tope de 30 resultados y avatares vía `portrait()`. Lista **inline**
+  (no se recorta con el `overflow` de la zona) y el clic gana al `blur` (`mousedown`).
+- Sustituye el input + `<datalist>` anterior. Estética y motor intactos.
+- **Deuda técnica registrada** en `ROADMAP.md`: el reparto óptimo global del tablero (hoy voraz) queda
+  como candidato a fase futura.
+- Tests: render jsdom actualizado a la ruta **solo ratón** (buscar → clic) → **117 verdes**.
+- Tag: `v3.2-picker`.
+
 ## Fase 3.1 — GAC War Room (tablero multi-equipo) — `v3.1-warroom`
 
 - **Bug 3v3 corregido:** el counter salía con 5 unidades en 3v3. `assemble()` gana un parámetro

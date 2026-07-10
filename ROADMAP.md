@@ -175,6 +175,23 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   **resetear tablero**. **Cero cambios en el Worker.**
 - El "Tablero meta" `ENEMIES[]` sigue intacto como sub-modo. Tests: `board`+`store`+render → **116 verdes**.
 
+### Fase 3.2 — Selector con avatares (`v3.2-picker`)
+- **Selector clicable con avatares + búsqueda** (`.wr-picker`) en las zonas enemigas y en el bloqueo:
+  escribes para filtrar y **haces clic** en la fila (con retrato) para añadir — totalmente operable con
+  ratón, sin depender de Enter ni de teclear el nombre exacto. Sustituye el input+`datalist` anterior.
+- Índice precomputado (`buildPickIndex`) + filtro con tope de 30 y avatares vía `portrait()`. Estética
+  y motor intactos. Tests render a la ruta ratón → **117 verdes**.
+
+---
+
+## DEUDA TÉCNICA / BACKLOG
+- **Reparto óptimo global del War Room** (candidato a fase futura). Hoy `genBoard`
+  ([web/src/counters.js](web/src/counters.js)) asigna **voraz** (orden auto: los equipos más difíciles
+  primero). **No garantiza** el reparto globalmente óptimo del roster entre los 2–6 equipos: podría
+  existir una combinación mejor probando permutaciones o una asignación tipo **húngara** con
+  coste = sinergia por emparejamiento. Se difiere por coste/complejidad; el voraz es predecible,
+  determinista y suficiente para el uso real. Origen: feedback Fase 3.1.
+
 ## FASE 4 — Módulos de valor (1 sesión c/u, orden por impacto)
 - **Datacrones + auditoría de mods** completa (swgoh.gg da inventario de crons y eficiencia por tirada — *exclusivo de esta fuente*) + **export a Grandivory Mod Optimizer**.
 - **Planificador de energía diaria** hacia Lord Vader (nodos + ETA por unidad).
