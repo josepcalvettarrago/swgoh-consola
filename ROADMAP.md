@@ -16,7 +16,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 
 ---
 
-## ESTADO ACTUAL (2026-07-08)
+## ESTADO ACTUAL (2026-07-09)
 
 | Fase | Estado | Tag | Notas |
 |---|---|---|---|
@@ -24,9 +24,10 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **0.1 — Hotfix GL** | ✅ Hecha | `v0.1-hotfix-gl` | `assemble()` garantiza máx. 1 Leyenda Galáctica por equipo. |
 | **1 — Pipeline** | ✅ Hecha | `v1-pipeline` | swgoh.gg → normalizador → Firestore + Worker + fetch con fallback. |
 | **1.1 — Ingesta a Actions** | ✅ Hecha | `v1.1-ingesta-actions` | Cloudflare bloquea el egress del Worker. La ingesta se movió a **GitHub Actions** con `curl`. (Ver 1.2: Actions tampoco sirve.) |
-| **2 — Diff engine + Progreso** | ✅ Hecha | `v2-progreso` | Diff engine puro + dedup, pestaña Progreso, fix gremio. **72 tests verdes.** |
+| **1.3 — Read path (Worker) en producción** | ✅ Desplegado | — | Worker de lectura **desplegado y operativo en producción** (`swgoh-consola.josep-calvet-tarrago.workers.dev`), sirviendo datos reales de Firestore `swgohapi`. No solo "hecho en tests": verificado end-to-end. Continuación de `v2-progreso`. |
+| **2 — Diff engine + Progreso** | ✅ Hecha | `v2-progreso` | Diff engine puro + dedup, pestaña Progreso, fix gremio. **72 tests verdes.** Read path ya operativo en prod (ver Fase 1.3) → la pestaña Progreso lee datos en vivo, no el `RD` embebido. |
 | **1.2 — Ingesta LOCAL (write path live)** | ✅ Operativa | — | swgoh.gg también da **403 al IP de datacenter de GitHub Actions** (ni curl-impersonate lo esquiva → bloqueo por IP). La ingesta corre **en local** (`scripts/ingest-local.ps1`) al **iniciar sesión** (acceso directo en la carpeta de Inicio; cron de Actions desactivado). Escribe en **Firestore live**. |
-| **3 — Counter Generator GAC** | ⏭️ Siguiente | — | — |
+| **3 — Counter Generator GAC (Scout)** | ✅ Hecha | `v3-counters` | Scout 3v3/5v5 dirigido por metadata (kit fijo por personaje): `detectThreats` + `counter_db` curado (27) + `assemble()`. Tablero meta previo intacto. §5 (nivel del rival) descartado: swgoh.gg da challenge+sin CORS. **95 tests verdes.** |
 | 4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
@@ -36,11 +37,25 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 - Service account en `firebase/*adminsdk*.json` (**gitignored**, nunca subido).
 - Coste **0** (Firestore plan Spark: 20k escrituras/día gratis; consumo real ~6/run).
 
-**⚠️ Pendiente para VER el progreso en la web (read path):** desplegar el **Worker de lectura**
-(`wrangler deploy` con el secret `FIREBASE_SERVICE_ACCOUNT`) y fijar `API_BASE` en `web/src/main.js`
-a su URL. Hasta entonces la consola usa el `RD` embebido (nunca en blanco) y la pestaña Progreso
-muestra su estado vacío **aunque los datos ya estén en Firestore**. Nota: el Worker lee la base
-`swgohapi` por defecto (`FIRESTORE_DB` override).
+**✅ Read path — OPERATIVO en producción.**
+- Worker desplegado: `https://swgoh-consola.josep-calvet-tarrago.workers.dev`
+  (`wrangler deploy`, vars `FIRESTORE_DB=swgohapi`, `ALLY_CODE`, `GUILD_ID`,
+  `PAGES_ORIGIN` en `wrangler.toml`; secret `FIREBASE_SERVICE_ACCOUNT` vía
+  `Get-Content ... | wrangler secret put ...` — nunca pegado a mano, rompe
+  los saltos de línea del PEM).
+- Fix aplicado en `worker/src/firestore.js` (`listDocs`): se eliminó el
+  `orderBy=__name__ desc` (exigía crear un índice compuesto en Firestore,
+  no soportado por el creador de índices estándar). Ahora se listan los
+  documentos sin orden en la query y se ordenan en JS por `_id`
+  (los IDs son timestamps ISO, por lo que el orden cronológico es exacto)
+  antes de aplicar el `limit`. Cero índices manuales que mantener.
+- `API_BASE` fijado en `web/src/main.js` apuntando al Worker de arriba.
+- Verificado end-to-end: `/api/roster/:ally` y `/api/progress/:ally`
+  devuelven datos reales de Firestore (`swgohapi`), no el `RD` embebido.
+  `/api/progress/355463284` responde `{"events":[],"latest":{...}}`:
+  meta en vivo correcta; `events` vacío es el comportamiento esperado
+  con 1 solo snapshot (el dedup solo escribe evento cuando hay diff
+  entre dos ingestas — se poblará en el próximo ingest con cambios).
 
 **🔒 Seguridad:** service-account rotado y guardado en `firebase/` (gitignored). El repo GitHub
 (`josepcalvettarrago/swgoh-consola`, privado) no contiene secretos.
@@ -129,11 +144,24 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   RD embebido.
 - Tests: diff, dedup, Vader, gremio, capa pura de Progreso y **render real en jsdom** → 72 verdes.
 
-## FASE 3 — Advanced Counter Generator GAC 3v3/5v5 (2-3 sesiones) ⭐ GAMECHANGER — ⏭️ SIGUIENTE
-- Input: ally code del rival → Worker trae su roster de swgoh.gg → `RD_ENEMY` (mismo esquema).
-- UI: selector de la defensa del rival (**3 o 5** chars, datalist como Conquest).
-- Motor: leer el kit real de la defensa (`ability_classes` + factions) → detectar amenazas (revive, TM-train, contraataque, buffs, sigilo…) → cruzar con **base curada** `/data/counter_db.json` (~30 arquetipos meta; fuente swgoh.gg/gac/counters) → proponer **mi mejor counter** con explicación por amenaza neutralizada.
-- **Disclaimer visible:** no modela los mods/datacrons exactos del rival (limitación de datos públicos).
+## FASE 3 — Advanced Counter Generator GAC 3v3/5v5 (2-3 sesiones) ⭐ GAMECHANGER — ✅ HECHA (`v3-counters`)
+- **Corrección de rumbo (verificada):** el plan original decía "*el Worker trae el roster del rival
+  de swgoh.gg*". **Inviable** — Cloudflare bloquea ese egress (fingerprint TLS + IP de datacenter;
+  ver Fase 1.1/1.3). La Fase 3 se dirige por **metadata**: el **kit es fijo por personaje**, así que
+  las amenazas de cualquier defensa se leen **sin** el roster en vivo del rival. Resuelve la
+  **elección** del counter (el 90% del valor), no la **inversión** real del rival.
+- UI **Scout** (sub-modo aditivo en Counters; el "tablero meta" `ENEMIES[]` se conserva): selector
+  **3v3/5v5**, datalist **global** (333 personajes desde `CHAR_META`), chips y ⚡ generar.
+- Motor puro (`web/src/counters.js`): `detectThreats` (kit → amenazas: revive, TM-train, contraataque,
+  muro, buffs, sigilo, control, DoT, aislamiento, plaga) → `matchArchetype` contra **base curada**
+  `web/src/data/counter_db.json` (**27** arquetipos; **curado a mano**, no scrapeado) → `genScout`
+  reutiliza `assemble()` (unicidad de GL intacta) y explica **amenaza neutralizada** por unidad.
+- **Metadata** `CHAR_META` embebida (sembrada del endpoint read-only `/api/meta/characters`, no de
+  swgoh.gg) + refresco en runtime con fallback → el datalist nunca queda vacío.
+- **Disclaimer visible:** no modela mods/datacrons ni orden de turnos del rival (limitación de datos públicos).
+- **§5 (nivel real del rival) descartado por sonda:** swgoh.gg responde 403 `Cf-Mitigated: challenge`
+  y **sin CORS** incluso desde IP residencial → capa oculta, Scout en manual, **cero cambios en el Worker**.
+- Tests: motor + render jsdom → **95 verdes** (72 previos + 23).
 
 ## FASE 4 — Módulos de valor (1 sesión c/u, orden por impacto)
 - **Datacrones + auditoría de mods** completa (swgoh.gg da inventario de crons y eficiencia por tirada — *exclusivo de esta fuente*) + **export a Grandivory Mod Optimizer**.
