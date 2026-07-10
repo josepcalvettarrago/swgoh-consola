@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// Render REAL del War Room (Fase 3.1) sobre el DOM del template. Garantiza: datalist nunca vacío
-// (fallback CHAR_META), tablero multi-equipo que genera counters del tamaño correcto sin roster
-// del rival, presupuesto/bloqueo/persistencia y reset, y que el Tablero meta sigue intacto.
+// Render REAL del War Room (Fase 3.1/3.2) sobre el DOM del template. Cubre el selector con avatares
+// (búsqueda + lista clicable, ruta SOLO ratón), el tablero multi-equipo, presupuesto, bloqueo,
+// persistencia y reset, y que el Tablero meta sigue intacto.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -26,78 +26,92 @@ async function boot(extra) {
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-function zoneInput(z) { return $$(".wr-def-in")[z]; }
-function addDef(z, name) {
-  const inp = zoneInput(z); inp.value = name;
-  inp.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+// Ruta SOLO RATÓN: escribe en el buscador y hace clic (mousedown) en la fila que coincide.
+function typeAndClick(input, listEl, name) {
+  input.value = name;
+  input.dispatchEvent(new window.Event("input", { bubbles: true }));
+  const opt = [...listEl.querySelectorAll(".wr-popt")].find(b => b.querySelector(".wr-poptn").textContent === name);
+  if (!opt) throw new Error("no aparece en el selector: " + name);
+  opt.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
 }
+function pickDef(z, name) {
+  const inp = $$("#scout-board .wr-psearch")[z];
+  typeAndClick(inp, inp.parentElement.querySelector(".wr-plist"), name);
+}
+function pickLock(name) { typeAndClick($("#lock-search"), $("#lock-plist"), name); }
 
-describe("War Room — render, presupuesto, bloqueo y persistencia", () => {
-  it("arranca con 2 zonas y datalist global poblado (fallback embebido)", async () => {
+describe("War Room — selector con avatares, tablero, presupuesto y persistencia", () => {
+  it("arranca con 2 zonas y cada zona tiene su selector (sin datalist)", async () => {
     await expect(boot({})).resolves.not.toThrow();
     expect($$(".wr-zone").length).toBe(2);
-    expect($("#scout-dl").children.length).toBeGreaterThan(100);
-    expect($("#cx-scout").style.display).not.toBe("none");
-    expect($("#cx-board").style.display).toBe("none");
+    expect($$("#scout-board .wr-psearch").length).toBe(2);
+    expect($("#scout-dl")).toBe(null); // ya no hay datalist
   });
 
-  it("añadir defensores a una zona (5v5) crea chips; generar da un counter de <=5 sin excepción", async () => {
+  it("el selector filtra por texto y muestra filas con avatar", async () => {
     await boot({});
-    ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => addDef(0, n));
+    const inp = $$("#scout-board .wr-psearch")[0];
+    inp.value = "bossk"; inp.dispatchEvent(new window.Event("input", { bubbles: true }));
+    const list = inp.parentElement.querySelector(".wr-plist");
+    expect(list.hidden).toBe(false);
+    const opts = list.querySelectorAll(".wr-popt");
+    expect(opts.length).toBeGreaterThan(0);
+    expect(opts[0].querySelector(".savw")).toBeTruthy();          // avatar presente
+    expect([...opts].some(o => o.querySelector(".wr-poptn").textContent === "Bossk")).toBe(true);
+  });
+
+  it("añadir defensores SOLO con ratón (clic en la fila, sin Enter) y generar da counter <=5", async () => {
+    await boot({});
+    ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => pickDef(0, n));
     expect($$(".wr-zone")[0].querySelectorAll(".cq-chip").length).toBe(3);
     $("#scout-go").click();
     const mine = $$(".wr-zone")[0].querySelector(".wr-mine");
-    expect(mine).toBeTruthy();
     expect(mine.querySelectorAll(".simrow").length).toBeGreaterThan(0);
     expect(mine.querySelectorAll(".simrow").length).toBeLessThanOrEqual(5);
     expect(mine.textContent).toContain("SINERGIA");
   });
 
-  it("3v3 genera counters de exactamente 3 (arreglo del bug)", async () => {
+  it("3v3 genera counters de exactamente 3", async () => {
     await boot({});
     $$("#scout-size button").find(b => b.dataset.n === "3").click();
-    ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => addDef(0, n));
+    ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => pickDef(0, n));
     $("#scout-go").click();
-    const rows = $$(".wr-zone")[0].querySelectorAll(".wr-mine .simrow");
-    expect(rows.length).toBe(3);
+    expect($$(".wr-zone")[0].querySelectorAll(".wr-mine .simrow").length).toBe(3);
+  });
+
+  it("bloqueo por clic en el selector de mi roster: chip + persiste + cuenta en 'en defensa'", async () => {
+    const RD = await boot({});
+    const name = RD.R[0].n;
+    pickLock(name);
+    expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1);
+    expect(JSON.parse(localStorage.getItem("swgoh.gac.locked"))).toContain(RD.R[0].i);
+    expect(Number($("#scout-budget").querySelector(".wr-b.lock b").textContent)).toBe(1);
   });
 
   it("+ Equipo añade zonas (hasta 6) y el presupuesto refleja gastados al generar", async () => {
     await boot({});
     $("#scout-addteam").click();
     expect($$(".wr-zone").length).toBe(3);
-    ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => addDef(0, n));
-    ["Great Mothers", "Merrin", "Old Daka"].forEach(n => addDef(1, n));
+    ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => pickDef(0, n));
+    ["Great Mothers", "Merrin", "Old Daka"].forEach(n => pickDef(1, n));
     $("#scout-go").click();
-    const spent = $("#scout-budget").querySelector(".wr-b.spent b");
-    expect(spent && Number(spent.textContent)).toBeGreaterThan(0);
+    expect(Number($("#scout-budget").querySelector(".wr-b.spent b").textContent)).toBeGreaterThan(0);
   });
 
-  it("bloquear una unidad de mi roster: chip + persiste en localStorage + cuenta en 'en defensa'", async () => {
+  it("resetear vuelve a 2 zonas vacías pero NO borra el bloqueo", async () => {
     const RD = await boot({});
-    const name = RD.R[0].n;
-    $("#lock-in").value = name; $("#lock-add").click();
-    expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1);
-    expect(JSON.parse(localStorage.getItem("swgoh.gac.locked"))).toContain(RD.R[0].i);
-    const lock = $("#scout-budget").querySelector(".wr-b.lock b");
-    expect(Number(lock.textContent)).toBe(1);
-  });
-
-  it("resetear tablero vuelve a 2 zonas vacías pero NO borra el bloqueo", async () => {
-    const RD = await boot({});
-    $("#lock-in").value = RD.R[0].n; $("#lock-add").click();
+    pickLock(RD.R[0].n);
     $("#scout-addteam").click();
-    addDef(0, "Bossk");
+    pickDef(0, "Bossk");
     $("#scout-reset").click();
     expect($$(".wr-zone").length).toBe(2);
     expect($$(".wr-zone")[0].querySelectorAll(".cq-chip").length).toBe(0);
-    expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1); // bloqueo intacto
+    expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1);
   });
 
   it("el tablero persiste entre 'recargas' (re-init lee localStorage)", async () => {
     await boot({});
-    addDef(0, "Jabba the Hutt");
-    // Segundo boot: mismo localStorage, DOM reescrito.
+    pickDef(0, "Jabba the Hutt");
     document.open(); document.write(TPL); document.close();
     vi.resetModules();
     const { init } = await import("../web/src/ui.js");

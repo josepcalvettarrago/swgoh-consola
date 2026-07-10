@@ -427,3 +427,16 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .wr-mine .simrow{grid-template-columns:26px 34px 1fr 54px;padding:7px 0}
 .wr-mine .simrow .savw{width:34px;height:34px}
 @media(max-width:520px){.wr-board{grid-template-columns:1fr}}
+/* selector con avatares (búsqueda + lista clicable) */
+.wr-picker{position:relative;margin-top:8px}
+.wr-pfull{margin-top:8px;font-size:12px;color:var(--muted);font-style:italic}
+.wr-plist{margin-top:6px;max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface2);box-shadow:0 12px 28px -16px rgba(0,0,0,.8)}
+.wr-plist[hidden]{display:none}
+.wr-popt{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:7px 10px;cursor:pointer;color:var(--text);font-family:inherit}
+.wr-popt:last-child{border-bottom:0}
+.wr-popt:hover:not([disabled]){background:var(--holo-dim)}
+.wr-popt[disabled]{opacity:.4;cursor:default}
+.wr-popt .savw{width:34px;height:34px;flex:none}.wr-popt .savw .savi{font-size:11px}
+.wr-poptn{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wr-popts{font-family:'Share Tech Mono';font-size:10.5px;color:var(--muted);white-space:nowrap}
+.wr-pempty{padding:10px;color:var(--muted);font-size:13px;text-align:center}

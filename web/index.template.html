@@ -124,15 +124,13 @@
 
         <details class="wr-locked" id="scout-lockbox">
           <summary>🛡️ Defensa fija — mis unidades que NO se usan en ataques</summary>
-          <div class="rx-controls">
-            <input id="lock-in" class="rx-in" type="text" list="lock-dl" placeholder="Añade una unidad tuya…" autocomplete="off">
-            <datalist id="lock-dl"></datalist>
-            <button class="cgen" id="lock-add">+ Bloquear</button>
+          <div class="wr-picker">
+            <input id="lock-search" class="rx-in wr-psearch" type="text" placeholder="🔎 Buscar unidad de tu roster…" autocomplete="off">
+            <div id="lock-plist" class="wr-plist" hidden></div>
           </div>
           <div id="lock-chips" class="cq-chips"></div>
         </details>
 
-        <datalist id="scout-dl"></datalist>
         <div id="scout-warn" class="simwarn" style="display:none"></div>
         <div id="scout-board" class="wr-board"></div>
 

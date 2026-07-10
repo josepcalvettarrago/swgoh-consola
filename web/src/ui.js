@@ -27,7 +27,7 @@ const KEYMECH = ["Taunt", "Dispel", "Revive", "Gain Turn Meter", "Remove Turn Me
 const cxState = { q: "", side: "", fac: "" };
 // War Room de counters (Fase 3.1): metadata global (live o embebida) + tablero multi-equipo.
 let META = EMBEDDED_META;         // mapa base_id -> {n,s,r,c,a,im,ld} (se refresca en init desde extra.charMeta)
-let SCOUT_NAME2ID = {};           // nombre exacto -> base_id, para el datalist global
+let PICK_ALL = [], PICK_ROSTER = []; // índices del selector: todos los personajes / solo mi roster
 // Estado del tablero: tamaño uniforme (3/5), orden de reparto, 2-6 equipos enemigos, bloqueo de mi
 // defensa fija y el último plan generado. Se persiste en localStorage (store.js).
 const boardState = { size: 5, order: "auto", teams: [{ defenseIds: [] }, { defenseIds: [] }], locked: [], plan: null };
@@ -273,16 +273,46 @@ function scoutUnit(id) {
   if (m) return { i: id, n: m.n, s: m.s, r: m.r, c: m.c || [], a: m.a || [], im: m.im, gl: m.gl ? 1 : 0, ld: m.ld };
   return lookupByName(id);
 }
-function scoutBuildDatalist() {
-  SCOUT_NAME2ID = {};
-  const names = [];
-  for (const [id, m] of Object.entries(META)) { if (m && m.n) { SCOUT_NAME2ID[m.n] = id; names.push(m.n); } }
-  RD.R.forEach(u => { if (!(u.n in SCOUT_NAME2ID)) { SCOUT_NAME2ID[u.n] = u.i; names.push(u.n); } });
-  const opts = names.sort((a, b) => a.localeCompare(b)).map(n => `<option value="${n.replace(/"/g, "&quot;")}">`).join("");
-  const dl = $("#scout-dl"); if (dl) dl.innerHTML = opts;
-  // Datalist del bloqueo: SOLO mi roster (defensa fija es cosa mía).
-  const ldl = $("#lock-dl");
-  if (ldl) ldl.innerHTML = RD.R.slice().sort((a, b) => a.n.localeCompare(b.n)).map(u => `<option value="${u.n.replace(/"/g, "&quot;")}">`).join("");
+// --- selector con avatares (búsqueda por texto + lista clicable) ---
+// Índices precomputados (una vez en init) para no reconstruir 333 filas en cada pulsación.
+function buildPickIndex() {
+  const facOf = c => (c || []).find(x => x !== "Leader") || "";
+  const seen = new Set(); PICK_ALL = [];
+  for (const [id, m] of Object.entries(META)) { if (m && m.n && !seen.has(id)) { seen.add(id); PICK_ALL.push({ id, n: m.n, s: m.s, fac: facOf(m.c) }); } }
+  RD.R.forEach(u => { if (!seen.has(u.i)) { seen.add(u.i); PICK_ALL.push({ id: u.i, n: u.n, s: u.s, fac: facOf(u.c) }); } });
+  PICK_ALL.sort((a, b) => a.n.localeCompare(b.n));
+  PICK_ROSTER = RD.R.map(u => ({ id: u.i, n: u.n, s: u.s, fac: facOf(u.c) })).sort((a, b) => a.n.localeCompare(b.n));
+}
+// Filtra por nombre: primero los que empiezan por la búsqueda, luego los que la contienen. Cap 30.
+function pickFilter(list, q, limit = 30) {
+  q = (q || "").toLowerCase().trim();
+  if (!q) return list.slice(0, limit);
+  const starts = [], incl = [];
+  for (const e of list) { const n = e.n.toLowerCase(); if (n.startsWith(q)) starts.push(e); else if (n.includes(q)) incl.push(e); }
+  return starts.concat(incl).slice(0, limit);
+}
+// Pinta la lista clicable (con avatar) y cablea el clic. `onmousedown`+preventDefault para que el
+// clic gane al blur del input. `excludeSet` marca como añadidos (deshabilitados) los ya elegidos.
+function renderPickList(listEl, items, onPick, excludeSet) {
+  if (!listEl) return;
+  if (!items.length) { listEl.innerHTML = '<div class="wr-pempty">Sin resultados</div>'; listEl.hidden = false; return; }
+  listEl.innerHTML = items.map(e => {
+    const u = scoutUnit(e.id), dis = excludeSet && excludeSet.has(e.id);
+    return `<button type="button" class="wr-popt" data-id="${e.id}"${dis ? " disabled" : ""}>${portrait(u)}<span class="wr-poptn">${e.n}</span><span class="wr-popts">${SIDES[e.s] || ""}${e.fac ? " · " + e.fac : ""}</span></button>`;
+  }).join("");
+  listEl.hidden = false;
+  $$(".wr-popt", listEl).forEach(b => b.onmousedown = ev => { ev.preventDefault(); if (!b.disabled) onPick(b.dataset.id); });
+}
+// Cablea un input de búsqueda + su lista a un origen (PICK_ALL/PICK_ROSTER) y un callback de elección.
+function wirePicker(inp, listEl, source, excludeFn, onPick) {
+  if (!inp || !listEl) return;
+  const refresh = () => renderPickList(listEl, pickFilter(source, inp.value), onPick, excludeFn());
+  inp.oninput = refresh; inp.onfocus = refresh;
+  inp.onkeydown = e => {
+    if (e.key === "Enter") { e.preventDefault(); const ex = excludeFn(); const pick = pickFilter(source, inp.value).find(it => !ex.has(it.id)); if (pick) onPick(pick.id); }
+    else if (e.key === "Escape") { listEl.hidden = true; inp.blur(); }
+  };
+  inp.onblur = () => setTimeout(() => { listEl.hidden = true; }, 150);
 }
 function scoutWarn(msg) { const w = $("#scout-warn"); if (!w) return; if (!msg) { w.style.display = "none"; return; } w.textContent = msg; w.style.display = "block"; clearTimeout(scoutWarn._t); scoutWarn._t = setTimeout(() => { w.style.display = "none"; }, 4200); }
 function persistBoard() { saveBoard({ size: boardState.size, order: boardState.order, teams: boardState.teams }, null); }
@@ -298,12 +328,11 @@ function lockRenderChips() {
   }).join("");
   $$("#lock-chips button").forEach(b => b.onclick = () => { boardState.locked.splice(+b.dataset.i, 1); persistLocked(); lockRenderChips(); renderBudget(); });
 }
-function lockAdd() {
-  const inp = $("#lock-in"); if (!inp) return;
-  const nm = inp.value.trim(), id = SCOUT_NAME2ID[nm];
-  if (!id || !ID2U[id]) { scoutWarn("Para bloquear en defensa usa una unidad de TU roster (nombre exacto)."); return; }
+function lockAdd(id) {
+  if (!id || !ID2U[id]) { scoutWarn("El bloqueo es para unidades de TU roster."); return; }
   if (!boardState.locked.includes(id)) { boardState.locked.push(id); persistLocked(); lockRenderChips(); renderBudget(); }
-  inp.value = "";
+  const s = $("#lock-search"); if (s) s.value = "";
+  const l = $("#lock-plist"); if (l) l.hidden = true;
 }
 
 // --- presupuesto de roster ---
@@ -328,7 +357,7 @@ function zoneEnemyBuilder(z, i) {
   return `<div class="wr-enemy">
      <div class="wr-zlabel">Defensa enemiga <span>${z.defenseIds.length}/${boardState.size}</span></div>
      <div class="cq-chips">${chips || '<span class="cq-empty">Añade los defensores de esta zona.</span>'}</div>
-     ${full ? "" : `<div class="rx-controls"><input class="rx-in wr-def-in" data-z="${i}" list="scout-dl" type="text" placeholder="+ defensor…" autocomplete="off"></div>`}
+     ${full ? '<div class="wr-pfull">Zona completa.</div>' : `<div class="wr-picker"><input class="rx-in wr-psearch" data-z="${i}" type="text" placeholder="🔎 Buscar defensor…" autocomplete="off"><div class="wr-plist" data-z="${i}" hidden></div></div>`}
    </div>`;
 }
 function zoneCounter(i) {
@@ -359,15 +388,17 @@ function renderBoard() {
        ${zoneEnemyBuilder(z, i)}
        ${zoneCounter(i)}
      </div>`).join("");
-  // Wiring por delegación tras cada render.
-  $$(".wr-def-in", wrap).forEach(inp => inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); defenderAdd(+inp.dataset.z, inp.value.trim()); } });
+  // Wiring por delegación tras cada render: cada zona lleva su selector con avatares.
+  $$(".wr-psearch", wrap).forEach(inp => {
+    const z = +inp.dataset.z, listEl = wrap.querySelector(`.wr-plist[data-z="${z}"]`);
+    wirePicker(inp, listEl, PICK_ALL, () => new Set(boardState.teams[z].defenseIds), id => defenderAdd(z, id));
+  });
   $$(".wr-def-rm", wrap).forEach(b => b.onclick = () => { boardState.teams[+b.dataset.z].defenseIds.splice(+b.dataset.k, 1); persistBoard(); renderBoard(); });
   $$(".wr-rmteam", wrap).forEach(b => b.onclick = () => { if (boardCanRemove()) { boardState.teams.splice(+b.dataset.z, 1); boardState.plan = null; persistBoard(); renderBoard(); renderBudget(); } });
   renderBudget();
 }
-function defenderAdd(z, nm) {
-  const id = SCOUT_NAME2ID[nm];
-  if (!id) { scoutWarn("Ese personaje no está en la metadata (usa el nombre exacto de la lista)."); return; }
+function defenderAdd(z, id) {
+  if (!id) return;
   const team = boardState.teams[z]; if (!team) return;
   if (team.defenseIds.length >= boardState.size) { scoutWarn(`Máximo ${boardState.size} en ${boardState.size}v${boardState.size}.`); return; }
   if (team.defenseIds.includes(id)) return;
@@ -522,7 +553,7 @@ export function init(rd, extra = {}) {
 
   // Counters — War Room (Fase 3.1): metadata global (live o embebida) + tablero persistente.
   META = (extra.charMeta && typeof extra.charMeta === "object" && Object.keys(extra.charMeta).length) ? extra.charMeta : EMBEDDED_META;
-  scoutBuildDatalist();
+  buildPickIndex();
   // Restaura bloqueo + tablero desde localStorage (si los hay).
   boardState.locked = loadLocked(null);
   const savedBoard = loadBoard(null);
@@ -536,8 +567,7 @@ export function init(rd, extra = {}) {
   $("#scout-addteam") && ($("#scout-addteam").onclick = boardAddTeam);
   $("#scout-go") && ($("#scout-go").onclick = boardGenerate);
   $("#scout-reset") && ($("#scout-reset").onclick = boardReset);
-  $("#lock-add") && ($("#lock-add").onclick = lockAdd);
-  $("#lock-in") && ($("#lock-in").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); lockAdd(); } });
+  wirePicker($("#lock-search"), $("#lock-plist"), PICK_ROSTER, () => new Set(boardState.locked), id => lockAdd(id));
   lockRenderChips(); renderBoard();
   cxSetMode("scout");
 
