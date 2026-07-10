@@ -304,15 +304,17 @@ function renderPickList(listEl, items, onPick, excludeSet) {
   $$(".wr-popt", listEl).forEach(b => b.onmousedown = ev => { ev.preventDefault(); if (!b.disabled) onPick(b.dataset.id); });
 }
 // Cablea un input de búsqueda + su lista a un origen (PICK_ALL/PICK_ROSTER) y un callback de elección.
-function wirePicker(inp, listEl, source, excludeFn, onPick) {
+// `container` opcional: si se pasa, también se oculta al perder foco (para el desplegable de zona,
+// que aparece al pulsar un hueco vacío; el picker del bloqueo va siempre visible y no lo pasa).
+function wirePicker(inp, listEl, source, excludeFn, onPick, container) {
   if (!inp || !listEl) return;
   const refresh = () => renderPickList(listEl, pickFilter(source, inp.value), onPick, excludeFn());
   inp.oninput = refresh; inp.onfocus = refresh;
   inp.onkeydown = e => {
     if (e.key === "Enter") { e.preventDefault(); const ex = excludeFn(); const pick = pickFilter(source, inp.value).find(it => !ex.has(it.id)); if (pick) onPick(pick.id); }
-    else if (e.key === "Escape") { listEl.hidden = true; inp.blur(); }
+    else if (e.key === "Escape") { listEl.hidden = true; if (container) container.hidden = true; inp.blur(); }
   };
-  inp.onblur = () => setTimeout(() => { listEl.hidden = true; }, 150);
+  inp.onblur = () => setTimeout(() => { listEl.hidden = true; if (container) container.hidden = true; }, 150);
 }
 function scoutWarn(msg) { const w = $("#scout-warn"); if (!w) return; if (!msg) { w.style.display = "none"; return; } w.textContent = msg; w.style.display = "block"; clearTimeout(scoutWarn._t); scoutWarn._t = setTimeout(() => { w.style.display = "none"; }, 4200); }
 function persistBoard() { saveBoard({ size: boardState.size, order: boardState.order, teams: boardState.teams }, null); }
@@ -349,15 +351,22 @@ function renderBudget() {
 // --- tablero de equipos enemigos ---
 function boardCanRemove() { return boardState.teams.length > 2; }
 function zoneEnemyBuilder(z, i) {
-  const chips = z.defenseIds.map((id, k) => {
-    const u = scoutUnit(id), src = unitImg(u), av = src ? `<img class="cqav" src="${src}" loading="lazy" alt="" onerror="this.remove()">` : "";
-    return `<span class="cq-chip cq-char">${av}${u.n}<button class="wr-def-rm" data-z="${i}" data-k="${k}" aria-label="quitar">×</button></span>`;
-  }).join("");
-  const full = z.defenseIds.length >= boardState.size;
+  const size = boardState.size;
+  let slots = "";
+  for (let k = 0; k < size; k++) {
+    const id = z.defenseIds[k];
+    if (id) {
+      const u = scoutUnit(id);
+      slots += `<div class="wr-slot filled">${portrait(u)}<button class="wr-def-rm" data-z="${i}" data-k="${k}" aria-label="quitar ${u.n}">×</button><span class="wr-slotn">${u.n}</span></div>`;
+    } else {
+      slots += `<button type="button" class="wr-slot empty" data-z="${i}" aria-label="añadir defensor">+</button>`;
+    }
+  }
+  const full = z.defenseIds.length >= size;
   return `<div class="wr-enemy">
-     <div class="wr-zlabel">Defensa enemiga <span>${z.defenseIds.length}/${boardState.size}</span></div>
-     <div class="cq-chips">${chips || '<span class="cq-empty">Añade los defensores de esta zona.</span>'}</div>
-     ${full ? '<div class="wr-pfull">Zona completa.</div>' : `<div class="wr-picker"><input class="rx-in wr-psearch" data-z="${i}" type="text" placeholder="🔎 Buscar defensor…" autocomplete="off"><div class="wr-plist" data-z="${i}" hidden></div></div>`}
+     <div class="wr-zlabel">Defensa enemiga <span class="wr-count">${z.defenseIds.length}/${size}</span></div>
+     <div class="wr-slots" style="--slots:${size}">${slots}</div>
+     ${full ? "" : `<div class="wr-picker" data-z="${i}" hidden><input class="rx-in wr-psearch" data-z="${i}" type="text" placeholder="🔎 Buscar defensor…" autocomplete="off"><div class="wr-plist" data-z="${i}" hidden></div></div>`}
    </div>`;
 }
 function zoneCounter(i) {
@@ -388,10 +397,15 @@ function renderBoard() {
        ${zoneEnemyBuilder(z, i)}
        ${zoneCounter(i)}
      </div>`).join("");
-  // Wiring por delegación tras cada render: cada zona lleva su selector con avatares.
-  $$(".wr-psearch", wrap).forEach(inp => {
-    const z = +inp.dataset.z, listEl = wrap.querySelector(`.wr-plist[data-z="${z}"]`);
-    wirePicker(inp, listEl, PICK_ALL, () => new Set(boardState.teams[z].defenseIds), id => defenderAdd(z, id));
+  // Wiring por delegación tras cada render: cada zona lleva su selector con avatares (oculto hasta
+  // que se pulsa un hueco vacío, como el "Edit Defenses" del juego).
+  $$(".wr-picker", wrap).forEach(pk => {
+    const z = +pk.dataset.z, inp = pk.querySelector(".wr-psearch"), listEl = pk.querySelector(".wr-plist");
+    wirePicker(inp, listEl, PICK_ALL, () => new Set(boardState.teams[z].defenseIds), id => defenderAdd(z, id), pk);
+  });
+  $$(".wr-slot.empty", wrap).forEach(b => b.onclick = () => {
+    const z = +b.dataset.z, pk = wrap.querySelector(`.wr-picker[data-z="${z}"]`);
+    if (pk) { pk.hidden = false; const inp = pk.querySelector(".wr-psearch"); if (inp) inp.focus(); }
   });
   $$(".wr-def-rm", wrap).forEach(b => b.onclick = () => { boardState.teams[+b.dataset.z].defenseIds.splice(+b.dataset.k, 1); persistBoard(); renderBoard(); });
   $$(".wr-rmteam", wrap).forEach(b => b.onclick = () => { if (boardCanRemove()) { boardState.teams.splice(+b.dataset.z, 1); boardState.plan = null; persistBoard(); renderBoard(); renderBudget(); } });

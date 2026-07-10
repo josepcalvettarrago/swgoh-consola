@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-// Render REAL del War Room (Fase 3.1/3.2) sobre el DOM del template. Cubre el selector con avatares
-// (búsqueda + lista clicable, ruta SOLO ratón), el tablero multi-equipo, presupuesto, bloqueo,
-// persistencia y reset, y que el Tablero meta sigue intacto.
+// Render REAL del War Room (Fase 3.1/3.2/3.3) sobre el DOM del template. Cubre la holomesa con
+// ranuras tipo juego (huecos vacíos + retratos circulares), el selector con avatares (búsqueda +
+// clic), tablero multi-equipo, presupuesto, bloqueo, persistencia y reset, y que el Tablero meta
+// sigue intacto.
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -26,7 +27,6 @@ async function boot(extra) {
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
-// Ruta SOLO RATÓN: escribe en el buscador y hace clic (mousedown) en la fila que coincide.
 function typeAndClick(input, listEl, name) {
   input.value = name;
   input.dispatchEvent(new window.Event("input", { bubbles: true }));
@@ -34,36 +34,48 @@ function typeAndClick(input, listEl, name) {
   if (!opt) throw new Error("no aparece en el selector: " + name);
   opt.dispatchEvent(new window.MouseEvent("mousedown", { bubbles: true, cancelable: true }));
 }
+// Ruta tipo juego: clic en un hueco vacío (revela el picker) → buscar → clic en la fila.
 function pickDef(z, name) {
-  const inp = $$("#scout-board .wr-psearch")[z];
-  typeAndClick(inp, inp.parentElement.querySelector(".wr-plist"), name);
+  const zone = $$(".wr-zone")[z];
+  const empty = zone.querySelector(".wr-slot.empty");
+  if (empty) empty.click();
+  typeAndClick(zone.querySelector(".wr-psearch"), zone.querySelector(".wr-plist"), name);
 }
 function pickLock(name) { typeAndClick($("#lock-search"), $("#lock-plist"), name); }
+const filled = z => $$(".wr-zone")[z].querySelectorAll(".wr-slot.filled").length;
 
-describe("War Room — selector con avatares, tablero, presupuesto y persistencia", () => {
-  it("arranca con 2 zonas y cada zona tiene su selector (sin datalist)", async () => {
+describe("War Room holomesa — ranuras, selector, tablero y persistencia", () => {
+  it("arranca con 2 zonas y cada zona muestra `size` ranuras vacías (5v5)", async () => {
     await expect(boot({})).resolves.not.toThrow();
     expect($$(".wr-zone").length).toBe(2);
-    expect($$("#scout-board .wr-psearch").length).toBe(2);
-    expect($("#scout-dl")).toBe(null); // ya no hay datalist
+    expect($(".wr-table")).toBeTruthy();                          // marco holomesa presente
+    expect($$(".wr-zone")[0].querySelectorAll(".wr-slot.empty").length).toBe(5);
+    expect(filled(0)).toBe(0);
+  });
+
+  it("clic en un hueco vacío revela el picker de esa zona", async () => {
+    await boot({});
+    const pk = $('.wr-picker[data-z="0"]');
+    expect(pk.hidden).toBe(true);
+    $$(".wr-zone")[0].querySelector(".wr-slot.empty").click();
+    expect(pk.hidden).toBe(false);
   });
 
   it("el selector filtra por texto y muestra filas con avatar", async () => {
     await boot({});
-    const inp = $$("#scout-board .wr-psearch")[0];
+    $$(".wr-zone")[0].querySelector(".wr-slot.empty").click();
+    const inp = $$(".wr-zone")[0].querySelector(".wr-psearch");
     inp.value = "bossk"; inp.dispatchEvent(new window.Event("input", { bubbles: true }));
-    const list = inp.parentElement.querySelector(".wr-plist");
-    expect(list.hidden).toBe(false);
-    const opts = list.querySelectorAll(".wr-popt");
+    const opts = $$(".wr-zone")[0].querySelector(".wr-plist").querySelectorAll(".wr-popt");
     expect(opts.length).toBeGreaterThan(0);
-    expect(opts[0].querySelector(".savw")).toBeTruthy();          // avatar presente
+    expect(opts[0].querySelector(".savw")).toBeTruthy();
     expect([...opts].some(o => o.querySelector(".wr-poptn").textContent === "Bossk")).toBe(true);
   });
 
-  it("añadir defensores SOLO con ratón (clic en la fila, sin Enter) y generar da counter <=5", async () => {
+  it("añadir defensores por ranura (clic hueco → buscar → clic) y generar da counter <=5", async () => {
     await boot({});
     ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => pickDef(0, n));
-    expect($$(".wr-zone")[0].querySelectorAll(".cq-chip").length).toBe(3);
+    expect(filled(0)).toBe(3);
     $("#scout-go").click();
     const mine = $$(".wr-zone")[0].querySelector(".wr-mine");
     expect(mine.querySelectorAll(".simrow").length).toBeGreaterThan(0);
@@ -71,9 +83,10 @@ describe("War Room — selector con avatares, tablero, presupuesto y persistenci
     expect(mine.textContent).toContain("SINERGIA");
   });
 
-  it("3v3 genera counters de exactamente 3", async () => {
+  it("3v3 muestra 3 ranuras y genera counters de exactamente 3", async () => {
     await boot({});
     $$("#scout-size button").find(b => b.dataset.n === "3").click();
+    expect($$(".wr-zone")[0].querySelectorAll(".wr-slot").length).toBe(3);
     ["Jabba the Hutt", "Bossk", "Boba Fett"].forEach(n => pickDef(0, n));
     $("#scout-go").click();
     expect($$(".wr-zone")[0].querySelectorAll(".wr-mine .simrow").length).toBe(3);
@@ -81,8 +94,7 @@ describe("War Room — selector con avatares, tablero, presupuesto y persistenci
 
   it("bloqueo por clic en el selector de mi roster: chip + persiste + cuenta en 'en defensa'", async () => {
     const RD = await boot({});
-    const name = RD.R[0].n;
-    pickLock(name);
+    pickLock(RD.R[0].n);
     expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1);
     expect(JSON.parse(localStorage.getItem("swgoh.gac.locked"))).toContain(RD.R[0].i);
     expect(Number($("#scout-budget").querySelector(".wr-b.lock b").textContent)).toBe(1);
@@ -105,7 +117,7 @@ describe("War Room — selector con avatares, tablero, presupuesto y persistenci
     pickDef(0, "Bossk");
     $("#scout-reset").click();
     expect($$(".wr-zone").length).toBe(2);
-    expect($$(".wr-zone")[0].querySelectorAll(".cq-chip").length).toBe(0);
+    expect(filled(0)).toBe(0);
     expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1);
   });
 
@@ -117,7 +129,7 @@ describe("War Room — selector con avatares, tablero, presupuesto y persistenci
     const { init } = await import("../web/src/ui.js");
     const { RD } = await import("../web/src/data.js");
     init(RD, {});
-    expect($$(".wr-zone")[0].querySelectorAll(".cq-chip").length).toBe(1);
+    expect(filled(0)).toBe(1);
   });
 
   it("cambiar a Tablero meta muestra el board clásico; el resto sigue vivo", async () => {
