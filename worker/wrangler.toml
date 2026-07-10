@@ -7,6 +7,9 @@ compatibility_date = "2025-01-01"
 
 # Variables NO secretas.
 [vars]
+FIRESTORE_DB = "swgohapi"
+ALLY_CODE    = "355463284"
+GUILD_ID     = "U6tWH0WuSDyl_g7lmgZm-w"
 PAGES_ORIGIN = "*"            # en prod: https://<tu-proyecto>.pages.dev
 
 # Secret (NUNCA en el repo). Solo lectura de Firestore:
