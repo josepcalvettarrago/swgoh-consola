@@ -16,7 +16,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 
 ---
 
-## ESTADO ACTUAL (2026-07-09)
+## ESTADO ACTUAL (2026-07-11)
 
 | Fase | Estado | Tag | Notas |
 |---|---|---|---|
@@ -29,6 +29,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **1.2 — Ingesta LOCAL (write path live)** | ✅ Operativa | — | swgoh.gg también da **403 al IP de datacenter de GitHub Actions** (ni curl-impersonate lo esquiva → bloqueo por IP). La ingesta corre **en local** (`scripts/ingest-local.ps1`) al **iniciar sesión** (acceso directo en la carpeta de Inicio; cron de Actions desactivado). Escribe en **Firestore live**. |
 | **3 — Counter Generator GAC (Scout)** | ✅ Hecha | `v3-counters` | Scout 3v3/5v5 dirigido por metadata (kit fijo por personaje): `detectThreats` + `counter_db` curado (27) + `assemble()`. Tablero meta previo intacto. §5 (nivel del rival) descartado: swgoh.gg da challenge+sin CORS. **95 tests verdes.** |
 | **3.1 — GAC War Room** | ✅ Hecha | `v3.1-warroom` | Tablero multi-equipo (2–6) con presupuesto de roster compartido (exclusividad), fix del bug 3v3 (`assemble(size)`), bloqueo de mi defensa fija y persistencia `localStorage`. **116 tests verdes.** |
+| **3.2–3.5 — War Room UX/visual** | ✅ Hecha | `v3.2-picker` … `v3.5-filtros` | Selector con avatares (3.2), reskin holomesa GAC (3.3), defensa fija holomesa + teclado (3.4), búsqueda avanzada por Lado/Rol/Facción/Mecánica (3.5). **122 tests verdes.** |
 | 4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
