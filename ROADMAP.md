@@ -189,6 +189,12 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   retrato de anillo por lado. Bisel en `::before` (no recorta el picker). **Cero cambios de motor.**
 - Holomesa **plana** (sin 3D). Tests render → **118 verdes**.
 
+### Fase 3.4 — Defensa fija holomesa + teclado (`v3.4-lockholo-kbd`)
+- **Bloqueo (defensa fija)** con aspecto de mini-holomesa al desplegar el `<details>`: unidades en
+  ranuras circulares (borde cian + escaneo), en vez de chips.
+- **Selector navegable con teclado**: ↑/↓ resaltan (saltando las ya elegidas, auto-scroll) y Enter
+  añade; el clic sigue igual. Aplica a zonas y bloqueo. **Cero cambios de motor.** → **119 verdes**.
+
 ---
 
 ## DEUDA TÉCNICA / BACKLOG

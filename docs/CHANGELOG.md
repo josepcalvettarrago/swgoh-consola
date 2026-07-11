@@ -2,6 +2,20 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 3.4 — Defensa fija holomesa + navegación por teclado — `v3.4-lockholo-kbd`
+
+- **Defensa fija con aspecto GAC:** el bloqueo deja de ser una lista de chips. Sigue siendo una
+  subpestaña **colapsable** (`<details>`) y, al desplegarse, se ve como una **mini-holomesa** (borde
+  cian, fondo con escaneo) con las unidades bloqueadas en **ranuras circulares** (retrato con anillo
+  por lado + `×` para quitar).
+- **Navegación por teclado en el selector:** además del clic, **↑/↓** resaltan filas (saltando las ya
+  elegidas, con auto-scroll) y **Enter** añade la resaltada. Aplica a zonas y bloqueo (mismo
+  `wirePicker`). El clic sigue funcionando igual.
+- **Cero cambios de motor/estado:** `genBoard`/`assemble`/`store`/persistencia intactos; solo UI.
+- Tests: bloqueo con `.wr-slot.filled`, panel abierto con `.wr-lockslots`, y teclado ↑+Enter →
+  **119 verdes**.
+- Tag: `v3.4-lockholo-kbd`.
+
 ## Fase 3.3 — Rediseño visual "holomesa GAC" — `v3.3-holotable`
 
 - **El War Room parece la Grand Arena del juego** (todo CSS, sin imágenes del juego — restricción
