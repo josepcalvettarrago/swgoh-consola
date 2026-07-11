@@ -28,6 +28,12 @@ const cxState = { q: "", side: "", fac: "" };
 // War Room de counters (Fase 3.1): metadata global (live o embebida) + tablero multi-equipo.
 let META = EMBEDDED_META;         // mapa base_id -> {n,s,r,c,a,im,ld} (se refresca en init desde extra.charMeta)
 let PICK_ALL = [], PICK_ROSTER = []; // índices del selector: todos los personajes / solo mi roster
+let FACETS = { all: { fac: [], mech: [] }, roster: { fac: [], mech: [] } }; // listas de facetas por contexto
+// Filtros avanzados del selector (tipo Conquest), combinados con Y. Persisten durante la SESIÓN
+// (no en localStorage). "all" lo comparten todas las zonas enemigas; "roster" es del bloqueo.
+const pickState = { all: { side: "", role: "", fac: "", mech: "" }, roster: { side: "", role: "", fac: "", mech: "" } };
+const PICK_SIDES = [["L", "Luz"], ["D", "Oscuro"], ["N", "Neutral"]];
+const PICK_ROLES = [["Tank", "Tanque"], ["Attacker", "Daño"], ["Support", "Apoyo"], ["Healer", "Sustain"]];
 // Estado del tablero: tamaño uniforme (3/5), orden de reparto, 2-6 equipos enemigos, bloqueo de mi
 // defensa fija y el último plan generado. Se persiste en localStorage (store.js).
 const boardState = { size: 5, order: "auto", teams: [{ defenseIds: [] }, { defenseIds: [] }], locked: [], plan: null };
@@ -276,19 +282,30 @@ function scoutUnit(id) {
 // --- selector con avatares (búsqueda por texto + lista clicable) ---
 // Índices precomputados (una vez en init) para no reconstruir 333 filas en cada pulsación.
 function buildPickIndex() {
-  const facOf = c => (c || []).find(x => x !== "Leader") || "";
+  // Entradas con c/a por REFERENCIA (no se copian los arrays) para filtrar por facción/mecánica.
   const seen = new Set(); PICK_ALL = [];
-  for (const [id, m] of Object.entries(META)) { if (m && m.n && !seen.has(id)) { seen.add(id); PICK_ALL.push({ id, n: m.n, s: m.s, fac: facOf(m.c) }); } }
-  RD.R.forEach(u => { if (!seen.has(u.i)) { seen.add(u.i); PICK_ALL.push({ id: u.i, n: u.n, s: u.s, fac: facOf(u.c) }); } });
+  for (const [id, m] of Object.entries(META)) { if (m && m.n && !seen.has(id)) { seen.add(id); PICK_ALL.push({ id, n: m.n, s: m.s, r: m.r, c: m.c || [], a: m.a || [] }); } }
+  RD.R.forEach(u => { if (!seen.has(u.i)) { seen.add(u.i); PICK_ALL.push({ id: u.i, n: u.n, s: u.s, r: u.r, c: u.c || [], a: u.a || [] }); } });
   PICK_ALL.sort((a, b) => a.n.localeCompare(b.n));
-  PICK_ROSTER = RD.R.map(u => ({ id: u.i, n: u.n, s: u.s, fac: facOf(u.c) })).sort((a, b) => a.n.localeCompare(b.n));
+  PICK_ROSTER = RD.R.map(u => ({ id: u.i, n: u.n, s: u.s, r: u.r, c: u.c || [], a: u.a || [] })).sort((a, b) => a.n.localeCompare(b.n));
+  FACETS = { all: facetsOf(PICK_ALL), roster: facetsOf(PICK_ROSTER) };
 }
-// Filtra por nombre: primero los que empiezan por la búsqueda, luego los que la contienen. Cap 30.
-function pickFilter(list, q, limit = 30) {
+// Facciones (por frecuencia desc, sin "Leader") y mecánicas (alfabético) distintas de una lista.
+function facetsOf(list) {
+  const facCount = {}, mech = new Set();
+  for (const e of list) { for (const c of e.c) { if (c !== "Leader") facCount[c] = (facCount[c] || 0) + 1; } for (const a of e.a) mech.add(a); }
+  const fac = Object.entries(facCount).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([c]) => c);
+  return { fac, mech: [...mech].sort((a, b) => a.localeCompare(b)) };
+}
+// Filtra por nombre + filtros avanzados (Lado/Rol/Facción/Mecánica, combinados con Y). Con texto,
+// los que EMPIEZAN por la búsqueda van primero. Cap 30.
+function pickFilter(list, q, filters = {}, limit = 30) {
   q = (q || "").toLowerCase().trim();
-  if (!q) return list.slice(0, limit);
+  const f = filters || {};
+  const ok = e => (!f.side || e.s === f.side) && (!f.role || e.r === f.role) && (!f.fac || e.c.includes(f.fac)) && (!f.mech || e.a.includes(f.mech));
+  if (!q) { const out = []; for (const e of list) { if (ok(e)) { out.push(e); if (out.length >= limit) break; } } return out; }
   const starts = [], incl = [];
-  for (const e of list) { const n = e.n.toLowerCase(); if (n.startsWith(q)) starts.push(e); else if (n.includes(q)) incl.push(e); }
+  for (const e of list) { if (!ok(e)) continue; const n = e.n.toLowerCase(); if (n.startsWith(q)) starts.push(e); else if (n.includes(q)) incl.push(e); }
   return starts.concat(incl).slice(0, limit);
 }
 // Pinta la lista clicable (con avatar) y cablea el clic. `onmousedown`+preventDefault para que el
@@ -304,16 +321,33 @@ function renderPickList(listEl, items, onPick, excludeSet, activeIndex = -1) {
   listEl.hidden = false;
   $$(".wr-popt", listEl).forEach(b => b.onmousedown = ev => { ev.preventDefault(); if (!b.disabled) onPick(b.dataset.id); });
 }
+// Rellena la barra de filtros avanzados (Lado/Rol/Facción/Mecánica + Limpiar) de un picker y la
+// cablea. Los valores salen de `pickState[ctx]` (persisten en sesión) y al cambiar re-filtran.
+function buildFilterBar(container, ctx, refresh) {
+  const bar = container && container.querySelector(".wr-pfilters"); if (!bar) return;
+  const st = pickState[ctx], F = FACETS[ctx] || { fac: [], mech: [] };
+  const opts = (pairs, sel, any) => `<option value="">${any}</option>` + pairs.map(([v, l]) => `<option value="${v}"${v === sel ? " selected" : ""}>${l}</option>`).join("");
+  bar.innerHTML =
+    `<select class="rx-sel wr-pf" data-k="side" aria-label="Lado">${opts(PICK_SIDES, st.side, "Lado")}</select>` +
+    `<select class="rx-sel wr-pf" data-k="role" aria-label="Rol">${opts(PICK_ROLES, st.role, "Rol")}</select>` +
+    `<select class="rx-sel wr-pf" data-k="fac" aria-label="Facción">${opts(F.fac.map(c => [c, c]), st.fac, "Facción")}</select>` +
+    `<select class="rx-sel wr-pf" data-k="mech" aria-label="Mecánica">${opts(F.mech.map(m => [m, m]), st.mech, "Mecánica")}</select>` +
+    `<button type="button" class="wr-pclear"${(st.side || st.role || st.fac || st.mech) ? "" : " hidden"}>Limpiar</button>`;
+  $$(".wr-pf", bar).forEach(sel => sel.onchange = () => { st[sel.dataset.k] = sel.value; buildFilterBar(container, ctx, refresh); refresh(); });
+  const clr = bar.querySelector(".wr-pclear");
+  if (clr) clr.onclick = () => { st.side = st.role = st.fac = st.mech = ""; buildFilterBar(container, ctx, refresh); refresh(); };
+}
 // Cablea un input de búsqueda + su lista a un origen (PICK_ALL/PICK_ROSTER) y un callback de elección.
-// Soporta ratón (clic) Y teclado (↑/↓ resaltan, Enter elige). `container` opcional: si se pasa, también
-// se oculta al perder foco (desplegable de zona, que aparece al pulsar un hueco vacío; el del bloqueo
-// va siempre visible y no lo pasa).
-function wirePicker(inp, listEl, source, excludeFn, onPick, container) {
+// Soporta ratón (clic), teclado (↑/↓ resaltan, Enter elige) y filtros avanzados (`ctx`). `container`
+// es el `.wr-picker`; si lleva `data-z` (zona) se oculta al salir el foco; el del bloqueo permanece.
+function wirePicker(inp, listEl, source, excludeFn, onPick, container, ctx) {
   if (!inp || !listEl) return;
+  const hideBox = container && container.hasAttribute && container.hasAttribute("data-z");
+  const filters = () => (ctx && pickState[ctx]) || {};
   let items = [], active = -1;
   const firstEnabled = ex => items.findIndex(it => !ex.has(it.id));
   const paint = () => renderPickList(listEl, items, onPick, excludeFn(), active);
-  const refresh = () => { items = pickFilter(source, inp.value); active = firstEnabled(excludeFn()); paint(); };
+  const refresh = () => { items = pickFilter(source, inp.value, filters()); active = firstEnabled(excludeFn()); paint(); };
   const move = dir => {
     const ex = excludeFn(); if (!items.length) return;
     for (let n = 0; n < items.length; n++) { active = (active + dir + items.length) % items.length; if (!ex.has(items[active].id)) break; }
@@ -321,6 +355,7 @@ function wirePicker(inp, listEl, source, excludeFn, onPick, container) {
     const el = listEl.querySelector(".wr-popt.active");
     if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
   };
+  if (ctx && container) buildFilterBar(container, ctx, refresh);
   inp.oninput = refresh; inp.onfocus = refresh;
   inp.onkeydown = e => {
     if (e.key === "ArrowDown") { e.preventDefault(); if (listEl.hidden) refresh(); else move(1); }
@@ -329,9 +364,11 @@ function wirePicker(inp, listEl, source, excludeFn, onPick, container) {
       e.preventDefault(); const ex = excludeFn();
       const pick = (active >= 0 && items[active] && !ex.has(items[active].id)) ? items[active] : items.find(it => !ex.has(it.id));
       if (pick) onPick(pick.id);
-    } else if (e.key === "Escape") { listEl.hidden = true; if (container) container.hidden = true; inp.blur(); }
+    } else if (e.key === "Escape") { listEl.hidden = true; if (hideBox) container.hidden = true; inp.blur(); }
   };
-  inp.onblur = () => setTimeout(() => { listEl.hidden = true; if (container) container.hidden = true; }, 150);
+  // Ocultar al salir el foco del picker ENTERO (así interactuar con los selects de filtro no lo cierra).
+  if (container) container.onfocusout = () => setTimeout(() => { if (!container.contains(document.activeElement)) { listEl.hidden = true; if (hideBox) container.hidden = true; } }, 120);
+  else inp.onblur = () => setTimeout(() => { listEl.hidden = true; }, 150);
 }
 function scoutWarn(msg) { const w = $("#scout-warn"); if (!w) return; if (!msg) { w.style.display = "none"; return; } w.textContent = msg; w.style.display = "block"; clearTimeout(scoutWarn._t); scoutWarn._t = setTimeout(() => { w.style.display = "none"; }, 4200); }
 function persistBoard() { saveBoard({ size: boardState.size, order: boardState.order, teams: boardState.teams }, null); }
@@ -383,7 +420,7 @@ function zoneEnemyBuilder(z, i) {
   return `<div class="wr-enemy">
      <div class="wr-zlabel">Defensa enemiga <span class="wr-count">${z.defenseIds.length}/${size}</span></div>
      <div class="wr-slots" style="--slots:${size}">${slots}</div>
-     ${full ? "" : `<div class="wr-picker" data-z="${i}" hidden><input class="rx-in wr-psearch" data-z="${i}" type="text" placeholder="🔎 Buscar defensor…" autocomplete="off"><div class="wr-plist" data-z="${i}" hidden></div></div>`}
+     ${full ? "" : `<div class="wr-picker" data-z="${i}" hidden><div class="wr-pfilters"></div><input class="rx-in wr-psearch" data-z="${i}" type="text" placeholder="🔎 Buscar defensor…" autocomplete="off"><div class="wr-plist" data-z="${i}" hidden></div></div>`}
    </div>`;
 }
 function zoneCounter(i) {
@@ -418,7 +455,7 @@ function renderBoard() {
   // que se pulsa un hueco vacío, como el "Edit Defenses" del juego).
   $$(".wr-picker", wrap).forEach(pk => {
     const z = +pk.dataset.z, inp = pk.querySelector(".wr-psearch"), listEl = pk.querySelector(".wr-plist");
-    wirePicker(inp, listEl, PICK_ALL, () => new Set(boardState.teams[z].defenseIds), id => defenderAdd(z, id), pk);
+    wirePicker(inp, listEl, PICK_ALL, () => new Set(boardState.teams[z].defenseIds), id => defenderAdd(z, id), pk, "all");
   });
   $$(".wr-slot.empty", wrap).forEach(b => b.onclick = () => {
     const z = +b.dataset.z, pk = wrap.querySelector(`.wr-picker[data-z="${z}"]`);
@@ -598,7 +635,7 @@ export function init(rd, extra = {}) {
   $("#scout-addteam") && ($("#scout-addteam").onclick = boardAddTeam);
   $("#scout-go") && ($("#scout-go").onclick = boardGenerate);
   $("#scout-reset") && ($("#scout-reset").onclick = boardReset);
-  wirePicker($("#lock-search"), $("#lock-plist"), PICK_ROSTER, () => new Set(boardState.locked), id => lockAdd(id));
+  wirePicker($("#lock-search"), $("#lock-plist"), PICK_ROSTER, () => new Set(boardState.locked), id => lockAdd(id), $("#lock-search") && $("#lock-search").closest(".wr-picker"), "roster");
   lockRenderChips(); renderBoard();
   cxSetMode("scout");
 

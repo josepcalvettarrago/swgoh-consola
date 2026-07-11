@@ -144,6 +144,34 @@ describe("War Room holomesa — ranuras, selector, tablero y persistencia", () =
     expect(filled(0)).toBe(1);
   });
 
+  it("búsqueda avanzada: barra de filtros en zona y en bloqueo (4 selects cada una)", async () => {
+    await boot({});
+    expect($$(".wr-zone")[0].querySelectorAll(".wr-pf").length).toBe(4);
+    expect($$(".wr-locked .wr-pf").length).toBe(4);
+  });
+
+  it("filtrar por Lado reduce la lista (combina con texto)", async () => {
+    await boot({});
+    const zone = $$(".wr-zone")[0];
+    const search = q => { const i = zone.querySelector(".wr-psearch"); i.value = q; i.dispatchEvent(new window.Event("input", { bubbles: true })); };
+    const setF = (k, v) => { const s = zone.querySelector(`.wr-pf[data-k="${k}"]`); s.value = v; s.dispatchEvent(new window.Event("change", { bubbles: true })); };
+    const names = () => [...zone.querySelectorAll(".wr-plist .wr-popt .wr-poptn")].map(e => e.textContent);
+    search("jabba"); setF("side", "D");
+    expect(names()).toContain("Jabba the Hutt");          // Jabba es Oscuro
+    setF("side", "L");
+    expect(names()).not.toContain("Jabba the Hutt");      // oculto bajo filtro Luz
+  });
+
+  it("los filtros persisten entre búsquedas y los comparten todas las zonas", async () => {
+    await boot({});
+    const z0 = $$(".wr-zone")[0];
+    const roleSel = z0.querySelector('.wr-pf[data-k="role"]');
+    roleSel.value = "Tank"; roleSel.dispatchEvent(new window.Event("change", { bubbles: true }));
+    $("#scout-addteam").click();                          // re-render del tablero
+    expect($$(".wr-zone")[0].querySelector('.wr-pf[data-k="role"]').value).toBe("Tank"); // persiste
+    expect($$(".wr-zone")[1].querySelector('.wr-pf[data-k="role"]').value).toBe("Tank"); // compartido
+  });
+
   it("cambiar a Tablero meta muestra el board clásico; el resto sigue vivo", async () => {
     await boot({});
     $$("#cx-mode button").find(b => b.dataset.m === "board").click();

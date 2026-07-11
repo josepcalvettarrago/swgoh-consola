@@ -474,3 +474,9 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .wr-poptn{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wr-popts{font-family:'Share Tech Mono';font-size:10.5px;color:var(--muted);white-space:nowrap}
 .wr-pempty{padding:10px;color:var(--muted);font-size:13px;text-align:center}
+/* barra de filtros avanzados del selector (Lado/Rol/Facción/Mecánica) */
+.wr-pfilters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;align-items:center}
+.wr-pf{font-size:12px;padding:5px 8px;max-width:150px}
+.wr-pclear{background:none;border:1px solid var(--line);color:var(--muted);border-radius:7px;font-size:11.5px;padding:5px 9px;cursor:pointer}
+.wr-pclear:hover{border-color:var(--ember);color:var(--ember)}
+.wr-pclear[hidden]{display:none}
