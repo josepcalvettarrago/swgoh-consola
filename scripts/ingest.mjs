@@ -7,7 +7,7 @@
 //   node scripts/ingest.mjs --dry      # solo fetch + normaliza + imprime (sin escribir)
 //
 // Env: ALLY_CODE (opcional), FIREBASE_SERVICE_ACCOUNT (JSON del service account, obligatorio salvo --dry).
-import { buildCharMap, normalizeRoster, playerMeta, normalizeGuild } from "../worker/src/normalize.js";
+import { buildCharMap, normalizeRoster, playerMeta, normalizeGuild, compactMods } from "../worker/src/normalize.js";
 import { setDoc, getDoc } from "../worker/src/firestore.js";
 import { compactSnapshot, snapshotHash, diffSnapshots, isEmptyDiff } from "../web/src/diff.js";
 import { execFile } from "node:child_process";
@@ -110,6 +110,30 @@ async function main() {
     }
     // Actualiza el head para el próximo run.
     await write(`snapshots/${ALLY}`, { hash, snapshot: JSON.stringify(snapshot), ts: now });
+  }
+
+  // --- Mods (Fase 4.1): compactar + escribir con DEDUP (patrón snapshots) ---
+  // Cabe en 1 doc (~420 KB < 1 MB). Guarda: si el JSON de mods supera 900 KB, se pagina.
+  const compact = compactMods(player);
+  const modsJson = JSON.stringify(compact.mods), unitsJson = JSON.stringify(compact.units);
+  const modsHash = snapshotHash({ m: modsJson, u: unitsJson });
+  const modHead = DRY ? null : await getDoc(env, `mods/${ALLY}`).catch(() => null);
+  if (modHead && modHead.hash === modsHash) {
+    console.log(`  mods sin cambios (hash ${modsHash}) — no se escribe`);
+  } else {
+    const LIMIT = 900 * 1024;
+    if (Buffer.byteLength(modsJson, "utf8") <= LIMIT) {
+      await write(`mods/${ALLY}`, { mods: modsJson, units: unitsJson, count: compact.mods.length, hash: modsHash, paged: 0, updatedAt: now });
+    } else {
+      // Paginado: ~500 mods por página en mods/{ally}/pages/{000..}. El head guarda units + nº de páginas.
+      const PER = 500, pages = Math.ceil(compact.mods.length / PER);
+      for (let i = 0; i < pages; i++) {
+        const chunk = compact.mods.slice(i * PER, (i + 1) * PER);
+        await write(`mods/${ALLY}/pages/${String(i).padStart(3, "0")}`, { mods: JSON.stringify(chunk) });
+      }
+      await write(`mods/${ALLY}`, { units: unitsJson, count: compact.mods.length, hash: modsHash, paged: pages, updatedAt: now });
+    }
+    console.log(`  mods · ${compact.mods.length} compactos (${(Buffer.byteLength(modsJson, "utf8") / 1024).toFixed(0)} KB)`);
   }
 
   if (meta.guildId) {

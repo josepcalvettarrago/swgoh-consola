@@ -11,6 +11,7 @@
  *   GET /api/meta/characters   -> mapa de metadata
  *   GET /api/progress/:ally     -> últimos N eventos (diffs ya calculados) + meta más reciente
  *   GET /api/snapshots/:ally    -> últimos N snapshots compactos (para gráficas futuras)
+ *   GET /api/mods/:ally         -> inventario de mods compacto + inversión por unidad (auditoría)
  *
  * Secret: FIREBASE_SERVICE_ACCOUNT (solo lectura de Firestore).
  */
@@ -72,13 +73,28 @@ export default {
         });
         return json({ snapshots }, env);
       }
+      if ((m = pathname.match(/^\/api\/mods\/(\d+)$/))) {
+        const doc = await getDoc(env, `mods/${m[1]}`);
+        if (!doc) return json({ error: "sin mods todavía — ejecuta la ingesta local" }, env, 503);
+        const units = doc.units ? safeParse(doc.units) : {};
+        let mods;
+        if (doc.paged && Number(doc.paged) > 0) {
+          // Reensambla las páginas mods/{ally}/pages/{000..} en orden.
+          const pages = await listDocs(env, `mods/${m[1]}/pages`, { limit: 100 });
+          const byId = pages.slice().sort((a, b) => (a._id < b._id ? -1 : 1));
+          mods = byId.flatMap(p => (p.mods ? safeParse(p.mods) || [] : []));
+        } else {
+          mods = doc.mods ? safeParse(doc.mods) : [];
+        }
+        return json({ mods: mods || [], units, updatedAt: doc.updatedAt || null }, env);
+      }
       if (pathname === "/api/meta/characters") {
         const doc = await getDoc(env, "meta/characters");
         if (doc && doc.map) return raw(doc.map, env);
         return json({ error: "metadata no cacheada todavía" }, env, 503);
       }
 
-      return json({ ok: true, phase: 2, role: "read-only (ingesta en GitHub Actions)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally"] }, env);
+      return json({ ok: true, phase: 4, role: "read-only (ingesta local)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally", "/api/mods/:ally"] }, env);
     } catch (err) {
       return json({ error: String((err && err.message) || err) }, env, 500);
     }
