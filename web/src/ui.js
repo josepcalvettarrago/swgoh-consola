@@ -1,10 +1,11 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
-import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan } from "./engine.js";
+import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED, SHIP_META, SHIPS_EMBED } from "./data.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
 import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
+import FLEET_DB from "./data/fleet_db.json";
 
 // Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
 let RD = EMBEDDED_RD;
@@ -559,6 +560,40 @@ function animatePgRing() {
   const t0 = performance.now(); (function step(t) { const k = Math.min(1, (t - t0) / 1000), e = 1 - Math.pow(1 - k, 3), c = Math.round(pgLvpct * e); r.style.setProperty("--p", c); $("#pgv-pct").textContent = c + "%"; if (k < 1) requestAnimationFrame(step); })(t0);
 }
 
+// ===== Fleet Arena (Fase 4.3): flotas montables + arranque + crew =====
+let FLEET = { owned: SHIPS_EMBED, live: false };
+const fleetFilter = { side: "", tier: "" };
+const shipUnit = id => { const m = SHIP_META[id]; return m ? { n: m.n, s: m.s, im: m.im } : lookupByName(id); };
+const shipName = id => (SHIP_META[id] && SHIP_META[id].n) || id;
+function fleetCard(f) {
+  const stx = f.status === 2 ? ["ok", "✓ Montable"] : f.status === 1 ? ["mid", "Casi · faltan " + f.missing.length] : ["lo", "Bloqueada"];
+  const ship = s => `<span class="fl-ship ${s.owned7 ? "have" : "miss"}${s.capital ? " cap" : ""}" title="${s.name}${s.owned7 ? "" : " — no a 7★"}">${portrait(shipUnit(s.id))}<span class="fl-sn">${s.name}</span></span>`;
+  const crew = f.crew.map(c => `<span class="rc ${c.ready ? "rc-need" : "rc-gap"}" title="${c.owned ? `R${c.relic}·G${c.gear}` : "no lo tienes"}">${c.name}${c.owned ? ` R${c.relic}` : " ✗"}</span>`).join("");
+  return `<div class="card fleet-card st-${f.status}"><div class="head"><h3>${f.label}</h3><span class="fl-badge ${stx[0]}">${stx[1]} · Tier ${f.tier}</span></div>
+   <div class="fl-ships">${f.ships.map(ship).join("")}</div>
+   <div class="fl-opener">${f.opener}</div>
+   <div class="coverage"><span class="cv-h">Crew (pilotos)</span>${crew || '<span class="cq-empty">—</span>'}</div>
+   ${f.missing.length ? `<div class="simwarn">Faltan a 7★: ${f.missing.map(shipName).join(", ")}</div>` : ""}
+   <div class="simfoot">${f.source}</div></div>`;
+}
+function renderFleet() {
+  const listEl = $("#fleet-list"); if (!listEl) return;
+  const plan = planFleet({ owned: FLEET.owned, shipMeta: SHIP_META, roster: RD, fleetDb: FLEET_DB });
+  const owned7 = FLEET.owned.filter(o => o.t === 7).length;
+  const ownedCaps = FLEET.owned.filter(o => o.t === 7 && SHIP_META[o.i] && SHIP_META[o.i].cap).length;
+  const fieldable = plan.filter(f => f.canField).length;
+  const src = $("#fleet-src"); if (src) src.textContent = (FLEET.live ? "En vivo" : "Snapshot embebido") + ` · ${owned7} naves 7★`;
+  const st = $("#fleet-stats");
+  if (st) st.innerHTML = [
+    { v: fieldable, k: "flotas montables", cls: "zero" },
+    { v: ownedCaps, k: "capitales a 7★", cls: "" },
+    { v: owned7, k: "naves a 7★", cls: "" },
+    { v: plan.length, k: "flotas meta", cls: "" },
+  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}</div><div class="k">${x.k}</div></div>`).join("");
+  const filtered = plan.filter(f => (!fleetFilter.tier || f.tier === fleetFilter.tier) && (!fleetFilter.side || (SHIP_META[f.capital] && SHIP_META[f.capital].s === fleetFilter.side)));
+  listEl.innerHTML = filtered.map(fleetCard).join("") || '<div class="pg-empty">Ninguna flota con esos filtros.</div>';
+}
+
 // ===== Planificador de energía → Lord Vader (Fase 4.2) =====
 let vpEnergy = 480; // energía diaria para gear (persistida en localStorage)
 function renderVaderPlan() {
@@ -710,6 +745,12 @@ export function init(rd, extra = {}) {
   if (eIn) { eIn.value = vpEnergy; eIn.onchange = () => { const v = Math.max(120, Math.min(2000, Number(eIn.value) || 480)); vpEnergy = v; eIn.value = v; saveEnergy(v, null); renderVaderPlan(); }; }
   renderVaderPlan();
 
+  // Flota (Fase 4.3): naves en vivo o embebidas + filtros.
+  FLEET = (extra.fleet && Array.isArray(extra.fleet.owned) && extra.fleet.owned.length) ? extra.fleet : { owned: SHIPS_EMBED, live: false };
+  renderFleet();
+  $$("#fleet-side button").forEach(b => b.onclick = () => { fleetFilter.side = b.dataset.v; $$("#fleet-side button").forEach(x => x.setAttribute("aria-pressed", x === b)); renderFleet(); });
+  $("#fleet-tier") && ($("#fleet-tier").onchange = function () { fleetFilter.tier = this.value; renderFleet(); });
+
   // Roster explorer: poblar selects
   const role = $("#rx-role"), fac = $("#rx-fac"), ab = $("#rx-ab");
   RD.V.roles.forEach(r => role.insertAdjacentHTML("beforeend", `<option value="${r}">${r}</option>`));
@@ -762,7 +803,7 @@ export function init(rd, extra = {}) {
   cxSetMode("scout");
 
   // Pestañas
-  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso" };
+  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso", fleet: "#p-fleet" };
   $$(".tab").forEach(tab => tab.onclick = () => {
     $$(".tab").forEach(t => t.setAttribute("aria-selected", t === tab));
     const key = tab.dataset.p; Object.entries(panels).forEach(([k, sel]) => $(sel).classList.toggle("on", k === key));

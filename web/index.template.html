@@ -45,6 +45,7 @@
     <button class="tab" role="tab" aria-selected="false" data-p="conquest"><span class="n">06</span> Conquest</button>
     <button class="tab" role="tab" aria-selected="false" data-p="next"><span class="n">07</span> Mejoras</button>
     <button class="tab" role="tab" aria-selected="false" data-p="progreso"><span class="n">08</span> Progreso</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="fleet"><span class="n">09</span> Flota</button>
   </nav>
 
   <!-- MODS -->
@@ -245,6 +246,21 @@
       <div id="pg-vader"></div></div>
     <div class="card" id="pg-guild-card"><div class="head"><h3>Comparativa de gremio</h3><span class="note" id="pg-gnote">—</span></div>
       <div id="pg-guild"></div></div>
+  </section>
+
+  <!-- FLOTA -->
+  <section class="panel" id="p-fleet" role="tabpanel">
+    <div class="card"><div class="head"><h3>Fleet Arena — flotas disponibles</h3><span class="note" id="fleet-src">—</span></div>
+      <div class="statgrid" id="fleet-stats"></div>
+      <div class="rx-controls">
+        <div class="seg-btns" id="fleet-side">
+          <button data-v="" aria-pressed="true">Todas</button>
+          <button data-v="L">Luz</button><button data-v="D">Oscuro</button></div>
+        <select id="fleet-tier" class="rx-sel"><option value="">Tier</option><option value="S">S</option><option value="A">A</option><option value="B">B</option></select>
+      </div>
+      <p class="mods-disc"><b>Meta curada, no fuerza exacta.</b> Marca qué flotas puedes montar (naves 7★) y el arranque; la potencia real depende de tus <b>pilotos</b> (relic/gear/mods). Tu gremio es fuerte en flota: vía barata de cristales F2P.</p>
+    </div>
+    <div id="fleet-list"></div>
   </section>
 
   <footer><span id="foot-updated">—</span><span>Actualiza: descarga swgoh.gg/api/player/355463284/ y súbelo de nuevo</span></footer>
