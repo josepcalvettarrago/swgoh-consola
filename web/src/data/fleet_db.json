@@ -1,0 +1,119 @@
+{
+  "_meta": {
+    "about": "Base CURADA a mano de flotas meta de Fleet Arena / GAC (capital + titulares + refuerzos + crew + arranque). NO es un dato personal ni scrapeado: es meta general (tiers y arranque cambian con el juego). El ownership (qué naves 7★ tienes) SÍ es tuyo y llega en vivo. La fuerza real depende de tus PILOTOS (relic/gear/mods), no solo de tener las naves. Los base_id están verificados contra SHIP_META y CHAR_META.",
+    "updated": "2026-07-11",
+    "schema": "id,label,capital,starters[],reinforcements[],crew[],opener,tier(S|A|B),role(offense|defense|both),source"
+  },
+  "fleets": [
+    {
+      "id": "executor_empire",
+      "label": "Imperio (Executor)",
+      "capital": "CAPITALEXECUTOR",
+      "starters": ["TIEADVANCED", "TIEBOMBERIMPERIAL", "TIEFIGHTERIMPERIAL"],
+      "reinforcements": ["TIEREAPER", "TIEDEFENDER", "SITHFIGHTER", "XANADUBLOOD"],
+      "crew": ["VADER", "GRANDMOFFTARKIN", "ADMIRALPIETT"],
+      "opener": "Executor domina el arranque: refuerza rápido con TIE Reaper/Defender y usa el TIE Advanced de Vader para marcar. Capital top del meta.",
+      "tier": "S", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "profundity_bh",
+      "label": "Cazarrecompensas (Profundity)",
+      "capital": "CAPITALPROFUNDITY",
+      "starters": ["RAZORCREST", "HOUNDSTOOTH", "SLAVE1"],
+      "reinforcements": ["IG2000", "PUNISHINGONE", "GAUNTLETSTARFIGHTER", "XANADUBLOOD"],
+      "crew": ["BOSSK", "BOBAFETT", "CADBANE"],
+      "opener": "Profundity (Bo-Katan) con Razor Crest de arranque; encadena refuerzos de cazarrecompensas para bonus de daño. Capital top del meta.",
+      "tier": "S", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "leviathan_sith",
+      "label": "Sith (Leviathan)",
+      "capital": "CAPITALLEVIATHAN",
+      "starters": ["SITHINFILTRATOR", "SITHFIGHTER", "SITHBOMBER"],
+      "reinforcements": ["XANADUBLOOD", "TIEDAGGER", "VULTUREDROID"],
+      "crew": ["DARTHREVAN", "DARTHMALAK", "SITHMARAUDER"],
+      "opener": "Leviathan (Sith) castiga con daño masivo; refuerza con las naves Sith. Capital top del meta.",
+      "tier": "S", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "chimaera_empire",
+      "label": "Imperio (Chimaera / Thrawn)",
+      "capital": "CAPITALCHIMAERA",
+      "starters": ["TIEADVANCED", "TIEFIGHTERIMPERIAL", "TIEBOMBERIMPERIAL"],
+      "reinforcements": ["TIEREAPER", "TIEDEFENDER", "TIESILENCER", "SITHFIGHTER"],
+      "crew": ["GRANDADMIRALTHRAWN", "VADER", "GRANDMOFFTARKIN"],
+      "opener": "Chimaera de Thrawn: control de turn-meter; abre con TIE Advanced (Vader) y refuerza con TIE Reaper. Muy sólida de defensa.",
+      "tier": "A", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "negotiator_gr",
+      "label": "República Galáctica (Negotiator)",
+      "capital": "CAPITALNEGOTIATOR",
+      "starters": ["JEDISTARFIGHTERANAKIN", "BLADEOFDORIN", "JEDISTARFIGHTERAHSOKATANO"],
+      "reinforcements": ["ARC170REX", "ARC170CLONESERGEANT", "JEDISTARFIGHTERCONSULAR", "YWINGCLONEWARS"],
+      "crew": ["ANAKINKNIGHT", "PLOKOON", "AHSOKATANO", "CT7567"],
+      "opener": "Negotiator (Obi-Wan): abre con el Eta-2 de Anakin y encadena caza Jedi; refuerza con los ARC-170. Buena en ataque.",
+      "tier": "A", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "malevolence_sep",
+      "label": "Separatistas (Malevolence)",
+      "capital": "CAPITALMALEVOLENCE",
+      "starters": ["VULTUREDROID", "HYENABOMBER", "GEONOSIANSTARFIGHTER1"],
+      "reinforcements": ["GEONOSIANSTARFIGHTER2", "GEONOSIANSTARFIGHTER3", "SITHINFILTRATOR"],
+      "crew": ["GRIEVOUS", "NUTEGUNRAY", "COUNTDOOKU"],
+      "opener": "Malevolence (Grievous): enjambre de Vulture Droids/Hyena; el capital ampara y los droides reponen. Muy buena de defensa.",
+      "tier": "A", "role": "defense",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "raddus_resistance",
+      "label": "Resistencia (Raddus)",
+      "capital": "CAPITALRADDUS",
+      "starters": ["XWINGRESISTANCE", "XWINGBLACKONE", "MG100STARFORTRESSSF17"],
+      "reinforcements": ["MILLENNIUMFALCONEP7", "UMBARANSTARFIGHTER"],
+      "crew": ["POE", "FINN", "AMILYNHOLDO"],
+      "opener": "Raddus (Holdo): burst de Resistencia; abre con el X-wing de Poe y el StarFortress, refuerza con el Halcón de Rey.",
+      "tier": "A", "role": "offense",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "home_one_rebel",
+      "label": "Rebeldes (Home One)",
+      "capital": "CAPITALMONCALAMARICRUISER",
+      "starters": ["XWINGRED2", "XWINGRED3", "UWINGROGUEONE"],
+      "reinforcements": ["YWINGREBEL", "GHOST", "OUTRIDER", "MILLENNIUMFALCON"],
+      "crew": ["ADMIRALACKBAR", "WEDGEANTILLES", "BIGGSDARKLIGHTER", "CASSIANANDOR"],
+      "opener": "Home One (Ackbar): los X-wing de Wedge/Biggs marcan objetivos; refuerza con Ghost y U-wings. Clásica rebelde.",
+      "tier": "B", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "finalizer_fo",
+      "label": "Primera Orden (Finalizer)",
+      "capital": "CAPITALFINALIZER",
+      "starters": ["TIESILENCER", "TIEFIGHTERFIRSTORDER", "FIRSTORDERTIEECHELON"],
+      "reinforcements": ["TIEFIGHTERFOSF", "TIEDAGGER"],
+      "crew": ["KYLOREN", "SUPREMELEADERKYLOREN", "GENERALHUX"],
+      "opener": "Finalizer (Kylo): presión con el TIE Silencer; refuerza con los TIE de la Primera Orden.",
+      "tier": "B", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    },
+    {
+      "id": "endurance_gr",
+      "label": "Jedi (Endurance)",
+      "capital": "CAPITALJEDICRUISER",
+      "starters": ["JEDISTARFIGHTERAHSOKATANO", "BLADEOFDORIN", "JEDISTARFIGHTERCONSULAR"],
+      "reinforcements": ["JEDISTARFIGHTERANAKIN", "EBONHAWK"],
+      "crew": ["AHSOKATANO", "PLOKOON", "MASTERQUIGON"],
+      "opener": "Endurance: alternativa Jedi; caza Jedi de arranque. Menos meta que Negotiator pero sólida.",
+      "tier": "B", "role": "both",
+      "source": "meta de flota (curado manualmente)"
+    }
+  ]
+}

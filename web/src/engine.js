@@ -13,6 +13,8 @@ export { vaderPlan, VADER_COSTS } from "./vaderplan.js";
 export { THREAT_MAP, detectThreats, threatsToNeeds, matchArchetype, genScout, resolveUnit, teamDifficulty, genBoard } from "./counters.js";
 // Auditor de mods (Fase 4.1): motor puro sin DOM.
 export { MOD_RULES, SET_MAP, COLOR_MAP, parseDisp, modQuality, auditMods } from "./mods.js";
+// Módulo de flota (Fase 4.3): motor puro sin DOM.
+export { planFleet } from "./fleet.js";
 
 // ---- avatares (devuelven strings HTML; no tocan el DOM) ----
 const IMGPRE = "https://game-assets.swgoh.gg/textures/tex.charui_", IMGSUF = ".png";

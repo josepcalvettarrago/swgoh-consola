@@ -114,6 +114,18 @@ function meanRolls(arr) {
   const m = arr.reduce((a, b) => a + (Number(b) || 0), 0) / arr.length;
   return Math.round(m * 1000) / 1000;
 }
+// Fase 4.3: naves poseídas (combat_type 2) compactadas para el módulo de flota.
+// [{ i:base_id, t:estrellas, l:nivel, p:power }]. Puro/testeable.
+export function compactShips(playerJson) {
+  const out = [];
+  for (const wrap of (playerJson && playerJson.units) || []) {
+    const d = wrap.data || wrap;
+    if (!d || d.combat_type !== 2 || !d.base_id) continue;
+    out.push({ i: d.base_id, t: d.rarity, l: d.level, p: d.power });
+  }
+  return out.sort((a, b) => (a.i < b.i ? -1 : a.i > b.i ? 1 : 0));
+}
+
 // playerJson (export swgoh.gg) -> { mods:[compacto], units:{ base_id: inversión } }. Puro/testeable.
 export function compactMods(playerJson) {
   const rawMods = (playerJson && playerJson.mods) || [];
