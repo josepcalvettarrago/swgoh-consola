@@ -7,7 +7,7 @@
 //   node scripts/ingest.mjs --dry      # solo fetch + normaliza + imprime (sin escribir)
 //
 // Env: ALLY_CODE (opcional), FIREBASE_SERVICE_ACCOUNT (JSON del service account, obligatorio salvo --dry).
-import { buildCharMap, normalizeRoster, playerMeta, normalizeGuild, compactMods } from "../worker/src/normalize.js";
+import { buildCharMap, normalizeRoster, playerMeta, normalizeGuild, compactMods, compactShips } from "../worker/src/normalize.js";
 import { setDoc, getDoc } from "../worker/src/firestore.js";
 import { compactSnapshot, snapshotHash, diffSnapshots, isEmptyDiff } from "../web/src/diff.js";
 import { execFile } from "node:child_process";
@@ -134,6 +134,18 @@ async function main() {
       await write(`mods/${ALLY}`, { units: unitsJson, count: compact.mods.length, hash: modsHash, paged: pages, updatedAt: now });
     }
     console.log(`  mods · ${compact.mods.length} compactos (${(Buffer.byteLength(modsJson, "utf8") / 1024).toFixed(0)} KB)`);
+  }
+
+  // --- Naves (Fase 4.3): posesión compacta con DEDUP (para el módulo de flota) ---
+  const shipsOwned = compactShips(player);
+  const shipsJson = JSON.stringify(shipsOwned);
+  const shipsHash = snapshotHash({ s: shipsJson });
+  const shipHead = DRY ? null : await getDoc(env, `ships/${ALLY}`).catch(() => null);
+  if (shipHead && shipHead.hash === shipsHash) {
+    console.log(`  naves sin cambios (hash ${shipsHash}) — no se escribe`);
+  } else {
+    await write(`ships/${ALLY}`, { owned: shipsJson, count: shipsOwned.length, hash: shipsHash, updatedAt: now });
+    console.log(`  naves · ${shipsOwned.length} poseídas`);
   }
 
   if (meta.guildId) {

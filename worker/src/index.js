@@ -12,6 +12,7 @@
  *   GET /api/progress/:ally     -> últimos N eventos (diffs ya calculados) + meta más reciente
  *   GET /api/snapshots/:ally    -> últimos N snapshots compactos (para gráficas futuras)
  *   GET /api/mods/:ally         -> inventario de mods compacto + inversión por unidad (auditoría)
+ *   GET /api/fleet/:ally        -> naves poseídas (compacto) para el módulo de flota
  *
  * Secret: FIREBASE_SERVICE_ACCOUNT (solo lectura de Firestore).
  */
@@ -88,13 +89,18 @@ export default {
         }
         return json({ mods: mods || [], units, updatedAt: doc.updatedAt || null }, env);
       }
+      if ((m = pathname.match(/^\/api\/fleet\/(\d+)$/))) {
+        const doc = await getDoc(env, `ships/${m[1]}`);
+        if (!doc || !doc.owned) return json({ error: "sin naves todavía — ejecuta la ingesta local" }, env, 503);
+        return json({ owned: safeParse(doc.owned) || [], updatedAt: doc.updatedAt || null }, env);
+      }
       if (pathname === "/api/meta/characters") {
         const doc = await getDoc(env, "meta/characters");
         if (doc && doc.map) return raw(doc.map, env);
         return json({ error: "metadata no cacheada todavía" }, env, 503);
       }
 
-      return json({ ok: true, phase: 4, role: "read-only (ingesta local)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally", "/api/mods/:ally"] }, env);
+      return json({ ok: true, phase: 4, role: "read-only (ingesta local)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally", "/api/mods/:ally", "/api/fleet/:ally"] }, env);
     } catch (err) {
       return json({ error: String((err && err.message) || err) }, env, 500);
     }

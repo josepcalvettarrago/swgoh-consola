@@ -2,7 +2,7 @@
 // (red caída, backend sin configurar, forma inesperada), cae al RD embebido del bundle.
 // La consola nunca se queda en blanco. Los motores ya son agnósticos del roster.
 import { init } from "./ui.js";
-import { RD, CHAR_META, MODS_EMBED } from "./data.js";
+import { RD, CHAR_META, MODS_EMBED, SHIPS_EMBED } from "./data.js";
 import { auditMods } from "./engine.js";
 
 // Configurable en build/deploy. Vacío = sin backend -> se usa directamente el embebido.
@@ -85,9 +85,24 @@ export async function loadMods({ apiBase = API_BASE, ally = ALLY, fetchImpl } = 
   }
 }
 
+// Naves poseídas (Fase 4.3): para el módulo de flota. Fallback al snapshot embebido. Nunca lanza.
+export async function loadFleet({ apiBase = API_BASE, ally = ALLY, fetchImpl } = {}) {
+  const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
+  if (!apiBase || !f) return { owned: SHIPS_EMBED, live: false };
+  try {
+    const res = await f(`${apiBase}/api/fleet/${ally}`);
+    if (!res || !res.ok) throw new Error(`status ${res && res.status}`);
+    const data = await res.json();
+    if (data && Array.isArray(data.owned) && data.owned.length) return { owned: data.owned, live: true };
+    throw new Error("forma inesperada");
+  } catch {
+    return { owned: SHIPS_EMBED, live: false };
+  }
+}
+
 async function boot() {
-  const [rd, progress, guild, charMeta, mods] = await Promise.all([loadRoster(), loadProgress(), loadGuild(), loadCharMeta(), loadMods()]);
-  init(rd, { progress, guild, charMeta, mods });
+  const [rd, progress, guild, charMeta, mods, fleet] = await Promise.all([loadRoster(), loadProgress(), loadGuild(), loadCharMeta(), loadMods(), loadFleet()]);
+  init(rd, { progress, guild, charMeta, mods, fleet });
 }
 
 // Solo arranca en navegador (evita efectos secundarios al importar en tests).
