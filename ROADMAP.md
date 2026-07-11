@@ -31,7 +31,8 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **3.1 — GAC War Room** | ✅ Hecha | `v3.1-warroom` | Tablero multi-equipo (2–6) con presupuesto de roster compartido (exclusividad), fix del bug 3v3 (`assemble(size)`), bloqueo de mi defensa fija y persistencia `localStorage`. **116 tests verdes.** |
 | **3.2–3.5 — War Room UX/visual** | ✅ Hecha | `v3.2-picker` … `v3.5-filtros` | Selector con avatares (3.2), reskin holomesa GAC (3.3), defensa fija holomesa + teclado (3.4), búsqueda avanzada por Lado/Rol/Facción/Mecánica (3.5). **122 tests verdes.** |
 | **4.1 — Auditoría de mods + Grandivory** | ✅ Hecha | `v4.1-modaudit` | Auditoría dinámica de 1700 mods por el pipeline (ingesta compacta → `mods/{ally}` → endpoint read-only `/api/mods` → HTML con fallback). Motor puro `mods.js` (ofensores por inversión + quick-wins). Export honesto a Grandivory. **141 tests verdes.** |
-| 4.2 · 4.3 · 4.4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
+| **4.2 — Planificador energía → Vader** | ✅ Hecha | `v4.2-vaderplan` | Card computada en la pestaña Vader: gap relic/gear en vivo + orden priorizado + ETA en semanas con energía diaria configurable/persistida. Motor puro `vaderplan.js`, 100% cliente. **153 tests verdes.** |
+| 4.3 · 4.4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
 - swgoh.gg → normaliza → **Firestore** (base con nombre **`swgohapi`**, `europe-west3`, proyecto `swgoh-13551`).
@@ -227,8 +228,14 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
 - Datacrones (0) → sin panel vacío. Worker read-only. **141 tests verdes.**
 - **NO abordado (difiere a sub-fases):** planificador de datacrones (curado por temporada; tienes 0).
 
+### Fase 4.2 — Planificador de energía / ETA hacia Lord Vader (`v4.2-vaderplan`) — ✅ HECHA
+- **Cliente 100%** (cero Worker/pipeline). `web/src/vaderplan.js` (puro): cruza el roster en vivo
+  (relic/gear) con `DATA.lv` → gap por unidad, **orden priorizado** (barato primero) y **ETA en
+  semanas** con **energía diaria configurable y persistida** (`store.js`).
+- **Honesto:** gear en energía→días; relic en días/nivel curados (mats/créditos, no pura energía).
+  `VADER_COSTS` transparente/editable + disclaimer. Reproduce el gap real (57 relic + 17 gear). **153 tests.**
+
 ### Pendientes de Fase 4 (una por sesión)
-- **4.2 · Planificador de energía diaria** hacia Lord Vader (nodos + ETA por unidad). Nodos = meta curado.
 - **4.3 · Fleet Arena module** (gremio fuerte en flota: vía fácil de cristales). Naves ya en `units`.
 - **4.4 · Simulador defensivo de TW** (con datos del gremio).
 

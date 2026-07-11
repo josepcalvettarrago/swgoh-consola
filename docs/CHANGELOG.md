@@ -2,6 +2,22 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 4.2 — Planificador de energía / ETA hacia Lord Vader — `v4.2-vaderplan`
+
+- Nueva **card computada** en la pestaña Lord Vader (aditiva; no toca el roadmap narrativo ni
+  `vaderProgress`): cruza el **roster en vivo** (relic/gear por unidad) con los objetivos de Vader
+  (`DATA.lv`) y estima el **trabajo restante en días** + un **orden de farmeo priorizado** (lo más
+  barato/impacto primero, las hechas ✓ al final) + **ETA en semanas** hasta desbloquear.
+- **Motor puro** `web/src/vaderplan.js`: `VADER_COSTS` (tabla curada y transparente) + `vaderPlan(rd,
+  {costs, dailyGearEnergy})`. Determinista. Reproduce el gap real (**57 relic + 17 gear**).
+- **Energía diaria configurable y persistida** (`localStorage`, `store.js`): al cambiarla se recalcula
+  la ETA; el **gear** se modela energía→días, el **relic** en días/nivel curados.
+- **Honestidad:** es una **estimación**, no rutas de nodo exactas; el material de relic no es pura
+  energía (mats/créditos/GET). Disclaimer visible; tablas editables.
+- **100% cliente:** cero Worker, cero pipeline, cero endpoint. Tests: `vaderplan.test.js` (8) +
+  `vaderplan-render.test.js` (4, jsdom) → **153 verdes**.
+- Tag: `v4.2-vaderplan`.
+
 ## Fase 4.1 — Auditoría de mods dinámica + export a Grandivory — `v4.1-modaudit`
 
 - La pestaña **Arena / Mods** deja de ser un diagnóstico estático (4 cifras + plan SLKR + reubicación
