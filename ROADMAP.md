@@ -195,6 +195,11 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
 - **Selector navegable con teclado**: ↑/↓ resaltan (saltando las ya elegidas, auto-scroll) y Enter
   añade; el clic sigue igual. Aplica a zonas y bloqueo. **Cero cambios de motor.** → **119 verdes**.
 
+### Fase 3.5 — Búsqueda avanzada en el selector (`v3.5-filtros`)
+- Barra de filtros tipo Conquest en el selector (zonas y bloqueo): **Lado · Rol · Facción · Mecánica**
+  combinados con Y + texto. Facetas por contexto (todo el juego vs mi roster), **persisten en la sesión**
+  y las comparten las zonas; botón Limpiar. Re-filtra en vivo. **Cero cambios de motor.** → **122 verdes**.
+
 ---
 
 ## DEUDA TÉCNICA / BACKLOG

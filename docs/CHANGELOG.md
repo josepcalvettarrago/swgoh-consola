@@ -2,6 +2,21 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 3.5 — Búsqueda avanzada en el selector (filtros tipo Conquest) — `v3.5-filtros`
+
+- El buscador de personajes (zonas enemigas y bloqueo) gana una **barra de filtros** tipo Conquest:
+  **Lado · Rol · Facción · Mecánica**, desplegables seleccionables combinados con **Y** + el texto libre.
+- **Facetas por contexto**: las zonas filtran sobre **todo el juego** (333 de la metadata); el bloqueo,
+  sobre **mi roster**. El estado de filtros **persiste durante la sesión** (entre búsquedas y aperturas;
+  no en `localStorage`) y lo **comparten todas las zonas**; el bloqueo tiene el suyo. Botón **Limpiar**.
+- Cambiar un filtro **re-filtra en vivo** (no re-renderiza el tablero). El picker no se cierra al tocar
+  los selects (se controla el foco del contenedor). Teclado (↑/↓/Enter) y clic siguen igual.
+- Reutiliza el modelo de facetas de Conquest (`RD.V.factions/roles/abilities`, `ROLE_ES`). Índice del
+  picker enriquecido a `{id,n,s,r,c,a}` (c/a por referencia). **Cero cambios de motor/estado.**
+- Tests: barra presente en zona y bloqueo, filtrar por Lado reduce la lista (combina con texto), y los
+  filtros persisten/comparten entre zonas → **122 verdes**.
+- Tag: `v3.5-filtros`.
+
 ## Fase 3.4 — Defensa fija holomesa + navegación por teclado — `v3.4-lockholo-kbd`
 
 - **Defensa fija con aspecto GAC:** el bloqueo deja de ser una lista de chips. Sigue siendo una
