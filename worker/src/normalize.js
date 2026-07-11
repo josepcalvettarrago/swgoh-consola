@@ -104,3 +104,33 @@ export function playerMeta(playerJson) {
     guildId: d.guild_id, guild: d.guild_name, updated: (d.last_updated || "").slice(0, 10),
   };
 }
+
+// --- Fase 4.1: compactado de mods (auditoría) ---
+// El export crudo de swgoh.gg trae mods[] (~1700, ~2 MB con min/max/unscaled). Aquí se compacta a
+// lo que audita el motor (ver web/src/mods.js). GOTCHA verificado: `value` viene ESCALADO; se
+// conserva `display_value` (velocidad "7", no 70000). No se guarda `stat_min/max/unscaled/name/value`.
+function meanRolls(arr) {
+  if (!Array.isArray(arr) || !arr.length) return 0;
+  const m = arr.reduce((a, b) => a + (Number(b) || 0), 0) / arr.length;
+  return Math.round(m * 1000) / 1000;
+}
+// playerJson (export swgoh.gg) -> { mods:[compacto], units:{ base_id: inversión } }. Puro/testeable.
+export function compactMods(playerJson) {
+  const rawMods = (playerJson && playerJson.mods) || [];
+  const mods = rawMods.map(m => ({
+    id: m.id, c: m.character, sl: m.slot, set: Number(m.set), d: m.rarity, col: m.tier, lv: m.level,
+    p: { s: m.primary_stat && m.primary_stat.stat_id, v: m.primary_stat && m.primary_stat.display_value },
+    sec: (m.secondary_stats || []).map(s => ({ s: s.stat_id, v: s.display_value, r: s.roll, q: meanRolls(s.stat_rolls) })),
+  }));
+  const units = {};
+  for (const wrap of (playerJson && playerJson.units) || []) {
+    const d = wrap.data || wrap;
+    if (!d || !d.base_id) continue;
+    units[d.base_id] = {
+      g: d.gear_level, rl: relicLevel(d.relic_tier), t: d.rarity, p: d.power, ct: d.combat_type,
+      sm: (d.stat_diffs && Number(d.stat_diffs["5"])) || 0,
+      sf: (d.stats && Number(d.stats["5"])) || 0,
+    };
+  }
+  return { mods, units };
+}

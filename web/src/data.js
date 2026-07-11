@@ -3,5 +3,6 @@
 export { DATA } from "./data/meta.js";
 export { IMGBYNAME } from "./data/images.js";
 export { CHAR_META } from "./data/characters.js";
+export { MODS_EMBED } from "./data/mods.js";
 export { RD } from "./data/roster.js";
 export { ENEMIES, SIDES, ROLE_ES, KEYMECH } from "./data/enemies.js";

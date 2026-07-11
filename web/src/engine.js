@@ -9,6 +9,8 @@ export { diffSnapshots, compactSnapshot, snapshotHash, isEmptyDiff } from "./dif
 export { vaderProgress } from "./vader.js";
 // Scout de counters (Fase 3): motor puro sin DOM; `genScout` recibe `assemble` inyectada.
 export { THREAT_MAP, detectThreats, threatsToNeeds, matchArchetype, genScout, resolveUnit, teamDifficulty, genBoard } from "./counters.js";
+// Auditor de mods (Fase 4.1): motor puro sin DOM.
+export { MOD_RULES, SET_MAP, COLOR_MAP, parseDisp, modQuality, auditMods } from "./mods.js";
 
 // ---- avatares (devuelven strings HTML; no tocan el DOM) ----
 const IMGPRE = "https://game-assets.swgoh.gg/textures/tex.charui_", IMGSUF = ".png";
