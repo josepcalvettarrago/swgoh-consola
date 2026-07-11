@@ -480,3 +480,31 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .wr-pclear{background:none;border:1px solid var(--line);color:var(--muted);border-radius:7px;font-size:11.5px;padding:5px 9px;cursor:pointer}
 .wr-pclear:hover{border-color:var(--ember);color:var(--ember)}
 .wr-pclear[hidden]{display:none}
+
+/* ===== Arena / Mods (Fase 4.1) ===== */
+.mods-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.mods-actions .cgen{width:auto}
+.mods-disc{color:var(--muted);font-size:13.5px;padding:6px 0 4px}
+.mods-disc b{color:var(--text)}
+.mods-cbars{display:grid;gap:6px;margin:12px 0 2px}
+.mods-cbar{display:grid;grid-template-columns:64px 1fr 44px;align-items:center;gap:10px}
+.mods-cbar .cbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.mods-cbar .cbn{font-family:'Share Tech Mono';font-size:12px;color:var(--text);text-align:right}
+.trow.mods-off{grid-template-columns:1fr 128px}
+.mods-off .who2{display:flex;gap:12px;align-items:center;min-width:0}
+.mods-off .who2 .nm{font-weight:600}
+.mods-off .who2 .nm .r{font-family:'Share Tech Mono';font-size:11px;color:var(--gold);border:1px solid rgba(244,182,52,.3);border-radius:5px;padding:0 5px;background:rgba(244,182,52,.06)}
+.mods-off .who2 .tip{font-size:12.5px;color:var(--muted)}
+.mods-off .spd .cur.low{color:var(--ember)}
+.mods-off .spd .tg{font-family:'Share Tech Mono';font-size:10.5px;color:var(--muted)}
+.relocate .tag{font-family:'Chakra Petch';font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:20px;margin-left:auto}
+.relocate .tag.ok{color:var(--green);border:1px solid rgba(84,217,140,.35);background:rgba(84,217,140,.07)}
+.mods-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.modcard{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-left:3px solid var(--tone,var(--line));border-radius:10px;padding:8px 10px;background:var(--surface2)}
+.modcard.c-5{--tone:var(--gold)}.modcard.c-4{--tone:#a463ff}.modcard.c-3{--tone:var(--holo)}.modcard.c-2{--tone:var(--green)}.modcard.c-1{--tone:var(--muted)}
+.modcard .savw{width:38px;height:38px;flex:none}
+.modcard .mc-b{min-width:0}
+.modcard .mc-n{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modcard .mc-m{font-family:'Share Tech Mono';font-size:10.5px;color:var(--muted)}
+.modcard .mc-s{font-size:12px;color:var(--holo)}
+@media(max-width:520px){.mods-grid{grid-template-columns:1fr}}

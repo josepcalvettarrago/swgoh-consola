@@ -49,15 +49,29 @@
 
   <!-- MODS -->
   <section class="panel on" id="p-mods" role="tabpanel">
-    <div class="card"><div class="head"><h3>Estado global de tus mods</h3><span class="note">Foto de tu inventario actual</span></div>
-      <div class="statgrid" id="modstats"></div></div>
-    <div class="card"><div class="head"><h3>Equipo a modear #1 — SLKR (First Order)</h3>
-      <span class="note">Tu GL más desarrollado (R8) y equipo completo. Sube <b>todos</b> sus mods a nivel 15.</span></div>
-      <div id="team"></div></div>
-    <div class="card"><div class="head"><h3>Reasigna estos mods premium (están desperdiciados)</h3>
-      <span class="note">Los llevan Inquisidores que no usas en arena — muévelos al soporte de SLKR</span></div>
-      <ul class="relocate" id="reloc"></ul>
-      <p style="color:var(--muted);font-size:14px;padding-bottom:12px"><b style="color:var(--text)">Stats objetivo:</b> en el soporte (Hux, Kylo desenmascarado, Oficial FO, Piloto SF TIE) prioriza <b style="color:var(--holo)">VELOCIDAD</b> por encima de todo. En SLKR busca protección + salud + ofensiva y ~60% de potencia; de velocidad ya va sobrado.</p></div>
+    <div class="card"><div class="head"><h3>Estado global de tus mods</h3><span class="note" id="mods-src">—</span></div>
+      <div class="statgrid" id="modstats"></div>
+      <div id="mods-colorbars"></div>
+      <div class="mods-actions">
+        <a class="cgen" id="grand-open" href="https://mods-optimizer.swgoh.grandivory.com/" target="_blank" rel="noopener">🔧 Abrir Grandivory Mods Optimizer</a>
+        <button class="cgen" id="grand-copy">📋 Copiar ally code (355463284)</button>
+      </div>
+      <p class="mods-disc"><b>Auditor, no optimizador.</b> Marca déficits <b>objetivos</b> (sin subir, color bajo, sin velocidad); el óptimo por personaje lo hace <b>Grandivory</b> (baja tus datos de swgoh.gg él mismo — pega tu ally code). Llevas <b>0 datacrons</b>.</p>
+    </div>
+    <div class="card"><div class="head"><h3>Ofensores por inversión</h3>
+      <span class="note">Unidades relic'd / G13 con mods pobres — el arreglo más barato que existe</span></div>
+      <div id="mods-offenders"></div></div>
+    <div class="card"><div class="head"><h3>Quick-wins</h3>
+      <span class="note">Computado desde tu inventario · nunca sugiere gasto</span></div>
+      <div id="mods-quickwins"></div></div>
+    <div class="card" id="mods-grid-card"><div class="head"><h3>Explorar mods</h3><span class="note" id="mods-gridcount">—</span></div>
+      <div class="rx-controls">
+        <input id="mods-fq" class="rx-in" type="text" placeholder="Personaje…" autocomplete="off">
+        <select id="mods-fcolor" class="rx-sel"><option value="">Color</option><option value="5">dorado</option><option value="4">morado</option><option value="3">azul</option><option value="2">verde</option><option value="1">gris</option></select>
+        <select id="mods-fset" class="rx-sel"><option value="">Set</option></select>
+        <select id="mods-fflag" class="rx-sel"><option value="">Bandera</option><option value="unleveled">Sin subir</option><option value="lowColor">Color bajo</option><option value="noSpeed">Sin velocidad</option><option value="sixDot">6 puntos</option><option value="premiumSpeed">Vel. premium</option></select>
+      </div>
+      <div id="mods-grid" class="mods-grid"></div></div>
   </section>
 
   <!-- VADER -->

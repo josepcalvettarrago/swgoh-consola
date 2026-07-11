@@ -2,7 +2,8 @@
 // (red caída, backend sin configurar, forma inesperada), cae al RD embebido del bundle.
 // La consola nunca se queda en blanco. Los motores ya son agnósticos del roster.
 import { init } from "./ui.js";
-import { RD, CHAR_META } from "./data.js";
+import { RD, CHAR_META, MODS_EMBED } from "./data.js";
+import { auditMods } from "./engine.js";
 
 // Configurable en build/deploy. Vacío = sin backend -> se usa directamente el embebido.
 const API_BASE = "swgoh-consola.josep-calvet-tarrago.workers.dev";
@@ -66,9 +67,27 @@ export async function loadCharMeta({ apiBase = API_BASE, fetchImpl } = {}) {
   }
 }
 
+// Mods (Fase 4.1): inventario compacto + inversión → auditoría calculada en cliente. Si el endpoint
+// falla, cae al resumen embebido (MODS_EMBED) ya calculado. Nunca lanza; la pestaña nunca en blanco.
+export async function loadMods({ apiBase = API_BASE, ally = ALLY, fetchImpl } = {}) {
+  const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
+  if (!apiBase || !f) return { audit: MODS_EMBED, live: false };
+  try {
+    const res = await f(`${apiBase}/api/mods/${ally}`);
+    if (!res || !res.ok) throw new Error(`status ${res && res.status}`);
+    const data = await res.json();
+    if (data && Array.isArray(data.mods) && data.units) {
+      return { audit: auditMods({ units: data.units, mods: data.mods }), mods: data.mods, units: data.units, live: true };
+    }
+    throw new Error("forma inesperada");
+  } catch {
+    return { audit: MODS_EMBED, live: false };
+  }
+}
+
 async function boot() {
-  const [rd, progress, guild, charMeta] = await Promise.all([loadRoster(), loadProgress(), loadGuild(), loadCharMeta()]);
-  init(rd, { progress, guild, charMeta });
+  const [rd, progress, guild, charMeta, mods] = await Promise.all([loadRoster(), loadProgress(), loadGuild(), loadCharMeta(), loadMods()]);
+  init(rd, { progress, guild, charMeta, mods });
 }
 
 // Solo arranca en navegador (evita efectos secundarios al importar en tests).

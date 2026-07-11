@@ -1,7 +1,7 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
-import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard } from "./engine.js";
+import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED } from "./data.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
 import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
@@ -48,24 +48,7 @@ function renderStatic() {
   if (P.arena <= 230) $("#rankchip").classList.add("near");
   $("#foot-updated").textContent = "Datos: " + P.updated;
 
-  const MH = DATA.mod_health;
-  $("#d-unlev").textContent = fmt(MH.unleveled); $("#d-spd20").textContent = MH.spd20;
-  $("#modstats").innerHTML = [
-    { v: fmt(MH.unleveled), s: "/" + fmt(MH.total), k: "mods sin subir de nivel", cls: "alert" },
-    { v: MH.spd20, s: "", k: "mods con velocidad ≥ 20", cls: "alert" },
-    { v: MH.sixdot, s: "", k: "mods de 6 puntos", cls: "" },
-    { v: "0", s: "", k: "datacrons usados", cls: "zero" },
-  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}<small>${x.s}</small></div><div class="k">${x.k}</div></div>`).join("");
-
-  $("#team").innerHTML = DATA.mods_plan.map(t => {
-    const pct = Math.min(100, Math.round(t.spd / t.target * 100)), hit = t.spd >= t.target;
-    return `<div class="trow">${portrait(lookupByName(t.name))}<div class="who"><div class="nm">${t.name} <span class="r">R${t.relic}·G${t.gear}</span></div>
-   <div class="tip">${t.note}</div></div>
-   <div class="spd"><div class="cur ${hit ? "hit" : "low"}">${t.spd}</div><div class="tg">objetivo ${t.target}</div></div>
-   <div class="barwrap"><div class="meter seg" data-pct="${pct}" style="--tone:${hit ? "var(--green)" : "var(--holo)"}"><i></i></div></div></div>`;
-  }).join("");
-  $("#reloc").innerHTML = DATA.relocate.map(r =>
-    `<li>${portrait(lookupByName(r.from))}<span class="sp">+${r.sp}</span><span class="txt">mod de <b>${r.slot}</b> · lo lleva <b>${r.from}</b></span><span class="arw">→</span><span class="txt">al soporte de SLKR</span></li>`).join("");
+  // La pestaña "Arena / Mods" la pinta renderMods() (Fase 4.1) con datos en vivo o embebidos.
 
   const LV = DATA.lv;
   const need = LV.units.reduce((a, u) => a + u.need, 0), ach = LV.units.reduce((a, u) => a + Math.min(u.relic, u.need), 0);
@@ -250,7 +233,7 @@ function renderCounters() {
      <button class="cgen" data-e="${ix}">⚡ Generar counter con mi roster</button>
      <div class="cout" id="cout-${ix}"></div></div>`;
   }).join("");
-  $$(".cgen").forEach(b => b.onclick = () => genCounter(+b.dataset.e));
+  $$("#counters .cgen").forEach(b => b.onclick = () => genCounter(+b.dataset.e));
 }
 function genCounter(ei) {
   const e = ENEMIES[ei], out = $("#cout-" + ei);
@@ -576,6 +559,106 @@ function animatePgRing() {
   const t0 = performance.now(); (function step(t) { const k = Math.min(1, (t - t0) / 1000), e = 1 - Math.pow(1 - k, 3), c = Math.round(pgLvpct * e); r.style.setProperty("--p", c); $("#pgv-pct").textContent = c + "%"; if (k < 1) requestAnimationFrame(step); })(t0);
 }
 
+// ===== Arena / Mods (Fase 4.1): auditoría dinámica + export a Grandivory =====
+let MODS = { audit: MODS_EMBED, live: false }; // resultado de loadMods (init lo sustituye)
+const MOD_ALLY = "355463284";
+const GRAND_URL = "https://mods-optimizer.swgoh.grandivory.com/";
+const modFilter = { color: "", set: "", flag: "", q: "" };
+const FLAG_ES = { unleveled: "Sin subir", lowColor: "Color bajo", noSpeed: "Sin velocidad", sixDot: "6 puntos", premiumSpeed: "Vel. premium" };
+const SLOT_ES = { 2: "Cuadrado", 3: "Flecha", 4: "Rombo", 5: "Triángulo", 6: "Círculo", 7: "Cruz" };
+const modUnit = id => ID2U[id] || lookupByName(id);
+const modName = id => (ID2U[id] ? ID2U[id].n : id);
+
+function renderMods() {
+  const box = $("#p-mods"); if (!box) return;
+  const g = (MODS.audit && MODS.audit.global) || {};
+  const off = (MODS.audit && MODS.audit.offenders) || [];
+  const qw = (MODS.audit && MODS.audit.quickWins) || { level: [], move: [] };
+  // Cabecera (header): dos cifras en vivo.
+  if ($("#d-unlev")) $("#d-unlev").textContent = fmt(g.unleveled || 0);
+  if ($("#d-spd20")) $("#d-spd20").textContent = (g.speedGe && g.speedGe[20]) || 0;
+  const srcEl = $("#mods-src");
+  if (srcEl) srcEl.textContent = MODS.live ? `Inventario en vivo · ${fmt(g.total || 0)} mods` : "Resumen embebido (sin conexión al backend)";
+
+  // Estado global.
+  const spd20 = (g.speedGe && g.speedGe[20]) || 0;
+  $("#modstats").innerHTML = [
+    { v: fmt(g.unleveled || 0), s: "/" + fmt(g.total || 0), k: "mods sin subir de nivel", cls: "alert" },
+    { v: spd20, s: "", k: "mods con velocidad ≥ 20", cls: "alert" },
+    { v: (g.byDots && g.byDots[6]) || 0, s: "", k: "mods de 6 puntos", cls: "" },
+    { v: "0", s: "", k: "datacrons usados", cls: "zero" },
+  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}<small>${x.s}</small></div><div class="k">${x.k}</div></div>`).join("");
+
+  // Barras por color.
+  const cb = $("#mods-colorbars");
+  if (cb) {
+    const order = [["dorado", "var(--gold)"], ["morado", "#a463ff"], ["azul", "var(--holo)"], ["verde", "var(--green)"], ["gris", "var(--muted)"]];
+    const total = g.total || 1;
+    cb.innerHTML = `<div class="mods-cbars">` + order.map(([c, tone]) => {
+      const n = (g.byColor && g.byColor[c]) || 0, pct = Math.round(n / total * 100);
+      return `<div class="mods-cbar"><span class="cbl">${c}</span><div class="meter" data-pct="${pct}" style="--tone:${tone}"><i></i></div><span class="cbn">${fmt(n)}</span></div>`;
+    }).join("") + `</div>`;
+  }
+
+  // Ofensores por inversión.
+  const ob = $("#mods-offenders");
+  if (ob) {
+    if (!off.length) ob.innerHTML = '<div class="pg-empty">Sin ofensores: tus unidades de alta inversión llevan mods decentes. 👌</div>';
+    else ob.innerHTML = off.slice(0, 20).map(o => {
+      const u = modUnit(o.id);
+      const spd = o.spdMods === 0 ? `<span class="low">+0</span>` : `+${o.spdMods}`;
+      return `<div class="trow mods-off"><div class="who2">${portrait(u)}<div><div class="nm">${modName(o.id)} <span class="r">R${o.relic}·G${o.gear}</span></div><div class="tip">${o.why}</div></div></div>
+       <div class="spd"><div class="cur ${o.spdMods === 0 ? "low" : ""}">${o.spdMods}</div><div class="tg">vel mods / ${o.spdFinal} final</div></div></div>`;
+    }).join("");
+  }
+
+  // Quick-wins.
+  const qb = $("#mods-quickwins");
+  if (qb) {
+    const lvl = (qw.level || []).slice(0, 12).map(w => `<li>${portrait(modUnit(w.unit))}<span class="sp">${w.count}</span><span class="txt">sube a <b>nivel 15</b> los mods de <b>${modName(w.unit)}</b></span><span class="tag ok">${w.cost}</span></li>`).join("");
+    const mv = (qw.move || []).slice(0, 8).map(w => `<li>${portrait(modUnit(w.from))}<span class="sp">+${w.spd}</span><span class="txt">mueve un mod de <b>${w.spd}</b> vel de <b>${modName(w.from)}</b></span><span class="arw">→</span><span class="txt"><b>${modName(w.to)}</b></span></li>`).join("");
+    qb.innerHTML =
+      (lvl ? `<div class="slabel">Subir de nivel (barato)</div><ul class="relocate">${lvl}</ul>` : "") +
+      (mv ? `<div class="slabel">Reubicar velocidad premium (gratis)</div><ul class="relocate">${mv}</ul>` : "") +
+      (!lvl && !mv ? '<div class="pg-empty">Sin quick-wins evidentes ahora mismo.</div>' : "");
+  }
+
+  // Grid filtrable (solo con datos en vivo).
+  const gridWrap = $("#mods-grid-card");
+  if (gridWrap) gridWrap.style.display = (MODS.live && MODS.mods) ? "" : "none";
+  if (MODS.live && MODS.mods) renderModGrid();
+}
+
+function renderModGrid() {
+  const grid = $("#mods-grid"); if (!grid) return;
+  const f = modFilter, q = f.q.toLowerCase().trim();
+  const list = MODS.mods.filter(m => {
+    if (f.color && String(m.col) !== f.color) return false;
+    if (f.set && String(m.set) !== f.set) return false;
+    if (f.q && !modName(m.c).toLowerCase().includes(q)) return false;
+    if (f.flag && !modQuality(m).flags.includes(f.flag)) return false;
+    return true;
+  });
+  $("#mods-gridcount").textContent = `${fmt(list.length)} mods`;
+  grid.innerHTML = list.slice(0, 120).map(m => {
+    const sp = (m.sec || []).find(s => s.s === 5 && parseDisp(s.v) > 0);
+    const col = COLOR_MAP[m.col] || "?", set = (SET_MAP[m.set] && SET_MAP[m.set].n) || m.set;
+    return `<div class="modcard c-${m.col}">${portrait(modUnit(m.c))}
+     <div class="mc-b"><div class="mc-n">${modName(m.c)}</div>
+       <div class="mc-m">${SLOT_ES[m.sl] || m.sl} · ${set} · ${col} · ${m.d}▪ · L${m.lv}</div>
+       <div class="mc-s">${sp ? `⚡ ${parseDisp(sp.v)} vel` : "sin velocidad"}</div></div></div>`;
+  }).join("") || '<div class="pg-empty">Ningún mod con esos filtros.</div>';
+}
+
+function modExportWire() {
+  const open = $("#grand-open"); if (open) open.href = GRAND_URL;
+  const copy = $("#grand-copy");
+  if (copy) copy.onclick = async () => {
+    try { await navigator.clipboard.writeText(MOD_ALLY); copy.textContent = "✓ Copiado " + MOD_ALLY; setTimeout(() => { copy.textContent = "📋 Copiar ally code (" + MOD_ALLY + ")"; }, 2200); }
+    catch { copy.textContent = "Ally code: " + MOD_ALLY; }
+  };
+}
+
 // ===== cableado de eventos + arranque =====
 export function init(rd, extra = {}) {
   // Roster inyectado (en vivo) o embebido como fallback.
@@ -584,9 +667,20 @@ export function init(rd, extra = {}) {
   // Datos de la pestaña Progreso (opcionales; si faltan -> estados vacíos, nada roto).
   PROGRESS = { events: (extra.progress && extra.progress.events) || [], snapshots: (extra.progress && extra.progress.snapshots) || [] };
   GUILD = extra.guild || null;
+  MODS = (extra.mods && extra.mods.audit) ? extra.mods : { audit: MODS_EMBED, live: false };
 
   renderStatic();
   renderProgress();
+
+  // Arena / Mods (Fase 4.1): auditoría + export + filtros del grid en vivo.
+  renderMods();
+  modExportWire();
+  const setSel = $("#mods-fset");
+  if (setSel && !setSel.dataset.filled) { setSel.dataset.filled = "1"; Object.entries(SET_MAP).forEach(([id, s]) => setSel.insertAdjacentHTML("beforeend", `<option value="${id}">${s.n}</option>`)); }
+  $("#mods-fcolor") && ($("#mods-fcolor").onchange = function () { modFilter.color = this.value; renderModGrid(); });
+  $("#mods-fset") && ($("#mods-fset").onchange = function () { modFilter.set = this.value; renderModGrid(); });
+  $("#mods-fflag") && ($("#mods-fflag").onchange = function () { modFilter.flag = this.value; renderModGrid(); });
+  $("#mods-fq") && ($("#mods-fq").oninput = function () { modFilter.q = this.value; renderModGrid(); });
 
   // Roster explorer: poblar selects
   const role = $("#rx-role"), fac = $("#rx-fac"), ab = $("#rx-ab");
