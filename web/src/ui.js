@@ -293,26 +293,43 @@ function pickFilter(list, q, limit = 30) {
 }
 // Pinta la lista clicable (con avatar) y cablea el clic. `onmousedown`+preventDefault para que el
 // clic gane al blur del input. `excludeSet` marca como añadidos (deshabilitados) los ya elegidos.
-function renderPickList(listEl, items, onPick, excludeSet) {
+// `activeIndex` resalta la fila navegada por teclado.
+function renderPickList(listEl, items, onPick, excludeSet, activeIndex = -1) {
   if (!listEl) return;
   if (!items.length) { listEl.innerHTML = '<div class="wr-pempty">Sin resultados</div>'; listEl.hidden = false; return; }
-  listEl.innerHTML = items.map(e => {
+  listEl.innerHTML = items.map((e, i) => {
     const u = scoutUnit(e.id), dis = excludeSet && excludeSet.has(e.id);
-    return `<button type="button" class="wr-popt" data-id="${e.id}"${dis ? " disabled" : ""}>${portrait(u)}<span class="wr-poptn">${e.n}</span><span class="wr-popts">${SIDES[e.s] || ""}${e.fac ? " · " + e.fac : ""}</span></button>`;
+    return `<button type="button" class="wr-popt${i === activeIndex ? " active" : ""}" data-id="${e.id}"${dis ? " disabled" : ""}>${portrait(u)}<span class="wr-poptn">${e.n}</span><span class="wr-popts">${SIDES[e.s] || ""}${e.fac ? " · " + e.fac : ""}</span></button>`;
   }).join("");
   listEl.hidden = false;
   $$(".wr-popt", listEl).forEach(b => b.onmousedown = ev => { ev.preventDefault(); if (!b.disabled) onPick(b.dataset.id); });
 }
 // Cablea un input de búsqueda + su lista a un origen (PICK_ALL/PICK_ROSTER) y un callback de elección.
-// `container` opcional: si se pasa, también se oculta al perder foco (para el desplegable de zona,
-// que aparece al pulsar un hueco vacío; el picker del bloqueo va siempre visible y no lo pasa).
+// Soporta ratón (clic) Y teclado (↑/↓ resaltan, Enter elige). `container` opcional: si se pasa, también
+// se oculta al perder foco (desplegable de zona, que aparece al pulsar un hueco vacío; el del bloqueo
+// va siempre visible y no lo pasa).
 function wirePicker(inp, listEl, source, excludeFn, onPick, container) {
   if (!inp || !listEl) return;
-  const refresh = () => renderPickList(listEl, pickFilter(source, inp.value), onPick, excludeFn());
+  let items = [], active = -1;
+  const firstEnabled = ex => items.findIndex(it => !ex.has(it.id));
+  const paint = () => renderPickList(listEl, items, onPick, excludeFn(), active);
+  const refresh = () => { items = pickFilter(source, inp.value); active = firstEnabled(excludeFn()); paint(); };
+  const move = dir => {
+    const ex = excludeFn(); if (!items.length) return;
+    for (let n = 0; n < items.length; n++) { active = (active + dir + items.length) % items.length; if (!ex.has(items[active].id)) break; }
+    paint();
+    const el = listEl.querySelector(".wr-popt.active");
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+  };
   inp.oninput = refresh; inp.onfocus = refresh;
   inp.onkeydown = e => {
-    if (e.key === "Enter") { e.preventDefault(); const ex = excludeFn(); const pick = pickFilter(source, inp.value).find(it => !ex.has(it.id)); if (pick) onPick(pick.id); }
-    else if (e.key === "Escape") { listEl.hidden = true; if (container) container.hidden = true; inp.blur(); }
+    if (e.key === "ArrowDown") { e.preventDefault(); if (listEl.hidden) refresh(); else move(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); move(-1); }
+    else if (e.key === "Enter") {
+      e.preventDefault(); const ex = excludeFn();
+      const pick = (active >= 0 && items[active] && !ex.has(items[active].id)) ? items[active] : items.find(it => !ex.has(it.id));
+      if (pick) onPick(pick.id);
+    } else if (e.key === "Escape") { listEl.hidden = true; if (container) container.hidden = true; inp.blur(); }
   };
   inp.onblur = () => setTimeout(() => { listEl.hidden = true; if (container) container.hidden = true; }, 150);
 }
@@ -320,15 +337,15 @@ function scoutWarn(msg) { const w = $("#scout-warn"); if (!w) return; if (!msg) 
 function persistBoard() { saveBoard({ size: boardState.size, order: boardState.order, teams: boardState.teams }, null); }
 function persistLocked() { saveLocked(boardState.locked, null); }
 
-// --- bloqueo (mi defensa fija) ---
+// --- bloqueo (mi defensa fija): se pinta como una mini-holomesa con ranuras circulares ---
 function lockRenderChips() {
   const box = $("#lock-chips"); if (!box) return;
-  if (!boardState.locked.length) { box.innerHTML = '<span class="cq-empty">Sin unidades bloqueadas. Las que añadas aquí no se usarán en ningún counter del tablero.</span>'; return; }
-  box.innerHTML = boardState.locked.map((id, i) => {
-    const u = scoutUnit(id), src = unitImg(u), av = src ? `<img class="cqav" src="${src}" loading="lazy" alt="" onerror="this.remove()">` : "";
-    return `<span class="cq-chip cq-char">${av}${u.n}<button data-i="${i}" aria-label="quitar">×</button></span>`;
-  }).join("");
-  $$("#lock-chips button").forEach(b => b.onclick = () => { boardState.locked.splice(+b.dataset.i, 1); persistLocked(); lockRenderChips(); renderBudget(); });
+  if (!boardState.locked.length) { box.innerHTML = '<div class="wr-lockempty">Sin unidades bloqueadas. Las que añadas aquí no se usarán en ningún counter del tablero.</div>'; return; }
+  box.innerHTML = `<div class="wr-slots wr-lockslots">${boardState.locked.map((id, i) => {
+    const u = scoutUnit(id);
+    return `<div class="wr-slot filled"><button class="wr-lock-rm" data-i="${i}" aria-label="quitar ${u.n}">×</button>${portrait(u)}<span class="wr-slotn">${u.n}</span></div>`;
+  }).join("")}</div>`;
+  $$("#lock-chips .wr-lock-rm").forEach(b => b.onclick = () => { boardState.locked.splice(+b.dataset.i, 1); persistLocked(); lockRenderChips(); renderBudget(); });
 }
 function lockAdd(id) {
   if (!id || !ID2U[id]) { scoutWarn("El bloqueo es para unidades de TU roster."); return; }

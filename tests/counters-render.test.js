@@ -92,12 +92,24 @@ describe("War Room holomesa — ranuras, selector, tablero y persistencia", () =
     expect($$(".wr-zone")[0].querySelectorAll(".wr-mine .simrow").length).toBe(3);
   });
 
-  it("bloqueo por clic en el selector de mi roster: chip + persiste + cuenta en 'en defensa'", async () => {
+  it("bloqueo por clic: ranura holomesa + persiste + cuenta en 'en defensa'", async () => {
     const RD = await boot({});
     pickLock(RD.R[0].n);
-    expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1);
+    expect($("#lock-chips .wr-lockslots")).toBeTruthy();                 // se ve como mini-holomesa
+    expect($("#lock-chips").querySelectorAll(".wr-slot.filled").length).toBe(1);
     expect(JSON.parse(localStorage.getItem("swgoh.gac.locked"))).toContain(RD.R[0].i);
     expect(Number($("#scout-budget").querySelector(".wr-b.lock b").textContent)).toBe(1);
+  });
+
+  it("teclado: ↑/↓ resaltan y Enter añade la fila (sin clic)", async () => {
+    await boot({});
+    const zone = $$(".wr-zone")[0];
+    zone.querySelector(".wr-slot.empty").click();                        // revela + enfoca el picker
+    const inp = zone.querySelector(".wr-psearch");
+    inp.dispatchEvent(new window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    expect(zone.querySelector(".wr-popt.active")).toBeTruthy();          // hay fila resaltada
+    inp.dispatchEvent(new window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect(filled(0)).toBe(1);                                          // añadida por teclado
   });
 
   it("+ Equipo añade zonas (hasta 6) y el presupuesto refleja gastados al generar", async () => {
@@ -118,7 +130,7 @@ describe("War Room holomesa — ranuras, selector, tablero y persistencia", () =
     $("#scout-reset").click();
     expect($$(".wr-zone").length).toBe(2);
     expect(filled(0)).toBe(0);
-    expect($("#lock-chips").querySelectorAll(".cq-chip").length).toBe(1);
+    expect($("#lock-chips").querySelectorAll(".wr-slot.filled").length).toBe(1);
   });
 
   it("el tablero persiste entre 'recargas' (re-init lee localStorage)", async () => {

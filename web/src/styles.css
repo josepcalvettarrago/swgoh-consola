@@ -409,9 +409,15 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .wr-b b{display:block;font-family:'Chakra Petch';font-weight:700;font-size:20px;color:var(--text);line-height:1.1}
 .wr-b span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .wr-b.lock b{color:var(--gold)}.wr-b.spent b{color:var(--holo)}.wr-b.ok b{color:var(--green)}.wr-b.alert b{color:var(--ember)}
-.wr-locked{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px;background:var(--surface2)}
+.wr-locked{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px;background:var(--surface2);transition:.2s}
 .wr-locked summary{cursor:pointer;font-family:'Chakra Petch';font-weight:600;font-size:13px;color:var(--gold)}
 .wr-locked summary::marker{color:var(--gold)}
+.wr-locked[open]{border-color:rgba(58,214,230,.42);background:radial-gradient(120% 90% at 50% -25%,rgba(58,214,230,.08),transparent 62%),var(--surface2);box-shadow:inset 0 0 44px -22px rgba(58,214,230,.45)}
+.wr-locked[open] summary{color:var(--holo);margin-bottom:6px}
+.wr-locked[open] summary::marker{color:var(--holo)}
+.wr-lockempty{color:var(--muted);font-size:12.5px;margin-top:8px}
+.wr-lockslots{margin-top:10px;padding:12px;border:1px solid rgba(58,214,230,.28);border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(180deg,rgba(20,34,54,.5),rgba(9,16,29,.62));box-shadow:inset 0 0 34px -16px rgba(58,214,230,.5)}
+.wr-lockslots::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(to bottom,rgba(58,214,230,.05) 0 1px,transparent 1px 4px);opacity:.5}
 /* holomesa: marco tipo Grand Arena (todo CSS, sin imágenes del juego) */
 .wr-table{position:relative;margin:14px 0;padding:34px 16px 18px;border-radius:16px;overflow:hidden;
   background:radial-gradient(120% 80% at 50% -12%,rgba(58,214,230,.12),transparent 60%),radial-gradient(90% 70% at 50% 118%,rgba(58,214,230,.07),transparent 60%),linear-gradient(180deg,#0a1220,#070d17);
@@ -445,8 +451,8 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .wr-slot.filled{width:60px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .wr-slot.filled .savw{width:52px;height:52px;box-shadow:0 0 14px -3px rgba(58,214,230,.6)}
 .wr-slotn{font-size:9.5px;line-height:1.1;text-align:center;color:var(--muted);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wr-def-rm{position:absolute;top:-5px;right:3px;width:18px;height:18px;border-radius:50%;border:0;background:var(--ember);color:#fff;font-size:12px;line-height:1;cursor:pointer;opacity:0;transition:.15s;box-shadow:0 0 8px rgba(255,53,70,.5)}
-.wr-slot.filled:hover .wr-def-rm{opacity:1}
+.wr-def-rm,.wr-lock-rm{position:absolute;top:-5px;right:3px;width:18px;height:18px;border-radius:50%;border:0;background:var(--ember);color:#fff;font-size:12px;line-height:1;cursor:pointer;opacity:0;transition:.15s;box-shadow:0 0 8px rgba(255,53,70,.5);z-index:2}
+.wr-slot.filled:hover .wr-def-rm,.wr-slot.filled:hover .wr-lock-rm{opacity:1}
 .wr-slot.empty{width:52px;height:52px;border-radius:50%;border:2px dashed rgba(58,214,230,.4);background:rgba(58,214,230,.05);color:var(--holo);font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
 .wr-slot.empty:hover{border-color:var(--holo);background:var(--holo-dim);box-shadow:0 0 14px -2px rgba(58,214,230,.55)}
 .wr-mine{margin-top:8px;padding-top:8px;border-top:1px solid rgba(58,214,230,.25)}
@@ -462,7 +468,7 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .wr-plist[hidden]{display:none}
 .wr-popt{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:7px 10px;cursor:pointer;color:var(--text);font-family:inherit}
 .wr-popt:last-child{border-bottom:0}
-.wr-popt:hover:not([disabled]){background:var(--holo-dim)}
+.wr-popt:hover:not([disabled]),.wr-popt.active:not([disabled]){background:var(--holo-dim)}
 .wr-popt[disabled]{opacity:.4;cursor:default}
 .wr-popt .savw{width:34px;height:34px;flex:none}.wr-popt .savw .savi{font-size:11px}
 .wr-poptn{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
