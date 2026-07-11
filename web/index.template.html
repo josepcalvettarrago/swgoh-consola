@@ -80,6 +80,15 @@
       <div class="lvtop"><div class="ring" id="lvring"><div class="lab"><b id="lvpct">0%</b><span>Relic</span></div></div>
       <div class="lvfacts" id="lvfacts"></div></div>
       <div class="shipnote" id="shipnote"></div></div>
+    <div class="card"><div class="head"><h3>Planificador de energía → desbloqueo</h3><span class="note" id="vp-note">ETA estimada · en vivo</span></div>
+      <div class="vp-ctrl">
+        <label for="vp-energy">Energía diaria para gear</label>
+        <input id="vp-energy" class="rx-in" type="number" min="120" max="2000" step="20" value="480">
+        <span class="vp-hint">normal + refrescos (240+2×120 ≈ 480). El relic va por materiales, no solo energía.</span>
+      </div>
+      <div class="statgrid" id="vp-stats"></div>
+      <div id="vp-list"></div>
+      <p class="mods-disc"><b>Estimación honesta, no rutas de nodo.</b> El gear se modela con tu energía; el material de relic depende de mats/créditos/GET (medias curadas). Ajusta la energía a tu ritmo real.</p></div>
     <div class="loop"><div class="lh">Ciclo semanal con <span>Claude Cowork</span> — tú ejecutas, Cowork planifica y mide</div>
       <div class="cycle">
         <div class="step you"><div class="sn">01 · TÚ</div><div class="st">Ejecutas en el juego</div><div class="sd">Farmeas y subes relic/mods según la semana.</div></div>

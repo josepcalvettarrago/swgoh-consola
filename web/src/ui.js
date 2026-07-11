@@ -1,9 +1,9 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
 import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP } from "./engine.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
-import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard } from "./store.js";
+import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
 
 // Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
@@ -559,6 +559,28 @@ function animatePgRing() {
   const t0 = performance.now(); (function step(t) { const k = Math.min(1, (t - t0) / 1000), e = 1 - Math.pow(1 - k, 3), c = Math.round(pgLvpct * e); r.style.setProperty("--p", c); $("#pgv-pct").textContent = c + "%"; if (k < 1) requestAnimationFrame(step); })(t0);
 }
 
+// ===== Planificador de energía → Lord Vader (Fase 4.2) =====
+let vpEnergy = 480; // energía diaria para gear (persistida en localStorage)
+function renderVaderPlan() {
+  const listEl = $("#vp-list"); if (!listEl) return;
+  const p = vaderPlan(RD, { dailyGearEnergy: vpEnergy }), t = p.totals, doneN = p.units.filter(u => u.done).length;
+  const st = $("#vp-stats");
+  if (st) st.innerHTML = [
+    { v: t.relicGap, k: "niveles de relic que faltan", cls: "alert" },
+    { v: t.gearGap, k: "niveles de gear a G13", cls: "" },
+    { v: t.weeks, k: "semanas estimadas (ETA)", cls: "zero" },
+    { v: `${doneN}/${p.units.length}`, k: "unidades ya en objetivo", cls: doneN === p.units.length ? "zero" : "" },
+  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}</div><div class="k">${x.k}</div></div>`).join("");
+  listEl.innerHTML = p.order.map(u => {
+    const need = u.done ? '<span class="badge ok">✓ lista</span>'
+      : `${u.relicGap ? `<span class="rc rc-need">R+${u.relicGap}</span>` : ""}${u.gearGap ? `<span class="rc rc-gap">G+${u.gearGap}</span>` : ""}`;
+    return `<div class="trow vp-row ${u.done ? "done" : ""}">${portrait(lookupByName(u.name))}<div class="who"><div class="nm">${u.name} <span class="r">R${u.curRelic}·G${u.curGear}</span></div>
+     <div class="tip">objetivo R${u.tgtRelic}·G13 · ${need}</div></div>
+     <div class="spd"><div class="cur ${u.done ? "hit" : ""}">${u.done ? "✓" : u.days + "d"}</div><div class="tg">${u.done ? "" : "~" + Math.max(1, Math.ceil(u.days / 7)) + " sem"}</div></div></div>`;
+  }).join("");
+  const note = $("#vp-note"); if (note) note.textContent = `ETA ≈ ${t.weeks} semanas @ ${t.dailyGearEnergy} energía/día`;
+}
+
 // ===== Arena / Mods (Fase 4.1): auditoría dinámica + export a Grandivory =====
 let MODS = { audit: MODS_EMBED, live: false }; // resultado de loadMods (init lo sustituye)
 const MOD_ALLY = "355463284";
@@ -681,6 +703,12 @@ export function init(rd, extra = {}) {
   $("#mods-fset") && ($("#mods-fset").onchange = function () { modFilter.set = this.value; renderModGrid(); });
   $("#mods-fflag") && ($("#mods-fflag").onchange = function () { modFilter.flag = this.value; renderModGrid(); });
   $("#mods-fq") && ($("#mods-fq").oninput = function () { modFilter.q = this.value; renderModGrid(); });
+
+  // Lord Vader (Fase 4.2): planificador de energía / ETA (energía persistida).
+  vpEnergy = loadEnergy(null) || 480;
+  const eIn = $("#vp-energy");
+  if (eIn) { eIn.value = vpEnergy; eIn.onchange = () => { const v = Math.max(120, Math.min(2000, Number(eIn.value) || 480)); vpEnergy = v; eIn.value = v; saveEnergy(v, null); renderVaderPlan(); }; }
+  renderVaderPlan();
 
   // Roster explorer: poblar selects
   const role = $("#rx-role"), fac = $("#rx-fac"), ab = $("#rx-ab");

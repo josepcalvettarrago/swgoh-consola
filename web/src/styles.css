@@ -508,3 +508,13 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .modcard .mc-m{font-family:'Share Tech Mono';font-size:10.5px;color:var(--muted)}
 .modcard .mc-s{font-size:12px;color:var(--holo)}
 @media(max-width:520px){.mods-grid{grid-template-columns:1fr}}
+/* Planificador de energía → Lord Vader (Fase 4.2) */
+.vp-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0}
+.vp-ctrl label{font-size:13px;color:var(--muted);font-weight:600}
+.vp-ctrl #vp-energy{width:110px}
+.vp-ctrl .vp-hint{font-size:12px;color:var(--faint);flex:1;min-width:180px}
+.vp-row.done{opacity:.6}
+.vp-row .who .nm .r{font-family:'Share Tech Mono';font-size:11px;color:var(--gold);border:1px solid rgba(244,182,52,.3);border-radius:5px;padding:0 5px;background:rgba(244,182,52,.06)}
+.vp-row .tip .rc{margin-left:2px}
+.rc.rc-gap{color:var(--gold);border-color:rgba(244,182,52,.4);background:rgba(244,182,52,.1)}
+.vp-row .spd .cur.hit{color:var(--green)}
