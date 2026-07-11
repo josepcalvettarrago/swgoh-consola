@@ -7,6 +7,8 @@ import { IMGBYNAME, KEYMECH, ROLE_ES, SIDES } from "./data.js";
 export { diffSnapshots, compactSnapshot, snapshotHash, isEmptyDiff } from "./diff.js";
 // Auto-marcado del roadmap de Lord Vader (Fase 2): también puro.
 export { vaderProgress } from "./vader.js";
+// Planificador de energía / ETA hacia Lord Vader (Fase 4.2): puro.
+export { vaderPlan, VADER_COSTS } from "./vaderplan.js";
 // Scout de counters (Fase 3): motor puro sin DOM; `genScout` recibe `assemble` inyectada.
 export { THREAT_MAP, detectThreats, threatsToNeeds, matchArchetype, genScout, resolveUnit, teamDifficulty, genBoard } from "./counters.js";
 // Auditor de mods (Fase 4.1): motor puro sin DOM.

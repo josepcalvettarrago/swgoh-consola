@@ -8,6 +8,7 @@
 
 const K_LOCKED = "swgoh.gac.locked";
 const K_BOARD = "swgoh.gac.board";
+const K_ENERGY = "swgoh.vader.energy"; // energía diaria para el planificador de Vader (Fase 4.2)
 
 function store(storage) {
   if (storage) return storage;
@@ -52,4 +53,15 @@ export function saveBoard(board, storage) {
 export function clearBoard(storage) {
   const s = store(storage); if (!s) return false;
   try { s.removeItem(K_BOARD); return true; } catch { return false; }
+}
+
+// --- energía diaria del planificador de Vader (Fase 4.2) ---
+export function loadEnergy(storage) {
+  const v = Number(readJSON(storage, K_ENERGY, null));
+  return Number.isFinite(v) && v > 0 ? v : null;
+}
+export function saveEnergy(energy, storage) {
+  const v = Number(energy);
+  if (!Number.isFinite(v) || v <= 0) return false;
+  return writeJSON(storage, K_ENERGY, Math.round(v));
 }
