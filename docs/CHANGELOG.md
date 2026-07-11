@@ -2,6 +2,25 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 4.3 — Fleet Arena module (recomendador de flota) — `v4.3-fleet`
+
+- Nueva pestaña **Flota (09)**: qué **flotas meta puedes montar** (naves 7★ que posees), cuáles están
+  **"casi"** (falta la capital), y cuáles bloqueadas — con **orden de arranque** y **crew** (pilotos con
+  relic/gear desde el roster en vivo). Filtros por lado/tier.
+- **Pipeline (naves, antes se tiraban):** `compactShips()` (combat_type 2) → la ingesta local escribe
+  `ships/{ally}` con dedup → nuevo endpoint **read-only** `GET /api/fleet/:ally` (desplegado y
+  verificado: 200 + 64 naves). HTML con **fallback embebido** (`SHIPS_EMBED`).
+- **Datos:** `SHIP_META` (70 naves de `swgoh.gg/api/ships/`; imagen `tex.charui_*` → `portrait()` vale)
+  + `fleet_db.json` **curado** (10 flotas meta, base_ids verificados contra SHIP_META/CHAR_META). El
+  crew se cura ahí (la API de naves no trae pilotos) y se cruza con `RD`.
+- **Motor puro** `web/src/fleet.js`: `planFleet` (montable/casi/bloqueada, orden por estado+tier,
+  crew readiness). Determinista.
+- **Honestidad:** meta **curada** (tiers/arranque cambian); la fuerza real depende de los pilotos/mods
+  — disclaimer visible. Con el roster real: **7 de 10 flotas montables**.
+- Worker **read-only**. Tests: `fleet.test.js` (9) + `fleet-render.test.js` (5, jsdom) → **167 verdes**.
+  Build → 1 HTML (449 KB).
+- Tag: `v4.3-fleet`.
+
 ## Fase 4.2 — Planificador de energía / ETA hacia Lord Vader — `v4.2-vaderplan`
 
 - Nueva **card computada** en la pestaña Lord Vader (aditiva; no toca el roadmap narrativo ni
