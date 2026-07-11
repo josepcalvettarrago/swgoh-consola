@@ -30,7 +30,8 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **3 — Counter Generator GAC (Scout)** | ✅ Hecha | `v3-counters` | Scout 3v3/5v5 dirigido por metadata (kit fijo por personaje): `detectThreats` + `counter_db` curado (27) + `assemble()`. Tablero meta previo intacto. §5 (nivel del rival) descartado: swgoh.gg da challenge+sin CORS. **95 tests verdes.** |
 | **3.1 — GAC War Room** | ✅ Hecha | `v3.1-warroom` | Tablero multi-equipo (2–6) con presupuesto de roster compartido (exclusividad), fix del bug 3v3 (`assemble(size)`), bloqueo de mi defensa fija y persistencia `localStorage`. **116 tests verdes.** |
 | **3.2–3.5 — War Room UX/visual** | ✅ Hecha | `v3.2-picker` … `v3.5-filtros` | Selector con avatares (3.2), reskin holomesa GAC (3.3), defensa fija holomesa + teclado (3.4), búsqueda avanzada por Lado/Rol/Facción/Mecánica (3.5). **122 tests verdes.** |
-| 4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
+| **4.1 — Auditoría de mods + Grandivory** | ✅ Hecha | `v4.1-modaudit` | Auditoría dinámica de 1700 mods por el pipeline (ingesta compacta → `mods/{ally}` → endpoint read-only `/api/mods` → HTML con fallback). Motor puro `mods.js` (ofensores por inversión + quick-wins). Export honesto a Grandivory. **141 tests verdes.** |
+| 4.2 · 4.3 · 4.4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
 - swgoh.gg → normaliza → **Firestore** (base con nombre **`swgohapi`**, `europe-west3`, proyecto `swgoh-13551`).
@@ -212,10 +213,24 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   determinista y suficiente para el uso real. Origen: feedback Fase 3.1.
 
 ## FASE 4 — Módulos de valor (1 sesión c/u, orden por impacto)
-- **Datacrones + auditoría de mods** completa (swgoh.gg da inventario de crons y eficiencia por tirada — *exclusivo de esta fuente*) + **export a Grandivory Mod Optimizer**.
-- **Planificador de energía diaria** hacia Lord Vader (nodos + ETA por unidad).
-- **Fleet Arena module** (tu gremio es fuerte en flota: vía fácil de cristales).
-- **Simulador defensivo de TW** (con datos del gremio).
+
+### Fase 4.1 — Auditoría de mods + export a Grandivory (`v4.1-modaudit`) — ✅ HECHA
+- **Pipeline (primer dato NUEVO de la cuenta de punta a punta):** `compactMods()` compacta el export
+  (dropea `stat_min/max/unscaled/value` crudo, conserva `display_value`) → la ingesta local escribe
+  `mods/{ally}` con dedup por hash (~396 KB, 1 doc; guarda de paginado si >900 KB). Endpoint
+  **read-only** `GET /api/mods/:ally` desplegado y verificado (curl 200 + MCP).
+- **Motor puro** `web/src/mods.js`: `modQuality` (estado OBJETIVO, no "fit") + `auditMods` (global +
+  ofensores por inversión + quick-wins). `SET_MAP` verificado empíricamente. Determinista.
+- **UI dinámica:** estado global calculado (742/17/238/649 en vivo), ofensores relic'd con mods pobres,
+  quick-wins (nivel/reubicar, sin gasto), grid filtrable. `loadMods()` con fallback embebido → nunca en
+  blanco. Export honesto a Grandivory (deep-link inexistente verificado → abrir + copiar ally code).
+- Datacrones (0) → sin panel vacío. Worker read-only. **141 tests verdes.**
+- **NO abordado (difiere a sub-fases):** planificador de datacrones (curado por temporada; tienes 0).
+
+### Pendientes de Fase 4 (una por sesión)
+- **4.2 · Planificador de energía diaria** hacia Lord Vader (nodos + ETA por unidad). Nodos = meta curado.
+- **4.3 · Fleet Arena module** (gremio fuerte en flota: vía fácil de cristales). Naves ya en `units`.
+- **4.4 · Simulador defensivo de TW** (con datos del gremio).
 
 ## FASE 5 — Gremio multi-usuario (3-4 sesiones)
 - **Firebase Auth** para el login del gremio (esto es lo que Firebase te ahorra construir).

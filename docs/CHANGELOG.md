@@ -2,6 +2,32 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 4.1 — Auditoría de mods dinámica + export a Grandivory — `v4.1-modaudit`
+
+- La pestaña **Arena / Mods** deja de ser un diagnóstico estático (4 cifras + plan SLKR + reubicación
+  hardcodeados en `DATA`) y pasa a **auditoría dinámica** del inventario real de **1700 mods**,
+  alimentada por el pipeline. Primer módulo que empuja datos NUEVOS de la cuenta por TODO el pipeline.
+- **Pipeline (write path):** `normalize.compactMods()` compacta el export (dropea `stat_min/max/
+  unscaled/value` crudo; conserva `display_value`) → la ingesta local escribe `mods/{ally}` con
+  **dedup por hash** (~396 KB, 1 doc; guarda de paginado si >900 KB). Nuevo endpoint **read-only**
+  `GET /api/mods/:ally` en el Worker (mismo patrón/CORS). Desplegado y **verificado** (curl 200 +
+  MCP): 1700 mods + 362 units.
+- **Motor puro** `web/src/mods.js`: `modQuality` (estado OBJETIVO: puntos/color/nivel/velocidad 2ª +
+  calidad de tirada — NO el "fit" con el personaje), `auditMods` (global + **ofensores por inversión**
+  + **quick-wins** computados). `SET_MAP` verificado empíricamente (no adivinado). Determinista.
+- **UI:** estado global calculado (742 sin subir, 17 con vel≥20, 238 de 6 puntos, 649 dorados — en
+  vivo), barras por color, ofensores (relic'd/G13 con mods grises y +0 vel arriba), quick-wins
+  (subir nivel / reubicar velocidad, nunca sugiere gasto) y **grid filtrable** por color/set/bandera/
+  personaje. `loadMods()` con **fallback** al resumen embebido (`MODS_EMBED`, ~10 KB) → nunca en blanco.
+- **Export honesto a Grandivory:** botón a `mods-optimizer.swgoh.grandivory.com` + **copiar ally code**.
+  Verificado que **no hay deep-link por ally code** (la URL antigua ya no resuelve) → no se inventa; el
+  JSON de import tampoco (esquema no confirmado). Es un **auditor**, no un optimizador (disclaimer en UI).
+- **Datacrones:** 0 usados → no se construye panel vacío; se mantiene el callout "0 datacrons".
+- Worker **read-only** (toda la escritura, en la ingesta). Fix menor: `renderCounters` cableaba TODO
+  `.cgen`; ahora acotado a `#counters`. Tests: `mods.test.js` (13, cifras reales exactas) +
+  `mods-render.test.js` (6, jsdom, vivo y fallback) → **141 verdes**. Build → 1 HTML (416 KB).
+- Tag: `v4.1-modaudit`.
+
 ## Fase 3.5 — Búsqueda avanzada en el selector (filtros tipo Conquest) — `v3.5-filtros`
 
 - El buscador de personajes (zonas enemigas y bloqueo) gana una **barra de filtros** tipo Conquest:
