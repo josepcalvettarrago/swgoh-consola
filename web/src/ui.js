@@ -1,9 +1,9 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
 import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED, SHIP_META, SHIPS_EMBED } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet } from "./engine.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet, planTWDefense } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
-import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy } from "./store.js";
+import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy, loadTW, saveTW } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
 import FLEET_DB from "./data/fleet_db.json";
 
@@ -560,6 +560,34 @@ function animatePgRing() {
   const t0 = performance.now(); (function step(t) { const k = Math.min(1, (t - t0) / 1000), e = 1 - Math.pow(1 - k, 3), c = Math.round(pgLvpct * e); r.style.setProperty("--p", c); $("#pgv-pct").textContent = c + "%"; if (k < 1) requestAnimationFrame(step); })(t0);
 }
 
+// ===== Defensa de Territory War (Fase 4.4): tus escuadrones sin solapar por zonas =====
+const twFmt = { zones: 4, perZone: 5, size: 5 };
+function renderTW() {
+  const listEl = $("#tw-list"); if (!listEl) return;
+  const p = planTWDefense(RD, { zones: twFmt.zones, perZone: twFmt.perZone, size: twFmt.size, assemble });
+  const gr = guildRanking(GUILD, DATA.player.ally);
+  const rankStat = gr && gr.myIndex >= 0 ? { v: `${gr.myIndex + 1}/${gr.memberCount}`, k: "tu GP en el gremio", cls: "" } : { v: "—", k: "gremio (sin datos)", cls: "" };
+  const st = $("#tw-stats");
+  if (st) st.innerHTML = [
+    { v: `${p.built}/${p.totalWanted}`, k: "escuadrones montados", cls: p.ranOut ? "alert" : "zero" },
+    { v: `${p.usedCount}/${p.poolTotal}`, k: "unidades usadas", cls: "" },
+    { v: p.zones.length, k: "zonas", cls: "" },
+    rankStat,
+  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}</div><div class="k">${x.k}</div></div>`).join("");
+  listEl.innerHTML = p.zones.map(z => {
+    const squads = z.squads.map((R, si) => {
+      const ctx = { reqTags: null, forcedIds: [], needs: null };
+      const band = R.score >= 72 ? "hi" : R.score >= 50 ? "mid" : "lo";
+      return `<div class="tw-squad"><div class="tw-sh"><span class="tw-sn">Defensa ${si + 1}</span><span class="synergy ${band}"><b>${R.score}</b><span>SIN.</span></span></div>
+       ${R.team.map((u, i) => teamRow(u, i, R, ctx, false)).join("")}</div>`;
+    }).join("");
+    return `<div class="card tw-zone"><div class="head"><h3>Zona ${z.i + 1}</h3><span class="note">${z.squads.length} defensa(s)</span></div>
+     ${squads || '<div class="pg-empty">Sin unidades libres para esta zona.</div>'}</div>`;
+  }).join("");
+  if (p.ranOut) listEl.insertAdjacentHTML("beforeend", `<div class="simwarn">Tu roster no da para ${p.totalWanted} escuadrones de ${twFmt.size}: montados ${p.built}. Baja zonas/defensas o el tamaño.</div>`);
+}
+function twSetSize(n) { twFmt.size = n; $$("#tw-size button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.n === n))); saveTW(twFmt, null); renderTW(); }
+
 // ===== Fleet Arena (Fase 4.3): flotas montables + arranque + crew =====
 let FLEET = { owned: SHIPS_EMBED, live: false };
 const fleetFilter = { side: "", tier: "" };
@@ -751,6 +779,17 @@ export function init(rd, extra = {}) {
   $$("#fleet-side button").forEach(b => b.onclick = () => { fleetFilter.side = b.dataset.v; $$("#fleet-side button").forEach(x => x.setAttribute("aria-pressed", x === b)); renderFleet(); });
   $("#fleet-tier") && ($("#fleet-tier").onchange = function () { fleetFilter.tier = this.value; renderFleet(); });
 
+  // TW (Fase 4.4): formato persistido + regenerar.
+  const twSaved = loadTW(null); if (twSaved) { twFmt.zones = twSaved.zones; twFmt.perZone = twSaved.perZone; twFmt.size = twSaved.size; }
+  const zi = $("#tw-zones"), pi = $("#tw-per");
+  if (zi) zi.value = twFmt.zones; if (pi) pi.value = twFmt.perZone;
+  $$("#tw-size button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.n === twFmt.size)));
+  $$("#tw-size button").forEach(b => b.onclick = () => twSetSize(+b.dataset.n));
+  const twApply = () => { twFmt.zones = Math.max(1, Math.min(12, Number(zi && zi.value) || 4)); twFmt.perZone = Math.max(1, Math.min(20, Number(pi && pi.value) || 5)); if (zi) zi.value = twFmt.zones; if (pi) pi.value = twFmt.perZone; saveTW(twFmt, null); renderTW(); };
+  zi && (zi.onchange = twApply); pi && (pi.onchange = twApply);
+  $("#tw-go") && ($("#tw-go").onclick = twApply);
+  renderTW();
+
   // Roster explorer: poblar selects
   const role = $("#rx-role"), fac = $("#rx-fac"), ab = $("#rx-ab");
   RD.V.roles.forEach(r => role.insertAdjacentHTML("beforeend", `<option value="${r}">${r}</option>`));
@@ -803,7 +842,7 @@ export function init(rd, extra = {}) {
   cxSetMode("scout");
 
   // Pestañas
-  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso", fleet: "#p-fleet" };
+  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso", fleet: "#p-fleet", tw: "#p-tw" };
   $$(".tab").forEach(tab => tab.onclick = () => {
     $$(".tab").forEach(t => t.setAttribute("aria-selected", t === tab));
     const key = tab.dataset.p; Object.entries(panels).forEach(([k, sel]) => $(sel).classList.toggle("on", k === key));

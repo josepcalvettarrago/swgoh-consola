@@ -46,6 +46,7 @@
     <button class="tab" role="tab" aria-selected="false" data-p="next"><span class="n">07</span> Mejoras</button>
     <button class="tab" role="tab" aria-selected="false" data-p="progreso"><span class="n">08</span> Progreso</button>
     <button class="tab" role="tab" aria-selected="false" data-p="fleet"><span class="n">09</span> Flota</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="tw"><span class="n">10</span> TW</button>
   </nav>
 
   <!-- MODS -->
@@ -261,6 +262,21 @@
       <p class="mods-disc"><b>Meta curada, no fuerza exacta.</b> Marca qué flotas puedes montar (naves 7★) y el arranque; la potencia real depende de tus <b>pilotos</b> (relic/gear/mods). Tu gremio es fuerte en flota: vía barata de cristales F2P.</p>
     </div>
     <div id="fleet-list"></div>
+  </section>
+
+  <!-- TW -->
+  <section class="panel" id="p-tw" role="tabpanel">
+    <div class="card"><div class="head"><h3>Defensa de Territory War</h3><span class="note" id="tw-src">tu roster · sin solapar</span></div>
+      <div class="tw-ctrl">
+        <label>Zonas <input id="tw-zones" class="rx-in" type="number" min="1" max="12" step="1" value="4"></label>
+        <label>Defensas/zona <input id="tw-per" class="rx-in" type="number" min="1" max="20" step="1" value="5"></label>
+        <div class="seg-btns" id="tw-size"><button data-n="3" aria-pressed="false">3v3</button><button data-n="5" aria-pressed="true">5v5</button></div>
+        <button class="cgen" id="tw-go">♻️ Regenerar</button>
+      </div>
+      <div class="statgrid" id="tw-stats"></div>
+      <p class="mods-disc"><b>Monta TU defensa, no simula el combate.</b> Reparte tus mejores escuadrones por sinergia entre zonas, sin repetir personajes; tú los colocas. No conoce los rosters de tus compañeros (la API solo da su GP). Las zonas de flota, en la pestaña Flota.</p>
+    </div>
+    <div id="tw-list"></div>
   </section>
 
   <footer><span id="foot-updated">—</span><span>Actualiza: descarga swgoh.gg/api/player/355463284/ y súbelo de nuevo</span></footer>

@@ -536,3 +536,15 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .fl-ship.have .fl-sn{color:var(--text)}
 .fl-opener{font-size:13px;color:var(--muted);border-left:2px solid var(--holo);padding-left:9px;margin:2px 0 10px}
 @media(max-width:520px){#fleet-list{grid-template-columns:1fr}}
+/* Defensa de TW (Fase 4.4) */
+.tw-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:10px 0}
+.tw-ctrl label{font-size:13px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+.tw-ctrl .rx-in{width:76px}
+.tw-zone{margin:0 0 14px}
+.tw-squad{border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-bottom:10px;background:var(--surface2)}
+.tw-squad:last-child{margin-bottom:0}
+.tw-sh{display:flex;justify-content:space-between;align-items:center;padding:2px 0 4px}
+.tw-sn{font-family:'Chakra Petch';font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--holo)}
+.tw-squad .synergy{transform:scale(.82);transform-origin:right}
+.tw-squad .simrow{grid-template-columns:24px 32px 1fr 50px;padding:6px 0}
+.tw-squad .simrow .savw{width:32px;height:32px}
