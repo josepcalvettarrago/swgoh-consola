@@ -1,11 +1,12 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
 import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED, SHIP_META, SHIPS_EMBED } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet, planTWDefense } from "./engine.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet, planTWDefense, planDatacrons } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
 import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy, loadTW, saveTW } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
 import FLEET_DB from "./data/fleet_db.json";
+import DATACRON_DB from "./data/datacron_db.json";
 
 // Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
 let RD = EMBEDDED_RD;
@@ -622,6 +623,46 @@ function renderFleet() {
   listEl.innerHTML = filtered.map(fleetCard).join("") || '<div class="pg-empty">Ninguna flota con esos filtros.</div>';
 }
 
+// ===== Planificador de datacrones (Fase 4.5): guía CURADA evergreen × roster en vivo =====
+const dcFilter = { mode: "", fac: "" };
+function dcCard(p) {
+  const tgt = { n: p.targetName, s: p.side, im: (META[p.target] && META[p.target].im) || (ID2U[p.target] && ID2U[p.target].im) || null };
+  const own = p.targetOwned
+    ? `<span class="rc rc-need" title="lo tienes">✓ ${p.targetName} R${p.relic}·G${p.gear}</span>`
+    : `<span class="rc rc-gap" title="no lo tienes">✗ ${p.targetName} — no lo tienes</span>`;
+  const modes = (p.modes || []).map(m => `<span class="rc rc-mech">${m}</span>`).join("");
+  return `<div class="card dc-card st-${p.usable ? 2 : 0}"><div class="head"><h3>${p.label}</h3><span class="fl-badge ${p.usable ? "ok" : "lo"}">${p.usable ? "✓ Aprovechable" : "Sin squad/target"} · Tier ${p.tier}</span></div>
+   <div class="dc-chain">
+     <span class="dc-step"><span class="dc-lv">L3</span><span class="dc-tx">${SIDES[p.align] || p.align}</span></span>
+     <span class="dc-arrow">→</span>
+     <span class="dc-step"><span class="dc-lv">L6</span><span class="dc-tx">${p.faction} <small>(tienes ${p.factionCount})</small></span></span>
+     <span class="dc-arrow">→</span>
+     <span class="dc-step tgt">${portrait(tgt)}<span class="dc-lv">L9</span><span class="dc-tx">${p.targetName}</span></span>
+   </div>
+   <div class="dc-bonus"><b>L6 · ${p.faction}:</b> ${p.l6}</div>
+   <div class="dc-bonus"><b>L9 · ${p.targetName}:</b> ${p.l9}</div>
+   <div class="coverage"><span class="cv-h">Objetivo</span>${own}${modes}</div>
+   <div class="dc-note">${p.note}</div>
+   <div class="simfoot">${p.source}</div></div>`;
+}
+function renderDatacrons() {
+  const listEl = $("#dc-list"); if (!listEl) return;
+  const plan = planDatacrons({ roster: RD, datacronDb: DATACRON_DB, meta: META });
+  const usable = plan.paths.filter(p => p.usable).length;
+  const src = $("#dc-src"); if (src) src.textContent = `guía curada${plan.updated ? " · " + plan.updated : ""} · 0 datacrones`;
+  // Rellena el select de facción con las facciones presentes en la guía (una vez).
+  const sel = $("#dc-fac");
+  if (sel && sel.options.length <= 1) {
+    const facs = [...new Set(plan.paths.map(p => p.faction))].sort();
+    sel.insertAdjacentHTML("beforeend", facs.map(f => `<option value="${f}">${f}</option>`).join(""));
+  }
+  const filtered = plan.paths.filter(p =>
+    (!dcFilter.mode || (p.modes || []).includes(dcFilter.mode)) &&
+    (!dcFilter.fac || p.faction === dcFilter.fac));
+  const head = `<div class="statgrid"><div class="stat zero"><div class="v">${usable}</div><div class="k">rutas aprovechables</div></div><div class="stat"><div class="v">${plan.paths.length}</div><div class="k">rutas en la guía</div></div><div class="stat"><div class="v">0</div><div class="k">datacrones que tienes</div></div></div>`;
+  listEl.innerHTML = head + (filtered.map(dcCard).join("") || '<div class="pg-empty">Ninguna ruta con esos filtros.</div>');
+}
+
 // ===== Planificador de energía → Lord Vader (Fase 4.2) =====
 let vpEnergy = 480; // energía diaria para gear (persistida en localStorage)
 function renderVaderPlan() {
@@ -790,6 +831,11 @@ export function init(rd, extra = {}) {
   $("#tw-go") && ($("#tw-go").onclick = twApply);
   renderTW();
 
+  // Datacrones (Fase 4.5): guía curada × roster + filtros (modo / facción).
+  renderDatacrons();
+  $$("#dc-mode button").forEach(b => b.onclick = () => { dcFilter.mode = b.dataset.v; $$("#dc-mode button").forEach(x => x.setAttribute("aria-pressed", x === b)); renderDatacrons(); });
+  $("#dc-fac") && ($("#dc-fac").onchange = function () { dcFilter.fac = this.value; renderDatacrons(); });
+
   // Roster explorer: poblar selects
   const role = $("#rx-role"), fac = $("#rx-fac"), ab = $("#rx-ab");
   RD.V.roles.forEach(r => role.insertAdjacentHTML("beforeend", `<option value="${r}">${r}</option>`));
@@ -842,7 +888,7 @@ export function init(rd, extra = {}) {
   cxSetMode("scout");
 
   // Pestañas
-  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso", fleet: "#p-fleet", tw: "#p-tw" };
+  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso", fleet: "#p-fleet", tw: "#p-tw", datacron: "#p-datacron" };
   $$(".tab").forEach(tab => tab.onclick = () => {
     $$(".tab").forEach(t => t.setAttribute("aria-selected", t === tab));
     const key = tab.dataset.p; Object.entries(panels).forEach(([k, sel]) => $(sel).classList.toggle("on", k === key));
@@ -850,5 +896,7 @@ export function init(rd, extra = {}) {
     if (key === "vader") { initRoadmapMeters(); if (!ringDone) { ringDone = true; animateRing(); } }
     if (key === "progreso" && !pgRingDone) { pgRingDone = true; animatePgRing(); }
   });
+  // Enlaces internos "ir a pestaña" (p.ej. el callout "0 datacrons" → pestaña Datacrons).
+  $$("[data-goto]").forEach(a => a.onclick = e => { e.preventDefault(); const t = $(`.tab[data-p="${a.dataset.goto}"]`); if (t) t.click(); });
   animateMeters($("#p-mods"));
 }

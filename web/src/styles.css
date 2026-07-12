@@ -548,3 +548,25 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .tw-squad .synergy{transform:scale(.82);transform-origin:right}
 .tw-squad .simrow{grid-template-columns:24px 32px 1fr 50px;padding:6px 0}
 .tw-squad .simrow .savw{width:32px;height:32px}
+
+/* ===== Datacrons (Fase 4.5): guía curada evergreen (aditivo) ===== */
+.dc-callout{border:1px solid rgba(244,182,52,.4);background:linear-gradient(180deg,rgba(244,182,52,.08),transparent);border-radius:11px;padding:12px 14px;font-size:13.5px;line-height:1.5;color:var(--muted);margin-bottom:12px}
+.dc-callout b{color:var(--gold)}
+.dc-link{color:var(--holo);text-decoration:none;border-bottom:1px dashed rgba(58,214,230,.5);white-space:nowrap}
+.dc-link:hover{color:#fff;border-bottom-color:var(--holo)}
+#dc-list{display:grid;gap:12px}
+.dc-card{border-left:3px solid var(--line)}
+.dc-card.st-2{border-left-color:var(--holo)}
+.dc-card.st-0{border-left-color:var(--line);opacity:.9}
+.dc-chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}
+.dc-step{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--surface2)}
+.dc-step.tgt{border-color:rgba(58,214,230,.4);background:var(--holo-dim)}
+.dc-step .savw{width:34px;height:34px}
+.dc-lv{font-family:'Share Tech Mono';font-size:10.5px;color:var(--gold);border:1px solid rgba(244,182,52,.3);border-radius:5px;padding:0 5px;background:rgba(244,182,52,.06)}
+.dc-tx{font-family:'Chakra Petch';font-weight:600;font-size:13px;color:#e8eef6}
+.dc-tx small{color:var(--faint);font-weight:400}
+.dc-arrow{color:var(--holo);font-weight:700}
+.dc-bonus{font-size:13px;line-height:1.5;color:var(--muted);margin:5px 0}
+.dc-bonus b{color:var(--holo)}
+.dc-note{font-size:13px;line-height:1.5;color:var(--muted);border-left:2px solid var(--line);padding-left:10px;margin:8px 0 4px}
+@media(max-width:520px){.dc-chain{gap:6px}.dc-arrow{display:none}}

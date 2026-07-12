@@ -31,7 +31,7 @@
       <span class="dot"></span>
       <div>
         <h2>Diagnóstico: no es tu roster, son tus mods y datacrons</h2>
-        <p>Tienes 7 Galactic Legends y todo el meta, pero <b id="d-unlev">—</b> de 1700 mods están sin subir de nivel, solo <b id="d-spd20">—</b> superan 20 de velocidad y llevas <b>0 datacrons</b>. Eso explica el rango 228 — y son los arreglos más baratos que existen para F2P.</p>
+        <p>Tienes 7 Galactic Legends y todo el meta, pero <b id="d-unlev">—</b> de 1700 mods están sin subir de nivel, solo <b id="d-spd20">—</b> superan 20 de velocidad y llevas <b>0 datacrons</b> (<a href="#" class="dc-link" data-goto="datacron">planifícalos →</a>). Eso explica el rango 228 — y son los arreglos más baratos que existen para F2P.</p>
       </div>
     </div>
   </header>
@@ -47,6 +47,7 @@
     <button class="tab" role="tab" aria-selected="false" data-p="progreso"><span class="n">08</span> Progreso</button>
     <button class="tab" role="tab" aria-selected="false" data-p="fleet"><span class="n">09</span> Flota</button>
     <button class="tab" role="tab" aria-selected="false" data-p="tw"><span class="n">10</span> TW</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="datacron"><span class="n">11</span> Datacrons</button>
   </nav>
 
   <!-- MODS -->
@@ -58,7 +59,7 @@
         <a class="cgen" id="grand-open" href="https://mods-optimizer.swgoh.grandivory.com/" target="_blank" rel="noopener">🔧 Abrir Grandivory Mods Optimizer</a>
         <button class="cgen" id="grand-copy">📋 Copiar ally code (355463284)</button>
       </div>
-      <p class="mods-disc"><b>Auditor, no optimizador.</b> Marca déficits <b>objetivos</b> (sin subir, color bajo, sin velocidad); el óptimo por personaje lo hace <b>Grandivory</b> (baja tus datos de swgoh.gg él mismo — pega tu ally code). Llevas <b>0 datacrons</b>.</p>
+      <p class="mods-disc"><b>Auditor, no optimizador.</b> Marca déficits <b>objetivos</b> (sin subir, color bajo, sin velocidad); el óptimo por personaje lo hace <b>Grandivory</b> (baja tus datos de swgoh.gg él mismo — pega tu ally code). Llevas <b>0 datacrons</b> — <a href="#" class="dc-link" data-goto="datacron">guía por temporada →</a>.</p>
     </div>
     <div class="card"><div class="head"><h3>Ofensores por inversión</h3>
       <span class="note">Unidades relic'd / G13 con mods pobres — el arreglo más barato que existe</span></div>
@@ -277,6 +278,21 @@
       <p class="mods-disc"><b>Monta TU defensa, no simula el combate.</b> Reparte tus mejores escuadrones por sinergia entre zonas, sin repetir personajes; tú los colocas. No conoce los rosters de tus compañeros (la API solo da su GP). Las zonas de flota, en la pestaña Flota.</p>
     </div>
     <div id="tw-list"></div>
+  </section>
+
+  <!-- Datacrons -->
+  <section class="panel" id="p-datacron" role="tabpanel">
+    <div class="card"><div class="head"><h3>Planificador de datacrones</h3><span class="note" id="dc-src">—</span></div>
+      <div class="dc-callout"><b>Tienes 0 datacrones.</b> Esto es una <b>guía CURADA por temporada</b> (el set rota; en el juego eliges el más cercano). Prioriza la <b>elección</b> — alineación (L3) → facción (L6) → personaje (L9) — para tus squads meta. <b>No modela cifras exactas</b>: el número real depende del set vigente.</div>
+      <div class="rx-controls">
+        <div class="seg-btns" id="dc-mode">
+          <button data-v="" aria-pressed="true">Todos</button>
+          <button data-v="GAC">GAC</button><button data-v="TW">TW</button><button data-v="Arena">Arena</button></div>
+        <select id="dc-fac" class="rx-sel"><option value="">Facción</option></select>
+      </div>
+      <p class="mods-disc"><b>Curado, no dato personal.</b> Las rutas donde <b>posees</b> el personaje L9 y tienes su facción salen primero. El texto de bonus es cualitativo (qué potencia y por qué), no cifras del set.</p>
+    </div>
+    <div id="dc-list"></div>
   </section>
 
   <footer><span id="foot-updated">—</span><span>Actualiza: descarga swgoh.gg/api/player/355463284/ y súbelo de nuevo</span></footer>
