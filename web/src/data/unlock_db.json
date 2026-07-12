@@ -1,0 +1,286 @@
+{
+  "_meta": {
+    "about": "Catálogo CURADO de personajes desbloqueables por evento. Los campos stars/gear/relic de cada unidad son REQUISITOS (umbrales objetivo), NO el estado actual: el 'actual' se lee SOLO del roster en vivo. Emparejamiento por NOMBRE (units[].name = display name exacto del roster/CHAR_META). La entrada LORDVADER está verificada (reproduce el gap real 57 relic + 17 gear). El resto son requisitos CURADOS de guías públicas (fuente por entrada); cuando la lista o algún nivel no está confirmado al 100% se indica en 'notes' (por confirmar). Los eventos rotan/relajan requisitos con el tiempo: ajusta a lo que muestre el juego.",
+    "updated": "2026-07-12",
+    "schema": "id,name,short?,tier(journey|legendary|galactic_legend),prio_default(1|2|3),align(L|D),faction,ship?,units[{name,stars,gear,relic}],source,notes",
+    "batch": "v4.6 = 10 Galactic Legends + 3 legendaries (GAS, JKR, DR). Journeys y el resto de legendaries: tanda siguiente (4.7)."
+  },
+  "targets": [
+    {
+      "id": "LORDVADER",
+      "name": "Lord Vader",
+      "short": "Lord Vader",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "D",
+      "faction": "Empire / Sith",
+      "ship": { "name": "BTL-B Y-wing", "required": true, "stars": 7 },
+      "units": [
+        { "name": "CT-7567 \"Rex\"", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Tusken Raider", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Nute Gunray", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Count Dooku", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "General Skywalker", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "Padmé Amidala", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "Grand Moff Tarkin", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Embo", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Hunter", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Zam Wesell", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Wrecker", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Tech", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "ARC Trooper", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "Echo", "stars": 7, "gear": 13, "relic": 7 }
+      ],
+      "source": "swgoh.wiki/A_Hero_Falls (migrado de DATA.lv, verificado con el roster real)",
+      "notes": ""
+    },
+    {
+      "id": "SUPREMELEADERKYLOREN",
+      "name": "Supreme Leader Kylo Ren",
+      "short": "SLKR",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "D",
+      "faction": "First Order",
+      "units": [
+        { "name": "Kylo Ren", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Kylo Ren (Unmasked)", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Emperor Palpatine", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "General Hux", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Captain Phasma", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "First Order Officer", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "First Order SF TIE Pilot", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "First Order Executioner", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "First Order Stormtrooper", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Sith Trooper", "stars": 7, "gear": 13, "relic": 5 }
+      ],
+      "source": "swgoh.wiki/Heir_to_the_Dark_Side",
+      "notes": "Requisitos clave (parcial). Confirmar la lista completa (~13 unidades) y niveles exactos en el juego."
+    },
+    {
+      "id": "GLREY",
+      "name": "Rey",
+      "short": "GL Rey",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "L",
+      "faction": "Resistance",
+      "units": [
+        { "name": "Rey (Scavenger)", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Rey (Jedi Training)", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Poe Dameron", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Amilyn Holdo", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Resistance Hero Finn", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Resistance Hero Poe", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Rose Tico", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Finn", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "BB-8", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Resistance Pilot", "stars": 7, "gear": 13, "relic": 3 }
+      ],
+      "source": "swgoh.wiki/Heir_to_the_Light_Side",
+      "notes": "Requisitos clave (parcial). Confirmar lista completa y niveles exactos en el juego."
+    },
+    {
+      "id": "SITHPALPATINE",
+      "name": "Sith Eternal Emperor",
+      "short": "SEE",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "D",
+      "faction": "Sith / Empire",
+      "units": [
+        { "name": "Emperor Palpatine", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Darth Sidious", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Sith Marauder", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Count Dooku", "stars": 7, "gear": 13, "relic": 6 },
+        { "name": "Darth Vader", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Admiral Piett", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Director Krennic", "stars": 7, "gear": 13, "relic": 4 },
+        { "name": "Darth Maul", "stars": 7, "gear": 13, "relic": 4 },
+        { "name": "Royal Guard", "stars": 7, "gear": 13, "relic": 3 }
+      ],
+      "source": "swgoh.wiki/The_Final_Order",
+      "notes": "Requisitos clave (parcial). Confirmar lista completa y niveles exactos en el juego."
+    },
+    {
+      "id": "JEDIMASTERKENOBI",
+      "name": "Jedi Master Kenobi",
+      "short": "JMK",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "L",
+      "faction": "Galactic Republic / Jedi",
+      "units": [
+        { "name": "General Kenobi", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "Grand Master Yoda", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "Wat Tambor", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "General Grievous", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Jango Fett", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Shaak Ti", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Aayla Secura", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Ahsoka Tano", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Padawan Obi-Wan", "stars": 7, "gear": 13, "relic": 5 }
+      ],
+      "source": "swgoh.wiki/Kenobi_(Galactic_Legend_event)",
+      "notes": "Requisitos clave (parcial). Confirmar lista completa y niveles exactos en el juego."
+    },
+    {
+      "id": "GRANDMASTERLUKE",
+      "name": "Jedi Master Luke Skywalker",
+      "short": "JML",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "L",
+      "faction": "Rebel / Jedi",
+      "units": [
+        { "name": "Jedi Knight Luke Skywalker", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "R2-D2", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Rey (Jedi Training)", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Commander Luke Skywalker", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Han Solo", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Chewbacca", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "C-3PO", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Obi-Wan Kenobi (Old Ben)", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Biggs Darklighter", "stars": 7, "gear": 13, "relic": 3 }
+      ],
+      "source": "swgoh.wiki/A_Hero_Rises",
+      "notes": "Requisitos clave (parcial). Confirmar lista completa y niveles exactos en el juego."
+    },
+    {
+      "id": "GLLEIA",
+      "name": "Leia Organa",
+      "short": "GL Leia",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "L",
+      "faction": "Rebel",
+      "units": [
+        { "name": "Rebel Officer Leia Organa", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "R2-D2", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "Threepio & Chewie", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Captain Han Solo", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Lando Calrissian", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "C-3PO", "stars": 7, "gear": 13, "relic": 0 },
+        { "name": "Chewbacca", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Chief Chirpa", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Wicket", "stars": 7, "gear": 13, "relic": 5 }
+      ],
+      "source": "swgoh.wiki/Rebel_with_a_cause",
+      "notes": "Requisitos clave (parcial). Confirmar lista completa y niveles exactos en el juego."
+    },
+    {
+      "id": "JABBATHEHUTT",
+      "name": "Jabba the Hutt",
+      "short": "Jabba",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "D",
+      "faction": "Hutt Cartel / Scoundrel",
+      "units": [
+        { "name": "Han Solo", "stars": 7, "gear": 13, "relic": 8 },
+        { "name": "Boba Fett", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "C-3PO", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "Aurra Sing", "stars": 7, "gear": 13, "relic": 6 },
+        { "name": "Greedo", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Hondo Ohnaka", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Cad Bane", "stars": 7, "gear": 13, "relic": 5 }
+      ],
+      "source": "swgoh.wiki/He_Will_Pay_the_Price",
+      "notes": "Requisitos clave (parcial). Confirmar lista completa y niveles exactos en el juego."
+    },
+    {
+      "id": "GLAHSOKATANO",
+      "name": "Ahsoka Tano",
+      "short": "GL Ahsoka",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "L",
+      "faction": "Jedi / Spectre",
+      "units": [
+        { "name": "Ahsoka Tano (Snips)", "stars": 7, "gear": 13, "relic": 9 },
+        { "name": "Commander Ahsoka Tano", "stars": 7, "gear": 13, "relic": 9 },
+        { "name": "Ahsoka Tano (Fulcrum)", "stars": 7, "gear": 13, "relic": 9 },
+        { "name": "Barriss Offee", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Huyang", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Shin Hati", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Baylan Skoll", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Ezra Bridger (Exile)", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Padawan Sabine Wren", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Plo Koon", "stars": 7, "gear": 13, "relic": 3 }
+      ],
+      "source": "swgoh.wiki/Fulcrum_(Galactic_Legend_event)",
+      "notes": "Evento reciente (3 unidades a Relic 9 + 6 marquee). Requisitos parciales; confirmar lista completa y niveles en el juego."
+    },
+    {
+      "id": "GLHONDO",
+      "name": "Pirate King Hondo Ohnaka",
+      "short": "PK Hondo",
+      "tier": "galactic_legend",
+      "prio_default": 3,
+      "align": "D",
+      "faction": "Pirate / Scoundrel",
+      "units": [
+        { "name": "Hondo Ohnaka", "stars": 7, "gear": 13, "relic": 7 },
+        { "name": "General Kenobi", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Cad Bane", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Kelleran Beq", "stars": 7, "gear": 13, "relic": 5 }
+      ],
+      "source": "swgoh.wiki/Tales_of_the_Pirate_King",
+      "notes": "Evento muy reciente. Requisitos parciales (16 unidades a Relic 3+); confirmar la lista completa y niveles en el juego."
+    },
+    {
+      "id": "GENERALSKYWALKER",
+      "name": "General Skywalker",
+      "short": "GAS",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "L",
+      "faction": "Galactic Republic / 501st",
+      "units": [
+        { "name": "Ahsoka Tano (Snips)", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "CT-7567 \"Rex\"", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "CT-21-0408 \"Echo\"", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "ARC Trooper", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Clone Sergeant - Phase I", "stars": 7, "gear": 12, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/A_Hero_Rises_(General_Skywalker)",
+      "notes": "Requisitos clave (501st). Confirmar la lista y niveles exactos en el juego."
+    },
+    {
+      "id": "JEDIKNIGHTREVAN",
+      "name": "Jedi Knight Revan",
+      "short": "JKR",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "L",
+      "faction": "Old Republic",
+      "units": [
+        { "name": "Bastila Shan", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Jolee Bindo", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Mission Vao", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Zaalbar", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "T3-M4", "stars": 7, "gear": 11, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/Legend_of_the_Old_Republic",
+      "notes": "Evento journey (basado en gear/estrella, sin relic). G11-G12 suele bastar; confirmar en el juego."
+    },
+    {
+      "id": "DARTHREVAN",
+      "name": "Darth Revan",
+      "short": "DR",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "D",
+      "faction": "Sith Empire / Old Republic",
+      "units": [
+        { "name": "Bastila Shan (Fallen)", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Canderous Ordo", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Carth Onasi", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "HK-47", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Juhani", "stars": 7, "gear": 11, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/Scourge_of_the_Old_Republic",
+      "notes": "Evento journey (basado en gear/estrella, sin relic). G11-G12 suele bastar; confirmar en el juego."
+    }
+  ]
+}

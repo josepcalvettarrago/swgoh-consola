@@ -19,6 +19,8 @@ export { planFleet } from "./fleet.js";
 export { planTWDefense } from "./twdefense.js";
 // Planificador de datacrones (Fase 4.5): guía curada evergreen × roster en vivo. Puro.
 export { planDatacrons } from "./datacrons.js";
+// Ascensión configurable (Fase 4.6): selección + prioridad de objetivos sobre los motores de Vader.
+export { resolveTarget, planFor, priorityQueue, TIER_ORDER } from "./ascension.js";
 
 // ---- avatares (devuelven strings HTML; no tocan el DOM) ----
 const IMGPRE = "https://game-assets.swgoh.gg/textures/tex.charui_", IMGSUF = ".png";

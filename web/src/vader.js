@@ -15,25 +15,31 @@ function phaseState(done, total, anyProgress) {
   return "pendiente";
 }
 
-// vaderProgress(rd, opts?) — opts.lv / opts.plan permiten inyectar datos en los tests.
+// vaderProgress(rd, opts?) — opts.lv / opts.plan / opts.unlockName inyectables.
+// GENERALIZADO (Fase 4.6): `lv` puede ser cualquier objetivo (unlock_db) además de DATA.lv.
+//   target relic = `u.need` (viejo) o `u.relic` (nuevo); actual SOLO del roster (fallback embebido
+//   solo en esquema viejo). `unlockName` (default "Lord Vader") decide `vaderUnlocked`.
+// Sin `opts` → comportamiento idéntico al de la Fase 2.
 export function vaderProgress(rd, opts = {}) {
   const lv = opts.lv || DATA.lv;
   const plan = opts.plan || DATA.plan;
+  const unlockName = opts.unlockName || "Lord Vader";
   const byName = new Map(((rd && rd.R) || []).map(u => [u.n, u]));
   const curRelic = (name, fallback) => {
     const u = byName.get(name);
     return u ? u.rl : (fallback ?? 0);
   };
 
-  // Objetivo por unidad (lista canónica de 14 en DATA.lv.units: need = relic objetivo).
+  // Objetivo por unidad. need = relic objetivo (esquema viejo); relic = objetivo (esquema nuevo).
   const units = (lv.units || []).map(u => {
-    const current = curRelic(u.name, u.relic);
-    const target = u.need;
+    const legacy = u.need != null;
+    const target = legacy ? u.need : (u.relic || 0);
+    const current = curRelic(u.name, legacy ? u.relic : 0);
     return { name: u.name, current, target, done: current >= target, gap: Math.max(0, target - current) };
   });
 
   // Fases del plan: las que tienen `targets` se auto-marcan por reliquia.
-  const vaderUnlocked = byName.has("Lord Vader");
+  const vaderUnlocked = byName.has(unlockName);
   const phases = (plan || []).map(p => {
     const targets = (p.targets || []).map(t => {
       const current = curRelic(t.name, t.from);

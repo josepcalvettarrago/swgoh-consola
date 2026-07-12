@@ -2,6 +2,32 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 4.6 — Objetivo de ascensión configurable — `v4.6-ascension`
+
+- **De-hardcodeo (prerrequisito de la Fase 5):** la pestaña 2, antes clavada a **Lord Vader**, pasa a
+  **"Ascensión"** con **objetivo configurable**. Cualquier usuario elige a quién ascender y el planificador
+  calcula gap/ETA/orden con **su** roster en vivo.
+- **Catálogo curado** `web/src/data/unlock_db.json`: **10 Galactic Legends + 3 legendaries** (GAS, Jedi
+  Knight Revan, Darth Revan). La entrada **Lord Vader está migrada y verificada** (reproduce el gap real
+  **57 relic + 17 gear**). Requisitos verificados donde se pudo (fuente por entrada); lo no confirmado se
+  marca **"por confirmar"**. Los base_id de target y todos los nombres de unidad están verificados contra
+  CHAR_META. **Journeys y el resto de legendaries: tanda siguiente (4.7).**
+- **Motores generalizados con compatibilidad hacia atrás:** `vader.js`/`vaderplan.js` leen el target de
+  relic (`need` viejo o `relic` nuevo) y el **gear objetivo por unidad** (`gear ?? 13`, ya no fijo a 13), con
+  `unlockName` parametrizable. Sin `opts` se comportan igual que antes (tests de regresión intactos).
+- **Motor nuevo** `web/src/ascension.js` (puro): `resolveTarget`, `planFor` (delega en los motores de Vader),
+  `priorityQueue` (cola por tier, **un GL a la vez**). Re-exportado desde `engine.js`.
+- **UI:** selector de objetivo (avatar + búsqueda + filtro por tier), anillo/hechos/planificador por objetivo,
+  **plan semanal editable y persistido por objetivo** (no se autogenera; roadmap curado solo donde existe =
+  Vader), y **tab GL derivada** de `unlock_db` + roster (poseídos/faltantes por cercanía + huecos). El
+  emparejamiento sigue siendo **por nombre**; la clave interna de la tab (`vader`) se mantiene (solo cambia la
+  etiqueta visible).
+- **Persistencia** (`store.js`): `swgoh.ascension.target`/`.plan`/`.prios` + **migración** de la energía
+  (`swgoh.vader.energy` → `swgoh.ascension.energy`) sin perder el valor guardado del usuario.
+- Estética intocable, consola nunca en blanco (fallback embebido). **224 tests verdes** (203 + nuevos; se
+  añade `ascension.test.js` + `ascension-render.test.js`; regresión Vader idéntica). Build → 1 HTML (496 KB).
+- Tag: `v4.6-ascension`.
+
 ## Fase 4.5 — Planificador de datacrones (guía curada por temporada) — `v4.5-datacrons`
 
 - Nueva pestaña **Datacrons (11)**: recupera el planificador que la Fase 4.1 **difirió** (tienes **0**

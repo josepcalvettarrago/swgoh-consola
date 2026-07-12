@@ -1,6 +1,20 @@
 # FASE 4 — Módulos de valor · **4.1 Auditoría de mods dinámica + export a Grandivory**
 ### Guía y prompt para Claude Code
 
+> **ESTADO ACTUAL (reconciliado) — la Fase 4 fue más allá de 4.1.** Este documento documenta en detalle la
+> **4.1**; el resto de sub-fases se entregaron después. Resumen de lo realmente hecho:
+> - **4.1 · Auditoría de mods + Grandivory** — `v4.1-modaudit` (motor `mods.js`, endpoint `/api/mods`).
+> - **4.2 · Planificador de energía → Vader** — `v4.2-vaderplan` (`vaderplan.js`, 100% cliente).
+> - **4.3 · Fleet Arena** — `v4.3-fleet` (pestaña Flota, `fleet.js`, `/api/fleet`, `SHIP_META`+`fleet_db`).
+> - **4.4 · Defensa de TW** — `v4.4-twdefense` (pestaña TW, `twdefense.js`).
+> - **4.5 · Planificador de datacrones** — `v4.5-datacrons` (pestaña Datacrons, `datacrons.js`, guía curada).
+> - **4.6 · Objetivo de ascensión configurable** — `v4.6-ascension` (de-hardcodeo: tab "Vader"→"Ascensión",
+>   `unlock_db.json` + `ascension.js`, plan editable, tab GL derivada). **224 tests.** Prerrequisito de la Fase 5.
+> - **4.7 · Prioridades editables** — pendiente (`v4.7-prios`). Especificación completa en **`PHASE4.6.md`**.
+>
+> Las especificaciones detalladas de **4.6 y 4.7** viven en **`PHASE4.6.md`**. Lo que sigue abajo es la guía
+> original de la **4.1** (se conserva como referencia histórica).
+
 > Idioma: **español**. Estética: **intocable** (Sith/holotable, `--ember`, `--holo`, scanlines).
 > Motor nuevo **puro y testeable** en `engine.js`. La consola **nunca en blanco** si falta el endpoint o falla la API.
 > **Honestidad F2P:** esto es un **auditor** (detecta déficits objetivos), **no** un optimizador completo. El optimizador es Grandivory — por eso exportamos a él.

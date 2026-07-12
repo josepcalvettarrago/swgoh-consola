@@ -36,10 +36,11 @@ describe("Vader — planificador de energía", () => {
     const inp = $("#vp-energy"); inp.value = "240"; inp.dispatchEvent(new window.Event("change", { bubbles: true }));
     expect($("#vp-note").textContent).not.toBe(before);
     expect($("#vp-note").textContent).toMatch(/240/);
-    expect(JSON.parse(localStorage.getItem("swgoh.vader.energy"))).toBe(240);
+    // Fase 4.6: la energía se guarda ya bajo la clave nueva swgoh.ascension.energy.
+    expect(JSON.parse(localStorage.getItem("swgoh.ascension.energy"))).toBe(240);
   });
-  it("restaura la energía guardada al recargar", async () => {
-    localStorage.setItem("swgoh.vader.energy", "720");
+  it("restaura la energía guardada al recargar (migra la clave vieja swgoh.vader.energy)", async () => {
+    localStorage.setItem("swgoh.vader.energy", "720"); // valor de la Fase 4.2
     await boot();
     expect($("#vp-energy").value).toBe("720");
     expect($("#vp-note").textContent).toMatch(/720/);

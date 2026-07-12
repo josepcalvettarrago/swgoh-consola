@@ -33,7 +33,10 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **4.1 — Auditoría de mods + Grandivory** | ✅ Hecha | `v4.1-modaudit` | Auditoría dinámica de 1700 mods por el pipeline (ingesta compacta → `mods/{ally}` → endpoint read-only `/api/mods` → HTML con fallback). Motor puro `mods.js` (ofensores por inversión + quick-wins). Export honesto a Grandivory. **141 tests verdes.** |
 | **4.2 — Planificador energía → Vader** | ✅ Hecha | `v4.2-vaderplan` | Card computada en la pestaña Vader: gap relic/gear en vivo + orden priorizado + ETA en semanas con energía diaria configurable/persistida. Motor puro `vaderplan.js`, 100% cliente. **153 tests verdes.** |
 | **4.3 — Fleet Arena module** | ✅ Hecha | `v4.3-fleet` | Pestaña Flota: flotas meta montables (naves 7★) + arranque + crew (pilotos en vivo). Pipeline de naves (`compactShips` → `ships/{ally}` → `/api/fleet` read-only) + `SHIP_META` + `fleet_db` curado. Motor puro `fleet.js`. **167 tests verdes.** |
-| **4.4 — Defensa de TW** | ✅ Hecha | `v4.4-twdefense` | Pestaña TW: monta tu defensa (escuadrones sin solapar desde tu roster) por zonas configurables + contexto de gremio (GP). Motor puro `twdefense.js`, 100% cliente. **183 tests verdes.** Cierra la Fase 4. |
+| **4.4 — Defensa de TW** | ✅ Hecha | `v4.4-twdefense` | Pestaña TW: monta tu defensa (escuadrones sin solapar desde tu roster) por zonas configurables + contexto de gremio (GP). Motor puro `twdefense.js`, 100% cliente. **183 tests verdes.** |
+| **4.5 — Planificador de datacrones** | ✅ Hecha | `v4.5-datacrons` | Pestaña Datacrons: recomendador CURADO por temporada (tienes 0) cruzando `datacron_db` con el roster. Motor puro `datacrons.js`, 100% cliente. **203 tests verdes.** |
+| **4.6 — Objetivo de ascensión configurable** | ✅ Hecha | `v4.6-ascension` | De-hardcodeo: tab "Vader"→"Ascensión" con selector de objetivo (`unlock_db`: 10 GLs + 3 legendaries; Vader migrado 57/17) + motor `ascension.js` + plan editable + tab GL derivada. Prerrequisito de la Fase 5. **224 tests verdes.** |
+| **4.7 — Prioridades editables** | ⬜ Pendiente | `v4.7-prios` | Cola "próximo a farmear" + tiers reordenables + completar catálogo (journeys). Especificada. |
 | 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
@@ -259,12 +262,28 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   verificados) + motor puro `web/src/datacrons.js` (`planDatacrons`): marca `usable` (poseo el L9 y su
   facción), relic/gear del target, orden determinista. Pestaña **Datacrons (11)**.
 - **Honesto:** el set rota y no se puede traer en vivo → texto cualitativo, sin cifras inventadas; el
-  callout "0 datacrons" se mantiene y enlaza a la pestaña. **203 tests.** **Fase 4 completa.**
+  callout "0 datacrons" se mantiene y enlaza a la pestaña. **203 tests.**
+
+### Fase 4.6 — Objetivo de ascensión configurable (`v4.6-ascension`) — ✅ HECHA
+- **De-hardcodeo (prerrequisito de la Fase 5):** la tab 2 dejó de estar clavada a Vader. `unlock_db.json`
+  (catálogo curado: **10 GLs + 3 legendaries** GAS/JKR/DR; Vader **migrado y verificado** → reproduce
+  57 relic + 17 gear) + motor puro `web/src/ascension.js` (`resolveTarget`/`planFor`/`priorityQueue`,
+  "un GL a la vez").
+- Motores `vader.js`/`vaderplan.js` **generalizados con compatibilidad hacia atrás** (target relic/gear
+  por unidad; `unlockName` param). Tab **"Vader" → "Ascensión"**: selector de objetivo (avatar+búsqueda+
+  tier), planificador y anillo por objetivo, **plan semanal editable** persistido por objetivo, y tab GL
+  **derivada** de `unlock_db` + roster. `store.js`: `K_TARGET`/`K_PLAN`/`K_PRIOS` + **migración** de la
+  clave de energía (`swgoh.vader.energy` → `swgoh.ascension.energy`).
+- **Honesto:** requisitos verificados donde se pudo (fuente por entrada); lo no confirmado marcado
+  "por confirmar"; el plan semanal **no se autogenera** (curado solo donde existe = Vader). **224 tests.**
+- **Pendiente (4.7):** completar el catálogo (journeys + resto de legendaries) + prioridades editables.
 
 ## FASE 5 — Gremio multi-usuario (3-4 sesiones)
 - **Firebase Auth** para el login del gremio (esto es lo que Firebase te ahorra construir).
 - Colección `players` en Firestore; alta por ally code con enlace-invitación.
-- Cada miembro ve **SU** consola: los motores ya son agnósticos del roster (solo cambia `RD`).
+- Cada miembro ve **SU** consola: los motores son agnósticos del roster **y** el objetivo/plan/prioridades
+  ya están de-hardcodeados (4.6/4.7). La Fase 5 solo mueve esa config por-usuario de `localStorage` a
+  Firestore y añade Auth — **4.6/4.7 son su prerrequisito**.
 - Panel admin para Yusepi: estado de los 50, TW readiness, ranking.
 - Hosting definitivo: **Cloudflare Pages** + dominio.
 

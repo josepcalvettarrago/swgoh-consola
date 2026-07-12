@@ -1,12 +1,13 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
 import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED, SHIP_META, SHIPS_EMBED } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet, planTWDefense, planDatacrons } from "./engine.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet, planTWDefense, planDatacrons, resolveTarget, planFor } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
-import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy, loadTW, saveTW } from "./store.js";
+import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy, loadTW, saveTW, loadTarget, saveTarget, loadPlan, savePlan } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
 import FLEET_DB from "./data/fleet_db.json";
 import DATACRON_DB from "./data/datacron_db.json";
+import UNLOCK_DB from "./data/unlock_db.json";
 
 // Roster activo: por defecto el embebido; init(rd) lo sustituye por el que venga en vivo.
 let RD = EMBEDDED_RD;
@@ -51,53 +52,8 @@ function renderStatic() {
   $("#foot-updated").textContent = "Datos: " + P.updated;
 
   // La pestaña "Arena / Mods" la pinta renderMods() (Fase 4.1) con datos en vivo o embebidos.
-
-  const LV = DATA.lv;
-  const need = LV.units.reduce((a, u) => a + u.need, 0), ach = LV.units.reduce((a, u) => a + Math.min(u.relic, u.need), 0);
-  lvpct = Math.round(ach / need * 100);
-  $("#lvfacts").innerHTML = [
-    { v: "14/14", k: "unidades ya a 7★", cls: "zero" },
-    { v: LV.total_relic_gap, k: "niveles de relic que faltan", cls: "alert" },
-    { v: LV.total_gear_gap, k: "saltos de gear a G13", cls: "" },
-    { v: "8/10", k: "GL al desbloquearlo", cls: "zero" },
-  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}</div><div class="k">${x.k}</div></div>`).join("");
-  $("#shipnote").innerHTML = `<span class="badge ok">✓</span> Nave <b style="color:var(--text)">BTL-B Y-wing</b> ya a 7★ — requisito cumplido. Estás al <b style="color:var(--text)">${lvpct}%</b> del relic necesario.`;
-
-  const tones = { arena: "var(--holo)", relic: "var(--ember)", gear: "var(--gold)", unlock: "var(--green)" };
-  const kindlabel = { arena: "ARENA", relic: "RELIC", gear: "GEAR + RELIC", unlock: "EVENTO" };
-  $("#rmnote").textContent = DATA.plan_total_relic + " niveles de relic · ~5 meses F2P (estimado)";
-  $("#tl").innerHTML = DATA.plan.map(p => {
-    const tone = tones[p.kind];
-    const targets = (p.targets || []).map(t => {
-      const pf = Math.round(t.from / t.to * 100), gn = t.gearneed > 0 ? `<span class="gn">G${t.gear}→13</span>` : "";
-      return `<div class="tg" style="--tone:${tone}"><div class="nm">${portrait(lookupByName(t.name))}<span>${t.name}${gn}</span></div>
-     <div class="rmeter" data-p="${pf}"><i></i></div>
-     <div class="rr"><span class="a">R${t.from}</span><span class="b"> → R${t.to}</span></div></div>`;
-    }).join("");
-    const tasks = `<ul class="tasks" style="--tone:${tone}">${p.tasks.map(x => `<li>${x}</li>`).join("")}</ul>`;
-    return `<div class="node" style="--tone:${tone}"><div class="ndot"></div><div class="pcard">
-   <div class="ptop" style="--tone:${tone}"><div><div class="wk">${p.weeks} · Fase ${String(p.n).padStart(2, "0")}</div>
-   <h4>${p.title}</h4><div class="goal">${p.goal}</div></div><span class="kind" style="--tone:${tone}">${kindlabel[p.kind]}</span></div>
-   <div class="pbody">${targets ? `<div class="targets">${targets}</div>` : ""}${tasks}
-   <div class="check" style="--tone:${tone}"><span class="cl">Checkpoint</span><span>${p.check}</span></div></div></div></div>`;
-  }).join("");
-
-  $("#glcount").textContent = DATA.gl_owned.length + " de 10 desbloqueados";
-  $("#glowned").innerHTML = DATA.gl_owned.map(g => {
-    const rp = Math.round(g.relic / 9 * 100);
-    return `<div class="glcard"><div class="glhead">${portrait(lookupByName(g.name))}<div class="ab">${g.ab}</div></div><div class="full">${g.name}</div>
-   <div class="rl"><span>RELIC</span><b>R${g.relic}</b></div><div class="meter" data-pct="${rp}" style="--tone:var(--gold)"><i></i></div>
-   <div class="sp">‹ ${g.spd} vel · G${g.gear}</div></div>`;
-  }).join("");
-  $("#glmissing").innerHTML = DATA.gl_missing.map(g => {
-    const pill = g.ready === "closest" ? '<span class="pill next">PRÓXIMO</span>' : g.ready === "medium" ? '<span class="pill medium">MEDIO</span>' : '<span class="pill far">LEJANO</span>';
-    return `<div class="glcard missing ${g.ready === "closest" ? "next" : ""}">${pill}<div class="glhead">${portrait(lookupByName(g.name))}<div class="ab">${g.name}</div></div><div class="full">${g.tag}</div><div class="tagline">${g.note}</div></div>`;
-  }).join("");
-  const gapRows = arr => arr.map(u => {
-    const st = u.have ? `<span class="s has">${u.stars}★ · G${u.gear} · R${u.relic}</span>` : '<span class="s miss">no lo tienes</span>';
-    return `<div class="gaprow"><span class="gpname">${portrait(lookupByName(u.name))}${u.name}</span>${st}</div>`;
-  }).join("");
-  $("#gapAhsoka").innerHTML = gapRows(DATA.ahsoka_gap); $("#gapHondo").innerHTML = gapRows(DATA.hondo_gap);
+  // La pestaña "Ascensión" (antes Vader) la pinta renderAscension() (Fase 4.6), objetivo configurable.
+  // La pestaña GL la deriva renderGL() de unlock_db + roster.
 
   const impDots = l => { let s = '<span class="dots">'; for (let i = 0; i < 3; i++) s += `<b class="${i < l ? "on" : ""}"></b>`; return s + "</span>"; };
   $("#props").innerHTML = DATA.proposals.map(p => {
@@ -663,15 +619,26 @@ function renderDatacrons() {
   listEl.innerHTML = head + (filtered.map(dcCard).join("") || '<div class="pg-empty">Ninguna ruta con esos filtros.</div>');
 }
 
-// ===== Planificador de energía → Lord Vader (Fase 4.2) =====
-let vpEnergy = 480; // energía diaria para gear (persistida en localStorage)
+// ===== Ascensión (Fase 4.6): objetivo configurable + planificador de energía por objetivo =====
+let vpEnergy = 480;             // energía diaria para gear (persistida en localStorage)
+let ascTargetId = "LORDVADER";  // objetivo activo (persistido); default Lord Vader
+const ascFilter = { q: "", tier: "" };
+// Roadmap semanal CURADO por objetivo: solo donde ya existe (Vader = DATA.plan). No se autogenera.
+const ASC_SEED_PLAN = { LORDVADER: DATA.plan };
+const TIER_ES = { galactic_legend: "Galactic Legend", legendary: "Legendary", journey: "Journey" };
+const ascTargets = () => (UNLOCK_DB.targets || []);
+const ascActive = () => resolveTarget(UNLOCK_DB, ascTargetId);
+
+// Planificador de energía → desbloqueo, para el OBJETIVO activo (antes fijo a Vader).
 function renderVaderPlan() {
   const listEl = $("#vp-list"); if (!listEl) return;
-  const p = vaderPlan(RD, { dailyGearEnergy: vpEnergy }), t = p.totals, doneN = p.units.filter(u => u.done).length;
+  const target = ascActive(); if (!target) return;
+  const res = planFor(RD, target, { dailyGearEnergy: vpEnergy });
+  const p = { units: res.units, order: res.order, totals: res.totals }, t = p.totals, doneN = p.units.filter(u => u.done).length;
   const st = $("#vp-stats");
   if (st) st.innerHTML = [
-    { v: t.relicGap, k: "niveles de relic que faltan", cls: "alert" },
-    { v: t.gearGap, k: "niveles de gear a G13", cls: "" },
+    { v: t.relicGap, k: "niveles de relic que faltan", cls: t.relicGap ? "alert" : "" },
+    { v: t.gearGap, k: "niveles de gear que faltan", cls: "" },
     { v: t.weeks, k: "semanas estimadas (ETA)", cls: "zero" },
     { v: `${doneN}/${p.units.length}`, k: "unidades ya en objetivo", cls: doneN === p.units.length ? "zero" : "" },
   ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}</div><div class="k">${x.k}</div></div>`).join("");
@@ -679,10 +646,131 @@ function renderVaderPlan() {
     const need = u.done ? '<span class="badge ok">✓ lista</span>'
       : `${u.relicGap ? `<span class="rc rc-need">R+${u.relicGap}</span>` : ""}${u.gearGap ? `<span class="rc rc-gap">G+${u.gearGap}</span>` : ""}`;
     return `<div class="trow vp-row ${u.done ? "done" : ""}">${portrait(lookupByName(u.name))}<div class="who"><div class="nm">${u.name} <span class="r">R${u.curRelic}·G${u.curGear}</span></div>
-     <div class="tip">objetivo R${u.tgtRelic}·G13 · ${need}</div></div>
+     <div class="tip">objetivo R${u.tgtRelic}·G${u.tgtGear} · ${need}</div></div>
      <div class="spd"><div class="cur ${u.done ? "hit" : ""}">${u.done ? "✓" : u.days + "d"}</div><div class="tg">${u.done ? "" : "~" + Math.max(1, Math.ceil(u.days / 7)) + " sem"}</div></div></div>`;
   }).join("");
   const note = $("#vp-note"); if (note) note.textContent = `ETA ≈ ${t.weeks} semanas @ ${t.dailyGearEnergy} energía/día`;
+}
+
+// Selector de objetivo (reutiliza portrait + estética del picker). Lista clicable con avatar.
+function renderTargetPicker() {
+  const listEl = $("#asc-list"); if (!listEl) return;
+  const owned = new Set(RD.R.map(u => u.i));
+  const items = ascTargets().filter(t => (!ascFilter.tier || t.tier === ascFilter.tier) && (!ascFilter.q || t.name.toLowerCase().includes(ascFilter.q)));
+  listEl.innerHTML = items.map(t => {
+    const sel = t.id === ascTargetId ? " sel" : "";
+    const has = owned.has(t.id) ? '<span class="rc rc-need">✓ desbloqueado</span>' : "";
+    return `<button class="asc-opt${sel}" data-id="${t.id}">${portrait(lookupByName(t.name))}<span class="asc-on"><span class="asc-nm">${t.name}</span><span class="asc-meta">${TIER_ES[t.tier] || t.tier}${has}</span></span></button>`;
+  }).join("") || '<div class="pg-empty">Sin objetivos con ese filtro.</div>';
+  $$("#asc-list .asc-opt").forEach(b => b.onclick = () => ascSelect(b.dataset.id));
+}
+
+function ascSelect(id) {
+  ascTargetId = id; saveTarget(id, null);
+  renderTargetPicker(); renderAscension();
+  ringDone = false; animateRing();
+}
+
+// Pinta toda la pestaña Ascensión para el objetivo activo (anillo/hechos/nave/planificador/roadmap/plan).
+function renderAscension() {
+  const target = ascActive(); if (!target) return;
+  ascTargetId = target.id;
+  const seed = ASC_SEED_PLAN[target.id] || [];
+  const res = planFor(RD, target, { dailyGearEnergy: vpEnergy, plan: seed });
+  const prog = res.progress, t = res.totals;
+  if ($("#asc-title")) $("#asc-title").textContent = "Protocolo de ascensión — " + target.name;
+  if ($("#asc-src")) $("#asc-src").textContent = (t && t.unlocked) ? "✓ ya desbloqueado en tu roster" : "objetivo configurable · curado";
+  lvpct = prog ? prog.pct : 0;
+  const doneN = prog ? prog.unitsDone : 0, totN = prog ? prog.unitsTotal : 0;
+  $("#lvfacts").innerHTML = [
+    { v: `${doneN}/${totN}`, k: "unidades ya en objetivo", cls: (totN && doneN === totN) ? "zero" : "" },
+    { v: t ? t.relicGap : 0, k: "niveles de relic que faltan", cls: (t && t.relicGap) ? "alert" : "" },
+    { v: t ? t.gearGap : 0, k: "niveles de gear que faltan", cls: "" },
+    { v: t && t.unlocked ? "✓" : totN, k: t && t.unlocked ? "desbloqueado" : "unidades requisito", cls: "zero" },
+  ].map(x => `<div class="stat ${x.cls}"><div class="v">${x.v}</div><div class="k">${x.k}</div></div>`).join("");
+  const ship = target.ship;
+  $("#shipnote").innerHTML = ship
+    ? `<span class="badge ok">★</span> Nave <b style="color:var(--text)">${ship.name}</b> requerida a ${ship.stars || 7}★. Estás al <b style="color:var(--text)">${lvpct}%</b> del relic necesario.`
+    : `Estás al <b style="color:var(--text)">${lvpct}%</b> del relic necesario para <b style="color:var(--text)">${target.name}</b>.`;
+  renderVaderPlan();
+  renderRoadmap(seed);
+  renderAscPlanEditor(target);
+}
+
+// Roadmap semanal CURADO (solo si el objetivo trae seed). Nunca autogenera.
+function renderRoadmap(seedPlan) {
+  const tl = $("#tl"); if (!tl) return;
+  if (!seedPlan || !seedPlan.length) {
+    tl.innerHTML = '<div class="pg-empty soft">Sin roadmap curado para este objetivo. Usa el planificador de energía (arriba) y el plan semanal editable (abajo).</div>';
+    if ($("#rmnote")) $("#rmnote").textContent = "sin roadmap curado";
+    return;
+  }
+  if ($("#rmnote")) $("#rmnote").textContent = DATA.plan_total_relic + " niveles de relic · ~5 meses F2P (estimado)";
+  const tones = { arena: "var(--holo)", relic: "var(--ember)", gear: "var(--gold)", unlock: "var(--green)" };
+  const kindlabel = { arena: "ARENA", relic: "RELIC", gear: "GEAR + RELIC", unlock: "EVENTO" };
+  tl.innerHTML = seedPlan.map(p => {
+    const tone = tones[p.kind];
+    const targets = (p.targets || []).map(t => {
+      const pf = Math.round(t.from / t.to * 100), gn = t.gearneed > 0 ? `<span class="gn">G${t.gear}→13</span>` : "";
+      return `<div class="tg" style="--tone:${tone}"><div class="nm">${portrait(lookupByName(t.name))}<span>${t.name}${gn}</span></div>
+     <div class="rmeter" data-p="${pf}"><i></i></div>
+     <div class="rr"><span class="a">R${t.from}</span><span class="b"> → R${t.to}</span></div></div>`;
+    }).join("");
+    const tasks = `<ul class="tasks" style="--tone:${tone}">${p.tasks.map(x => `<li>${x}</li>`).join("")}</ul>`;
+    return `<div class="node" style="--tone:${tone}"><div class="ndot"></div><div class="pcard">
+   <div class="ptop" style="--tone:${tone}"><div><div class="wk">${p.weeks} · Fase ${String(p.n).padStart(2, "0")}</div>
+   <h4>${p.title}</h4><div class="goal">${p.goal}</div></div><span class="kind" style="--tone:${tone}">${kindlabel[p.kind]}</span></div>
+   <div class="pbody">${targets ? `<div class="targets">${targets}</div>` : ""}${tasks}
+   <div class="check" style="--tone:${tone}"><span class="cl">Checkpoint</span><span>${p.check}</span></div></div></div></div>`;
+  }).join("");
+}
+
+// Plan semanal EDITABLE por objetivo (persistido en este navegador). No autogenera nada.
+function renderAscPlanEditor(target) {
+  const ta = $("#asc-plan"); if (!ta) return;
+  const saved = loadPlan(target.id, null);
+  ta.value = saved || "";
+  const st = $("#asc-plan-status"); if (st) st.textContent = saved ? "guardado en este navegador" : "vacío · escribe tu plan";
+  const reset = $("#asc-plan-reset"); if (reset) reset.hidden = true; // no hay seeds de texto (Vader usa el roadmap)
+}
+
+// ===== Galactic Legends (Fase 4.6): derivada de unlock_db + roster (antes hardcodeada) =====
+function glGap(t, byName) {
+  return (t.units || []).reduce((s, u) => {
+    const l = byName.get(u.name); const cr = l ? l.rl : 0, cg = l ? l.g : 0;
+    return s + Math.max(0, (u.relic || 0) - cr) + Math.max(0, (u.gear != null ? u.gear : 13) - cg);
+  }, 0);
+}
+function renderGL() {
+  if (!$("#glowned")) return;
+  const gls = ascTargets().filter(t => t.tier === "galactic_legend");
+  const ownedU = new Map(RD.R.map(u => [u.i, u]));
+  const byName = new Map(RD.R.map(u => [u.n, u]));
+  const owned = gls.filter(t => ownedU.has(t.id));
+  const missing = gls.filter(t => !ownedU.has(t.id)).map(t => ({ t, gap: glGap(t, byName) })).sort((a, b) => a.gap - b.gap);
+  $("#glcount").textContent = owned.length + " de " + gls.length + " desbloqueados";
+  $("#glowned").innerHTML = owned.map(t => {
+    const u = ownedU.get(t.id); const rp = Math.round((u.rl || 0) / 9 * 100);
+    return `<div class="glcard"><div class="glhead">${portrait(lookupByName(t.name))}<div class="ab">${t.short || t.name}</div></div><div class="full">${t.name}</div>
+   <div class="rl"><span>RELIC</span><b>R${u.rl}</b></div><div class="meter" data-pct="${rp}" style="--tone:var(--gold)"><i></i></div>
+   <div class="sp">‹ G${u.g} · ${(u.p / 1000).toFixed(0)}k GP</div></div>`;
+  }).join("") || '<div class="pg-empty">Aún no tienes Galactic Legends del catálogo.</div>';
+  $("#glmissing").innerHTML = missing.map(({ t, gap }, i) => {
+    const pill = i === 0 ? '<span class="pill next">PRÓXIMO</span>' : i === 1 ? '<span class="pill medium">SIGUIENTE</span>' : '<span class="pill far">LEJANO</span>';
+    const conf = t.notes ? " · requisitos por confirmar" : "";
+    return `<div class="glcard missing ${i === 0 ? "next" : ""}">${pill}<div class="glhead">${portrait(lookupByName(t.name))}<div class="ab">${t.short || t.name}</div></div><div class="full">${t.faction || ""}</div><div class="tagline">Gap total ${gap} (relic+gear)${conf}</div></div>`;
+  }).join("") || '<div class="pg-empty">Tienes todos los GL del catálogo.</div>';
+  // Huecos de roster: unidades requisito de los 2 GL más cercanos, cruzadas con el roster.
+  const gapRows = t => (t.units || []).map(u => {
+    const l = byName.get(u.name);
+    const st = l ? `<span class="s has">${l.t || 7}★ · G${l.g} · R${l.rl}</span>` : '<span class="s miss">no lo tienes</span>';
+    return `<div class="gaprow"><span class="gpname">${portrait(lookupByName(u.name))}${u.name}</span>${st}</div>`;
+  }).join("");
+  const g1 = missing[0] && missing[0].t, g2 = missing[1] && missing[1].t;
+  if ($("#gap1title")) $("#gap1title").textContent = g1 ? g1.name + " — unidades requisito" : "—";
+  if ($("#gap2title")) $("#gap2title").textContent = g2 ? g2.name + " — unidades requisito" : "—";
+  if ($("#gapAhsoka")) $("#gapAhsoka").innerHTML = g1 ? gapRows(g1) : "";
+  if ($("#gapHondo")) $("#gapHondo").innerHTML = g2 ? gapRows(g2) : "";
 }
 
 // ===== Arena / Mods (Fase 4.1): auditoría dinámica + export a Grandivory =====
@@ -796,6 +884,7 @@ export function init(rd, extra = {}) {
   MODS = (extra.mods && extra.mods.audit) ? extra.mods : { audit: MODS_EMBED, live: false };
 
   renderStatic();
+  renderGL();
   renderProgress();
 
   // Arena / Mods (Fase 4.1): auditoría + export + filtros del grid en vivo.
@@ -808,11 +897,18 @@ export function init(rd, extra = {}) {
   $("#mods-fflag") && ($("#mods-fflag").onchange = function () { modFilter.flag = this.value; renderModGrid(); });
   $("#mods-fq") && ($("#mods-fq").oninput = function () { modFilter.q = this.value; renderModGrid(); });
 
-  // Lord Vader (Fase 4.2): planificador de energía / ETA (energía persistida).
+  // Ascensión (Fase 4.6): objetivo configurable + planificador de energía persistido.
   vpEnergy = loadEnergy(null) || 480;
+  ascTargetId = (loadTarget(null) && ascTargets().some(t => t.id === loadTarget(null))) ? loadTarget(null) : "LORDVADER";
   const eIn = $("#vp-energy");
   if (eIn) { eIn.value = vpEnergy; eIn.onchange = () => { const v = Math.max(120, Math.min(2000, Number(eIn.value) || 480)); vpEnergy = v; eIn.value = v; saveEnergy(v, null); renderVaderPlan(); }; }
-  renderVaderPlan();
+  // Selector de objetivo: búsqueda + filtro por tier.
+  $("#asc-search") && ($("#asc-search").oninput = function () { ascFilter.q = this.value.toLowerCase().trim(); renderTargetPicker(); });
+  $("#asc-tier") && ($("#asc-tier").onchange = function () { ascFilter.tier = this.value; renderTargetPicker(); });
+  // Plan semanal editable: guarda por objetivo al escribir.
+  $("#asc-plan") && ($("#asc-plan").oninput = function () { const tg = ascActive(); if (tg) { savePlan(tg.id, this.value, null); const st = $("#asc-plan-status"); if (st) st.textContent = this.value ? "guardado en este navegador" : "vacío · escribe tu plan"; } });
+  renderTargetPicker();
+  renderAscension();
 
   // Flota (Fase 4.3): naves en vivo o embebidas + filtros.
   FLEET = (extra.fleet && Array.isArray(extra.fleet.owned) && extra.fleet.owned.length) ? extra.fleet : { owned: SHIPS_EMBED, live: false };

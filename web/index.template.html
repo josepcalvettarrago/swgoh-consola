@@ -38,7 +38,7 @@
 
   <nav class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="true" data-p="mods"><span class="n">01</span> Arena / Mods</button>
-    <button class="tab" role="tab" aria-selected="false" data-p="vader"><span class="n">02</span> Lord Vader</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="vader"><span class="n">02</span> Ascensión</button>
     <button class="tab" role="tab" aria-selected="false" data-p="gl"><span class="n">03</span> Galactic Legends</button>
     <button class="tab" role="tab" aria-selected="false" data-p="counters"><span class="n">04</span> Counters</button>
     <button class="tab" role="tab" aria-selected="false" data-p="roster"><span class="n">05</span> Roster</button>
@@ -77,9 +77,18 @@
       <div id="mods-grid" class="mods-grid"></div></div>
   </section>
 
-  <!-- VADER -->
+  <!-- ASCENSIÓN (antes VADER) -->
   <section class="panel" id="p-vader" role="tabpanel">
-    <div class="card"><div class="head"><h3>Protocolo de ascensión — Lord Vader</h3><span class="note">Requisitos verificados (swgoh.wiki)</span></div>
+    <div class="card asc-select"><div class="head"><h3 id="asc-title">Protocolo de ascensión — Lord Vader</h3><span class="note" id="asc-src">objetivo configurable</span></div>
+      <div class="asc-picker">
+        <div class="rx-controls">
+          <input id="asc-search" class="rx-in" type="text" placeholder="🔎 Elegir objetivo de ascensión…" autocomplete="off">
+          <select id="asc-tier" class="rx-sel"><option value="">Todos</option><option value="galactic_legend">Galactic Legends</option><option value="legendary">Legendaries</option><option value="journey">Journeys</option></select>
+        </div>
+        <div id="asc-list" class="asc-list"></div>
+      </div>
+      <p class="mods-disc"><b>Catálogo curado.</b> Elige a quién ascender: el planificador calcula el gap y la ETA con TU roster en vivo. Requisitos verificados donde se pudo (fuente por entrada); los eventos rotan, ajusta a lo que muestre el juego.</p></div>
+    <div class="card"><div class="head"><h3>Progreso de requisitos</h3><span class="note" id="asc-reqnote">relic + gear objetivo</span></div>
       <div class="lvtop"><div class="ring" id="lvring"><div class="lab"><b id="lvpct">0%</b><span>Relic</span></div></div>
       <div class="lvfacts" id="lvfacts"></div></div>
       <div class="shipnote" id="shipnote"></div></div>
@@ -99,8 +108,12 @@
         <div class="step"><div class="sn">03 · COWORK</div><div class="st">Compara y recalcula</div><div class="sd">Marca lo hecho y actualiza el panel.</div></div>
         <div class="step"><div class="sn">04 · COWORK</div><div class="st">Te da la semana</div><div class="sd">Lista concreta de qué hacer a continuación.</div></div>
       </div></div>
-    <div class="card"><div class="head"><h3>Roadmap semana a semana</h3><span class="note" id="rmnote">—</span></div>
+    <div class="card" id="asc-roadmap-card"><div class="head"><h3>Roadmap semana a semana</h3><span class="note" id="rmnote">—</span></div>
       <div class="tl" id="tl"></div></div>
+    <div class="card"><div class="head"><h3>Plan semanal (editable)</h3><span class="note" id="asc-plan-status">se guarda en este navegador</span></div>
+      <textarea id="asc-plan" class="asc-plan" rows="7" placeholder="Escribe tu plan semanal para este objetivo… (no se autogenera; se guarda solo en este navegador)"></textarea>
+      <div class="asc-plan-ctrl"><button class="cgen" id="asc-plan-reset" hidden>Restablecer al curado</button></div>
+      <p class="mods-disc">Editable a mano y guardado por objetivo en este navegador. No se autogenera narrativa; el roadmap curado (arriba) solo existe donde ya se escribió (p. ej. Lord Vader).</p></div>
   </section>
 
   <!-- GL -->
@@ -109,9 +122,9 @@
       <div class="glgrid" id="glowned"></div>
       <div class="subhead">Te faltan — completa de uno en uno</div>
       <div class="glgrid" id="glmissing" style="padding-bottom:8px"></div></div>
-    <div class="card"><div class="head"><h3>Huecos de roster para los próximos GL</h3><span class="note">Lo que farmear tras Vader</span></div>
-      <div class="subhead" style="margin-top:4px">GL Ahsoka — unidades marquee "(Exile)"</div><div class="gaptbl" id="gapAhsoka"></div>
-      <div class="subhead">Pirate King Hondo — piratas / scoundrels</div><div class="gaptbl" id="gapHondo"></div></div>
+    <div class="card"><div class="head"><h3>Huecos de roster para los próximos GL</h3><span class="note" id="gapnote">Lo que farmear a continuación</span></div>
+      <div class="subhead" style="margin-top:4px" id="gap1title">—</div><div class="gaptbl" id="gapAhsoka"></div>
+      <div class="subhead" id="gap2title">—</div><div class="gaptbl" id="gapHondo"></div></div>
   </section>
 
   <!-- NEXT / PROPOSALS -->
