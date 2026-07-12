@@ -17,6 +17,8 @@ export { MOD_RULES, SET_MAP, COLOR_MAP, parseDisp, modQuality, auditMods } from 
 export { planFleet } from "./fleet.js";
 // Constructor de defensa de TW (Fase 4.4): puro; `assemble` inyectada.
 export { planTWDefense } from "./twdefense.js";
+// Planificador de datacrones (Fase 4.5): guía curada evergreen × roster en vivo. Puro.
+export { planDatacrons } from "./datacrons.js";
 
 // ---- avatares (devuelven strings HTML; no tocan el DOM) ----
 const IMGPRE = "https://game-assets.swgoh.gg/textures/tex.charui_", IMGSUF = ".png";
