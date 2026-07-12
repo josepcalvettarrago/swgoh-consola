@@ -36,7 +36,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **4.4 — Defensa de TW** | ✅ Hecha | `v4.4-twdefense` | Pestaña TW: monta tu defensa (escuadrones sin solapar desde tu roster) por zonas configurables + contexto de gremio (GP). Motor puro `twdefense.js`, 100% cliente. **183 tests verdes.** |
 | **4.5 — Planificador de datacrones** | ✅ Hecha | `v4.5-datacrons` | Pestaña Datacrons: recomendador CURADO por temporada (tienes 0) cruzando `datacron_db` con el roster. Motor puro `datacrons.js`, 100% cliente. **203 tests verdes.** |
 | **4.6 — Objetivo de ascensión configurable** | ✅ Hecha | `v4.6-ascension` | De-hardcodeo: tab "Vader"→"Ascensión" con selector de objetivo (`unlock_db`: 10 GLs + 3 legendaries; Vader migrado 57/17) + motor `ascension.js` + plan editable + tab GL derivada. Prerrequisito de la Fase 5. **224 tests verdes.** |
-| **4.7 — Prioridades editables** | ⬜ Pendiente | `v4.7-prios` | Cola "próximo a farmear" + tiers reordenables + completar catálogo (journeys). Especificada. |
+| **4.7 — Prioridades de farmeo editables** | ✅ Hecha | `v4.7-prios` | Hub de prioridades en "Mejoras": tiers reordenables + cola "próximo a farmear" (pins/override) + Top 5 derivado del estado. Catálogo ampliado (21 objetivos, 3 tiers). **237 tests verdes.** Cierra la Fase 4. |
 | 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
@@ -276,7 +276,15 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   clave de energía (`swgoh.vader.energy` → `swgoh.ascension.energy`).
 - **Honesto:** requisitos verificados donde se pudo (fuente por entrada); lo no confirmado marcado
   "por confirmar"; el plan semanal **no se autogenera** (curado solo donde existe = Vader). **224 tests.**
-- **Pendiente (4.7):** completar el catálogo (journeys + resto de legendaries) + prioridades editables.
+
+### Fase 4.7 — Prioridades de farmeo editables (`v4.7-prios`) — ✅ HECHA
+- **Cierra el de-hardcodeo.** La pestaña **"Mejoras"** pasa de Top 5 hardcodeado a **hub de prioridades**:
+  `ascension.js` gana `priorityQueue({pins})` (override individual, "un GL a la vez" tras pins) y
+  `deriveProposals(state)` (Top-N derivado de datacrones/mods/objetivo/flota/gremio). 100% cliente, puro.
+- **UI:** tablero de tiers reordenable (persistido `swgoh.ascension.prios`), cola "próximo a farmear" con
+  **pins** (`swgoh.ascension.pins`) y "ir al objetivo", Top 5 derivado. Catálogo ampliado a **21 objetivos**
+  (los 3 tiers con contenido; journey long tail pendiente, requisitos antiguos marcados "por confirmar").
+- **237 tests.** **Fase 4 completa.**
 
 ## FASE 5 — Gremio multi-usuario (3-4 sesiones)
 - **Firebase Auth** para el login del gremio (esto es lo que Firebase te ahorra construir).

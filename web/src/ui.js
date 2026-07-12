@@ -1,9 +1,9 @@
 // Capa de presentación (DOM). Toda la lógica pura vive en engine.js.
 // init() se llama desde main.js cuando el DOM está listo.
 import { DATA, RD as EMBEDDED_RD, ENEMIES, SIDES, CHAR_META as EMBEDDED_META, MODS_EMBED, SHIP_META, SHIPS_EMBED } from "./data.js";
-import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet, planTWDefense, planDatacrons, resolveTarget, planFor } from "./engine.js";
+import { assemble, teamRow, portrait, unitImg, lookupByName, vaderProgress, genBoard, modQuality, parseDisp, SET_MAP, COLOR_MAP, vaderPlan, planFleet, planTWDefense, planDatacrons, resolveTarget, planFor, priorityQueue, deriveProposals, TIER_ORDER } from "./engine.js";
 import { progressView, eventHeadline, unitChangeText, sortedUnitChanges, guildRanking } from "./progress.js";
-import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy, loadTW, saveTW, loadTarget, saveTarget, loadPlan, savePlan } from "./store.js";
+import { loadLocked, saveLocked, loadBoard, saveBoard, clearBoard, loadEnergy, saveEnergy, loadTW, saveTW, loadTarget, saveTarget, loadPlan, savePlan, loadPrios, savePrios, loadPins, savePins } from "./store.js";
 import COUNTER_DB from "./data/counter_db.json";
 import FLEET_DB from "./data/fleet_db.json";
 import DATACRON_DB from "./data/datacron_db.json";
@@ -53,17 +53,7 @@ function renderStatic() {
 
   // La pestaña "Arena / Mods" la pinta renderMods() (Fase 4.1) con datos en vivo o embebidos.
   // La pestaña "Ascensión" (antes Vader) la pinta renderAscension() (Fase 4.6), objetivo configurable.
-  // La pestaña GL la deriva renderGL() de unlock_db + roster.
-
-  const impDots = l => { let s = '<span class="dots">'; for (let i = 0; i < 3; i++) s += `<b class="${i < l ? "on" : ""}"></b>`; return s + "</span>"; };
-  $("#props").innerHTML = DATA.proposals.map(p => {
-    const lvl = p.impact.startsWith("Muy") ? 3 : p.impact === "Alto" ? 2 : 1;
-    return `<div class="prop"><div class="rank">${p.n}<small>PRIOR.</small></div>
-   <div><div class="pt">${p.title}<span class="tg2">${p.tag}</span></div>
-   <div class="why">${p.why}</div><div class="adds"><b>Añade:</b> ${p.adds}</div></div>
-   <div class="imp">${p.impact}${impDots(lvl)}</div></div>`;
-  }).join("");
-  $("#bonus").innerHTML = '<b>Bonus:</b> tu gremio es muy fuerte en flota (rango medio 74 vs 264 en personajes). Un módulo de <b>Fleet Arena</b> podría ser tu vía más fácil de cristales diarios como F2P.';
+  // La pestaña GL la deriva renderGL(); la pestaña "Mejoras" la deriva renderMejoras() (Fase 4.7).
 }
 
 // ===== animaciones (meters, roadmap, ring) =====
@@ -668,6 +658,7 @@ function renderTargetPicker() {
 function ascSelect(id) {
   ascTargetId = id; saveTarget(id, null);
   renderTargetPicker(); renderAscension();
+  if ($("#farm-queue")) renderMejoras(); // refresca "objetivo actual" + Top 5 derivado
   ringDone = false; animateRing();
 }
 
@@ -772,6 +763,70 @@ function renderGL() {
   if ($("#gapAhsoka")) $("#gapAhsoka").innerHTML = g1 ? gapRows(g1) : "";
   if ($("#gapHondo")) $("#gapHondo").innerHTML = g2 ? gapRows(g2) : "";
 }
+
+// ===== Mejoras (Fase 4.7): hub de prioridades — tablero de tiers + cola + Top 5 derivado =====
+const TIER_LABEL = { journey: "Journeys", legendary: "Legendaries", galactic_legend: "Galactic Legends" };
+let ascPrios = null;   // orden de tiers (persistido); null = por defecto TIER_ORDER
+let ascPins = [];      // objetivos fijados al frente de la cola (persistido)
+
+function renderPrioBoard() {
+  const el = $("#prio-board"); if (!el) return;
+  const order = ascPrios || TIER_ORDER;
+  el.innerHTML = order.map((tier, i) => `<div class="prio-tier" data-tier="${tier}">
+    <span class="prio-rank">P${i + 1}</span><span class="prio-name">${TIER_LABEL[tier] || tier}</span>
+    <span class="prio-move"><button class="prio-up" data-i="${i}" ${i === 0 ? "disabled" : ""}>▲</button><button class="prio-dn" data-i="${i}" ${i === order.length - 1 ? "disabled" : ""}>▼</button></span></div>`).join("");
+  $$("#prio-board .prio-up").forEach(b => b.onclick = () => prioMove(+b.dataset.i, -1));
+  $$("#prio-board .prio-dn").forEach(b => b.onclick = () => prioMove(+b.dataset.i, +1));
+}
+function prioMove(i, d) {
+  const o = (ascPrios || TIER_ORDER).slice(); const j = i + d;
+  if (j < 0 || j >= o.length) return;
+  [o[i], o[j]] = [o[j], o[i]];
+  ascPrios = o; savePrios(o, null);
+  renderPrioBoard(); renderFarmQueue();
+}
+function ascPinToggle(id) {
+  const s = new Set(ascPins); s.has(id) ? s.delete(id) : s.add(id);
+  ascPins = [...s]; savePins(ascPins, null); renderFarmQueue();
+}
+function renderFarmQueue() {
+  const el = $("#farm-queue"); if (!el) return;
+  const q = priorityQueue(UNLOCK_DB, ascPrios || TIER_ORDER, RD, { pins: ascPins });
+  const active = ascActive();
+  const rows = [];
+  for (const { tier, items } of q) {
+    rows.push(`<div class="fq-tier"><span class="fq-tl">${TIER_LABEL[tier] || tier}</span>${tier === "galactic_legend" ? '<span class="fq-hint">uno a la vez</span>' : ""}</div>`);
+    if (!items.length) { rows.push('<div class="pg-empty soft">Todo desbloqueado en este tier.</div>'); continue; }
+    for (const it of items) {
+      const isActive = active && active.id === it.id;
+      rows.push(`<div class="fq-item ${isActive ? "active" : ""}">${portrait(lookupByName(it.name))}
+       <div class="fq-mid"><div class="fq-nm">${it.name}${it.pinned ? ' <span class="rc rc-need">📌 fijado</span>' : ""}${isActive ? ' <span class="rc rc-mech">objetivo actual</span>' : ""}</div>
+        <div class="fq-meta">${it.pct}% listo · faltan ${it.unitsMissing} unidades · gap ${it.gapTotal}</div></div>
+       <div class="fq-act"><button class="fq-pin" data-id="${it.id}" title="Fijar / soltar">${it.pinned ? "📌" : "📍"}</button><button class="fq-go" data-id="${it.id}" title="Ir al objetivo">→</button></div></div>`);
+    }
+  }
+  el.innerHTML = rows.join("") || '<div class="pg-empty">Sin objetivos pendientes en el catálogo.</div>';
+  $$("#farm-queue .fq-pin").forEach(b => b.onclick = () => ascPinToggle(b.dataset.id));
+  $$("#farm-queue .fq-go").forEach(b => b.onclick = () => { ascSelect(b.dataset.id); const t = $('.tab[data-p="vader"]'); if (t) t.click(); });
+}
+function renderProposalsDerived() {
+  const el = $("#props"); if (!el) return;
+  const target = ascActive();
+  const res = target ? planFor(RD, target, { dailyGearEnergy: vpEnergy }) : null;
+  let fleetFieldable = 0, dc = 0;
+  try { fleetFieldable = planFleet({ owned: (FLEET && FLEET.owned) || [], shipMeta: SHIP_META, roster: RD, fleetDb: FLEET_DB }).filter(f => f.canField).length; } catch { /* noop */ }
+  try { dc = planDatacrons({ roster: RD, datacronDb: DATACRON_DB, meta: META }).paths.filter(p => p.usable).length; } catch { /* noop */ }
+  const props = deriveProposals({ modsAudit: MODS.audit, target, targetTotals: res && res.totals, fleetFieldable, datacronsUsable: dc, guild: GUILD || DATA.guild });
+  const impDots = l => { let s = '<span class="dots">'; for (let i = 0; i < 3; i++) s += `<b class="${i < l ? "on" : ""}"></b>`; return s + "</span>"; };
+  el.innerHTML = props.map(p => {
+    const lvl = p.impact.startsWith("Muy") ? 3 : p.impact === "Alto" ? 2 : 1;
+    return `<div class="prop"><div class="rank">${p.n}<small>PRIOR.</small></div>
+   <div><div class="pt">${p.title}<span class="tg2">${p.tag}</span></div>
+   <div class="why">${p.why}</div><div class="adds"><b>Añade:</b> ${p.adds}</div></div>
+   <div class="imp">${p.impact}${impDots(lvl)}</div></div>`;
+  }).join("") || '<div class="pg-empty">Todo al día — sin propuestas ahora mismo.</div>';
+}
+function renderMejoras() { renderPrioBoard(); renderFarmQueue(); renderProposalsDerived(); }
 
 // ===== Arena / Mods (Fase 4.1): auditoría dinámica + export a Grandivory =====
 let MODS = { audit: MODS_EMBED, live: false }; // resultado de loadMods (init lo sustituye)
@@ -909,6 +964,13 @@ export function init(rd, extra = {}) {
   $("#asc-plan") && ($("#asc-plan").oninput = function () { const tg = ascActive(); if (tg) { savePlan(tg.id, this.value, null); const st = $("#asc-plan-status"); if (st) st.textContent = this.value ? "guardado en este navegador" : "vacío · escribe tu plan"; } });
   renderTargetPicker();
   renderAscension();
+
+  // Mejoras (Fase 4.7): prioridades + cola + Top 5 derivado (persistido).
+  const savedPrios = loadPrios(null);
+  ascPrios = (Array.isArray(savedPrios) && savedPrios.length === TIER_ORDER.length && TIER_ORDER.every(t => savedPrios.includes(t))) ? savedPrios : null;
+  ascPins = loadPins(null);
+  $("#prio-reset") && ($("#prio-reset").onclick = () => { ascPrios = null; ascPins = []; savePrios(TIER_ORDER, null); savePins([], null); renderMejoras(); });
+  renderMejoras();
 
   // Flota (Fase 4.3): naves en vivo o embebidas + filtros.
   FLEET = (extra.fleet && Array.isArray(extra.fleet.owned) && extra.fleet.owned.length) ? extra.fleet : { owned: SHIPS_EMBED, live: false };

@@ -45,24 +45,48 @@ function gapOf(target, byName) {
   return { gapTotal, unitsMissing };
 }
 
-// priorityQueue(db, prios, rd) -> [{ tier, items:[{id,name,tier,gapTotal,unitsMissing,pct}] }].
-// Por cada tier en el orden `prios`: objetivos NO desbloqueados (id ausente del roster), ordenados por
-// gap total asc (desempate id). En 'galactic_legend' surface SOLO el primero (un GL a la vez).
-export function priorityQueue(db, prios, rd) {
+// priorityQueue(db, prios, rd, opts?) -> [{ tier, items:[{id,name,tier,gapTotal,unitsMissing,pct,pinned}] }].
+// Por cada tier en el orden `prios`: objetivos NO desbloqueados (id ausente del roster). Orden dentro del
+// tier: primero los FIJADOS (`opts.pins`, en su orden), luego el resto por gap total asc (desempate id).
+// En 'galactic_legend' surface SOLO el primero DESPUÉS de aplicar pins (un GL a la vez, aunque esté fijado).
+// Sin `opts` → comportamiento idéntico al de la Fase 4.6 (retrocompatible).
+export function priorityQueue(db, prios, rd, opts = {}) {
   const ts = targetsOf(db);
   const owned = new Set(((rd && rd.R) || []).map(u => u.i));
   const byName = new Map(((rd && rd.R) || []).map(u => [u.n, u]));
   const order = (Array.isArray(prios) && prios.length) ? prios : TIER_ORDER;
+  const pins = (opts && Array.isArray(opts.pins)) ? opts.pins : [];
+  const pinRank = new Map(pins.map((id, i) => [id, i]));
+  const rankOf = id => (pinRank.has(id) ? pinRank.get(id) : Infinity);
   const out = [];
   for (const tier of order) {
     let items = ts.filter(t => t.tier === tier && !owned.has(t.id)).map(t => {
       const { gapTotal, unitsMissing } = gapOf(t, byName);
       const total = (t.units || []).length;
       const pct = total ? Math.round((total - unitsMissing) / total * 100) : 0;
-      return { id: t.id, name: t.name, tier, gapTotal, unitsMissing, pct };
-    }).sort((a, b) => (a.gapTotal - b.gapTotal) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    if (tier === "galactic_legend") items = items.slice(0, 1); // un GL a la vez
+      return { id: t.id, name: t.name, tier, gapTotal, unitsMissing, pct, pinned: pinRank.has(t.id) };
+    }).sort((a, b) => (rankOf(a.id) - rankOf(b.id)) || (a.gapTotal - b.gapTotal) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    if (tier === "galactic_legend") items = items.slice(0, 1); // un GL a la vez (tras pins)
     out.push({ tier, items });
   }
   return out;
+}
+
+// deriveProposals(state) -> [{ n, id, title, tag, why, adds, impact }] ordenado por impacto (desc).
+// PURO: se alimenta de datos YA computados (nada de red). Sustituye el Top 5 hardcodeado de Yusepi.
+export function deriveProposals(state = {}) {
+  const { modsAudit, target, targetTotals, fleetFieldable = 0, datacronsUsable = 0, guild } = state;
+  const g = (modsAudit && modsAudit.global) || {};
+  const P = [];
+  if (datacronsUsable > 0) P.push({ id: "datacrons", title: "Módulo de datacrones", tag: "Arena + GAC", impact: "Muy alto", why: `Tienes ${datacronsUsable} rutas de datacrón aprovechables para tus squads: +daño y +supervivencia gratis por temporada.`, adds: "Guía de reticle por facción y objetivo." });
+  if ((g.unleveled || 0) > 150) P.push({ id: "mods", title: "Auditoría de mods", tag: "Global", impact: "Alto", why: `${g.unleveled} mods sin subir de nivel afectan a todos los modos.`, adds: "Ofensores por inversión + export a Grandivory." });
+  if (target && targetTotals && !targetTotals.unlocked && ((targetTotals.relicGap || 0) + (targetTotals.gearGap || 0)) > 0) {
+    const rem = (targetTotals.relicGap || 0) + (targetTotals.gearGap || 0);
+    P.push({ id: "ascension", title: `Sigue tu ascensión — ${target.name}`, tag: "Objetivo", impact: "Alto", why: `Te faltan ${rem} niveles (relic+gear) para desbloquear a ${target.name}.`, adds: "Orden de farmeo y ETA en la pestaña Ascensión." });
+  }
+  if (fleetFieldable > 0) P.push({ id: "fleet", title: "Fleet Arena", tag: "Recursos", impact: "Medio", why: `Puedes montar ${fleetFieldable} flotas meta: vía barata de cristales F2P.`, adds: "Arranque y crew en la pestaña Flota." });
+  if (guild && guild.rank) P.push({ id: "guild", title: "Seguimiento semanal + gremio", tag: "Progreso", impact: "Medio", why: `Vas ${guild.rank}/${guild.members || 50} en GP del gremio: mide el plan y a quién adelantar.`, adds: "Diff entre exports + ranking del gremio." });
+  const w = { "Muy alto": 3, "Alto": 2, "Medio": 1 };
+  P.sort((a, b) => (w[b.impact] || 0) - (w[a.impact] || 0));
+  return P.map((p, i) => ({ n: i + 1, ...p }));
 }

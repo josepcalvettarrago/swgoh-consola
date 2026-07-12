@@ -584,3 +584,27 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .asc-plan{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:13.5px;line-height:1.5;resize:vertical;min-height:120px}
 .asc-plan:focus{outline:none;border-color:var(--holo)}
 .asc-plan-ctrl{display:flex;justify-content:flex-end;margin-top:8px}
+
+/* ===== Mejoras / Prioridades (Fase 4.7): tablero + cola (aditivo) ===== */
+.prio-board{display:flex;flex-direction:column;gap:8px}
+.prio-tier{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:10px 14px}
+.prio-rank{font-family:'Chakra Petch';font-weight:700;font-size:13px;color:var(--ember);min-width:28px}
+.prio-name{font-family:'Chakra Petch';font-weight:600;font-size:14px;flex:1}
+.prio-move{display:flex;gap:6px}
+.prio-move button{background:var(--surface);border:1px solid var(--line);color:var(--holo);border-radius:7px;width:30px;height:28px;cursor:pointer;font-size:12px}
+.prio-move button:hover:not([disabled]){border-color:var(--holo)}
+.prio-move button[disabled]{opacity:.3;cursor:default}
+.prio-ctrl{display:flex;justify-content:flex-end;margin-top:10px}
+.farm-queue{display:flex;flex-direction:column;gap:7px}
+.fq-tier{display:flex;align-items:center;gap:10px;margin:8px 0 2px}
+.fq-tl{font-family:'Chakra Petch';font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--holo)}
+.fq-hint{font-family:'Share Tech Mono';font-size:10px;color:var(--faint);border:1px solid var(--line);border-radius:20px;padding:1px 8px}
+.fq-item{display:flex;align-items:center;gap:11px;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:8px 11px}
+.fq-item.active{border-color:var(--ember);background:linear-gradient(180deg,rgba(255,53,70,.1),transparent)}
+.fq-item .savw{width:40px;height:40px;flex:0 0 auto}
+.fq-mid{flex:1;min-width:0}
+.fq-nm{font-family:'Chakra Petch';font-weight:700;font-size:13.5px}
+.fq-meta{font-family:'Share Tech Mono';font-size:11px;color:var(--muted);margin-top:2px}
+.fq-act{display:flex;gap:6px}
+.fq-act button{background:var(--surface);border:1px solid var(--line);color:var(--holo);border-radius:8px;width:34px;height:32px;cursor:pointer;font-size:14px}
+.fq-act button:hover{border-color:var(--holo)}

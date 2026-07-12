@@ -4,9 +4,9 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { resolveTarget, planFor, priorityQueue } from "../web/src/ascension.js";
+import { resolveTarget, planFor, priorityQueue, deriveProposals } from "../web/src/ascension.js";
 import { vaderPlan } from "../web/src/vaderplan.js";
-import { loadTarget, saveTarget, loadPlan, savePlan, loadEnergy, saveEnergy, loadPrios, savePrios } from "../web/src/store.js";
+import { loadTarget, saveTarget, loadPlan, savePlan, loadEnergy, saveEnergy, loadPrios, savePrios, loadPins, savePins } from "../web/src/store.js";
 import { RD } from "../web/src/data.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -71,6 +71,52 @@ describe("priorityQueue", () => {
     const q = priorityQueue(db, ["journey", "legendary", "galactic_legend"], { R: [] });
     expect(q.map(x => x.tier)).toEqual(["journey", "legendary", "galactic_legend"]);
   });
+  it("override individual (pins): el fijado va primero aunque tenga más gap", () => {
+    // Sin pins, GL_B (R3) va antes que GL_A (R5). Con GL_A fijado, GL_A es el que surface.
+    const q = priorityQueue(db, ["galactic_legend"], { R: [] }, { pins: ["GL_A"] });
+    const gl = q.find(x => x.tier === "galactic_legend");
+    expect(gl.items.length).toBe(1);        // un GL a la vez sigue vigente
+    expect(gl.items[0].id).toBe("GL_A");
+    expect(gl.items[0].pinned).toBe(true);
+  });
+  it("sin opts se comporta igual que en 4.6 (retrocompatible)", () => {
+    const a = priorityQueue(db, ["legendary"], { R: [] });
+    const b = priorityQueue(db, ["legendary"], { R: [] }, {});
+    expect(a).toEqual(b);
+    expect(a.find(x => x.tier === "legendary").items[0].pinned).toBe(false);
+  });
+});
+
+describe("deriveProposals", () => {
+  it("datacrones aprovechables → propuesta 'Muy alto' arriba; mods altos → 'Alto'", () => {
+    const props = deriveProposals({
+      modsAudit: { global: { unleveled: 742 } },
+      datacronsUsable: 14,
+      target: { name: "Lord Vader" }, targetTotals: { unlocked: false, relicGap: 57, gearGap: 17 },
+      fleetFieldable: 7, guild: { rank: 30, members: 50 },
+    });
+    expect(props[0].id).toBe("datacrons");          // Muy alto primero
+    expect(props[0].impact).toBe("Muy alto");
+    expect(props.some(p => p.id === "mods")).toBe(true);
+    expect(props.some(p => p.id === "ascension")).toBe(true);
+    expect(props.map(p => p.n)).toEqual(props.map((_, i) => i + 1)); // renumerado
+  });
+  it("no propone lo que no aplica (0 datacrones aprovechables, objetivo ya desbloqueado)", () => {
+    const props = deriveProposals({
+      modsAudit: { global: { unleveled: 10 } },
+      datacronsUsable: 0,
+      target: { name: "X" }, targetTotals: { unlocked: true, relicGap: 0, gearGap: 0 },
+      fleetFieldable: 0,
+    });
+    expect(props.some(p => p.id === "datacrons")).toBe(false);
+    expect(props.some(p => p.id === "mods")).toBe(false);
+    expect(props.some(p => p.id === "ascension")).toBe(false);
+  });
+  it("es puro/determinista", () => {
+    const s = { modsAudit: { global: { unleveled: 300 } }, datacronsUsable: 2 };
+    expect(deriveProposals(s)).toEqual(deriveProposals(s));
+    expect(() => deriveProposals()).not.toThrow();
+  });
 });
 
 describe("store — objetivo, plan y energía (con migración)", () => {
@@ -101,6 +147,11 @@ describe("store — objetivo, plan y energía (con migración)", () => {
     savePrios(["journey", "legendary", "galactic_legend"], s);
     expect(loadPrios(s)).toEqual(["journey", "legendary", "galactic_legend"]);
   });
+  it("pins roundtrip + dedup (Fase 4.7)", () => {
+    const s = fake(); expect(loadPins(s)).toEqual([]);
+    savePins(["LORDVADER", "LORDVADER", "GLREY"], s);
+    expect(loadPins(s)).toEqual(["LORDVADER", "GLREY"]);
+  });
 });
 
 describe("unlock_db — integridad", () => {
@@ -115,5 +166,11 @@ describe("unlock_db — integridad", () => {
   it("hay 10 Galactic Legends y la entrada LORDVADER está", () => {
     expect(DB.targets.filter(t => t.tier === "galactic_legend").length).toBe(10);
     expect(DB.targets.find(t => t.id === "LORDVADER")).toBeTruthy();
+  });
+  it("los 3 tiers tienen contenido (journey/legendary/GL) tras la tanda 4.7", () => {
+    const byTier = DB.targets.reduce((a, t) => (a[t.tier] = (a[t.tier] || 0) + 1, a), {});
+    expect(byTier.journey).toBeGreaterThanOrEqual(1);
+    expect(byTier.legendary).toBeGreaterThanOrEqual(3);
+    expect(byTier.galactic_legend).toBe(10);
   });
 });

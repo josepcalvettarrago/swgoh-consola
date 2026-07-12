@@ -2,6 +2,28 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 4.7 — Prioridades de farmeo editables + cola "próximo a farmear" — `v4.7-prios`
+
+- **Cierra el de-hardcodeo (prerrequisito de la Fase 5):** la pestaña **"Mejoras"** deja de ser un Top 5
+  hardcodeado de Yusepi y pasa a un **hub de prioridades** genérico.
+- **Motor** (`ascension.js`, puro): `priorityQueue` gana `opts.pins` (override individual: los objetivos
+  **fijados** suben al frente de su tier; **"un GL a la vez"** se respeta tras los pins; sin `opts` =
+  idéntico a 4.6). Nuevo `deriveProposals(state)`: Top-N **derivado del estado en vivo** (datacrones
+  aprovechables, mods sin subir, gap del objetivo activo, flota montable, ranking de gremio), ordenado por
+  impacto. Determinista.
+- **UI (Mejoras):** **tablero de tiers reordenable** (↑/↓, persistido) · **cola "próximo a farmear"**
+  derivada del roster (por tier: próximo objetivo con % de cercanía, unidades que faltan, **📌 fijar/soltar**
+  y **→ ir al objetivo** que abre Ascensión) · **Top 5 derivado** (sustituye `DATA.proposals`). El bonus
+  hardcodeado de Yusepi se retira.
+- **Persistencia** (`store.js`): `swgoh.ascension.prios` (orden de tiers) y `swgoh.ascension.pins`
+  (objetivos fijados), con "Restablecer orden".
+- **Catálogo** (`unlock_db.json`): **tanda representativa** — +1 journey (JKL) y +7 legendaries clave
+  (GM Yoda, Emperor Palpatine, CLS, Padmé, Wat Tambor, Grievous, Gran Inquisidor). **21 objetivos** con los
+  **3 tiers con contenido**. Nombres/ids validados contra CHAR_META; requisitos aproximados marcados
+  **"por confirmar"** (los eventos antiguos son gear/estrella; el long tail de journeys queda pendiente).
+- Estética intocable, consola nunca en blanco. **237 tests verdes** (224 + nuevos). Build → 1 HTML (513 KB).
+- Tag: `v4.7-prios`. **Fase 4 completa.**
+
 ## Fase 4.6 — Objetivo de ascensión configurable — `v4.6-ascension`
 
 - **De-hardcodeo (prerrequisito de la Fase 5):** la pestaña 2, antes clavada a **Lord Vader**, pasa a

@@ -3,7 +3,7 @@
     "about": "Catálogo CURADO de personajes desbloqueables por evento. Los campos stars/gear/relic de cada unidad son REQUISITOS (umbrales objetivo), NO el estado actual: el 'actual' se lee SOLO del roster en vivo. Emparejamiento por NOMBRE (units[].name = display name exacto del roster/CHAR_META). La entrada LORDVADER está verificada (reproduce el gap real 57 relic + 17 gear). El resto son requisitos CURADOS de guías públicas (fuente por entrada); cuando la lista o algún nivel no está confirmado al 100% se indica en 'notes' (por confirmar). Los eventos rotan/relajan requisitos con el tiempo: ajusta a lo que muestre el juego.",
     "updated": "2026-07-12",
     "schema": "id,name,short?,tier(journey|legendary|galactic_legend),prio_default(1|2|3),align(L|D),faction,ship?,units[{name,stars,gear,relic}],source,notes",
-    "batch": "v4.6 = 10 Galactic Legends + 3 legendaries (GAS, JKR, DR). Journeys y el resto de legendaries: tanda siguiente (4.7)."
+    "batch": "v4.6 = 10 Galactic Legends + 3 legendaries (GAS, JKR, DR). v4.7 = +1 journey (JKL) y +7 legendaries clave (GMY, EP, CLS, Padmé, Wat Tambor, Grievous, Gran Inquisidor), tanda representativa. El long tail de journeys/guild events queda para una tanda posterior."
   },
   "targets": [
     {
@@ -281,6 +281,150 @@
       ],
       "source": "swgoh.wiki/Scourge_of_the_Old_Republic",
       "notes": "Evento journey (basado en gear/estrella, sin relic). G11-G12 suele bastar; confirmar en el juego."
+    },
+    {
+      "id": "JEDIKNIGHTLUKE",
+      "name": "Jedi Knight Luke Skywalker",
+      "short": "JKL",
+      "tier": "journey",
+      "prio_default": 1,
+      "align": "L",
+      "faction": "Rebel / Jedi",
+      "units": [
+        { "name": "Commander Luke Skywalker", "stars": 7, "gear": 13, "relic": 5 },
+        { "name": "Han Solo", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Chewbacca", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Obi-Wan Kenobi (Old Ben)", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "C-3PO", "stars": 7, "gear": 12, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/A_Simple_Man",
+      "notes": "Journey: Commander Luke a relic + apoyo a gear. Requisitos aproximados; confirmar en el juego."
+    },
+    {
+      "id": "GRANDMASTERYODA",
+      "name": "Grand Master Yoda",
+      "short": "GM Yoda",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "L",
+      "faction": "Jedi",
+      "units": [
+        { "name": "Jedi Knight Anakin", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Aayla Secura", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Luminara Unduli", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Barriss Offee", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Ahsoka Tano", "stars": 7, "gear": 11, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/The_Great_Journey",
+      "notes": "Evento antiguo (5 Jedi a gear). Lista aproximada; por confirmar en el juego."
+    },
+    {
+      "id": "EMPERORPALPATINE",
+      "name": "Emperor Palpatine",
+      "short": "EP",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "D",
+      "faction": "Empire / Sith",
+      "units": [
+        { "name": "Royal Guard", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "TIE Fighter Pilot", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Death Trooper", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "General Veers", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Count Dooku", "stars": 7, "gear": 11, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/Emperor's_Demonstration",
+      "notes": "Evento antiguo (Imperio a gear). Lista aproximada; por confirmar en el juego."
+    },
+    {
+      "id": "COMMANDERLUKESKYWALKER",
+      "name": "Commander Luke Skywalker",
+      "short": "CLS",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "L",
+      "faction": "Rebel",
+      "units": [
+        { "name": "Princess Leia", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Han Solo", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Chewbacca", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Stormtrooper Han", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "C-3PO", "stars": 7, "gear": 11, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/A_New_Hope",
+      "notes": "Evento antiguo (5 Rebeldes a gear). Lista aproximada; por confirmar en el juego."
+    },
+    {
+      "id": "PADMEAMIDALA",
+      "name": "Padmé Amidala",
+      "short": "Padmé",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "L",
+      "faction": "Galactic Republic",
+      "units": [
+        { "name": "Jedi Knight Anakin", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Ahsoka Tano", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Aayla Secura", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Qui-Gon Jinn", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Luminara Unduli", "stars": 7, "gear": 12, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/Chosen_One",
+      "notes": "Evento antiguo (República a gear). Lista aproximada; por confirmar en el juego."
+    },
+    {
+      "id": "WATTAMBOR",
+      "name": "Wat Tambor",
+      "short": "Wat",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "D",
+      "faction": "Separatist / Droid",
+      "units": [
+        { "name": "B1 Battle Droid", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "B2 Super Battle Droid", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Droideka", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Nute Gunray", "stars": 7, "gear": 12, "relic": 0 },
+        { "name": "Count Dooku", "stars": 7, "gear": 12, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/Separatist_Might",
+      "notes": "Evento de gremio (Separatistas a gear). Lista aproximada; por confirmar en el juego."
+    },
+    {
+      "id": "GRIEVOUS",
+      "name": "General Grievous",
+      "short": "GG",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "D",
+      "faction": "Separatist / Droid",
+      "units": [
+        { "name": "B1 Battle Droid", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "B2 Super Battle Droid", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Droideka", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Count Dooku", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Nute Gunray", "stars": 7, "gear": 11, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/Rise_of_the_Separatists",
+      "notes": "Evento de gremio (Separatistas a gear). Lista aproximada; por confirmar en el juego."
+    },
+    {
+      "id": "GRANDINQUISITOR",
+      "name": "Grand Inquisitor",
+      "short": "Gran Inquisidor",
+      "tier": "legendary",
+      "prio_default": 2,
+      "align": "D",
+      "faction": "Inquisitorius / Empire",
+      "units": [
+        { "name": "Fifth Brother", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Seventh Sister", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Eighth Brother", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Ninth Sister", "stars": 7, "gear": 11, "relic": 0 },
+        { "name": "Second Sister", "stars": 7, "gear": 11, "relic": 0 }
+      ],
+      "source": "swgoh.wiki/Inquisitorius",
+      "notes": "Evento (Inquisidores a gear). Lista aproximada; por confirmar en el juego."
     }
   ]
 }

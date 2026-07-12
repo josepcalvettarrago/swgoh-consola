@@ -14,6 +14,7 @@ const K_TW = "swgoh.tw.format";        // formato de TW del constructor de defen
 const K_TARGET = "swgoh.ascension.target"; // id del objetivo de ascensión elegido (Fase 4.6)
 const K_PLAN = "swgoh.ascension.plan";     // mapa targetId -> plan semanal editado a mano (Fase 4.6)
 const K_PRIOS = "swgoh.ascension.prios";   // orden de tiers de prioridad de farmeo (Fase 4.7)
+const K_PINS = "swgoh.ascension.pins";     // objetivos fijados al frente de la cola (Fase 4.7)
 
 function store(storage) {
   if (storage) return storage;
@@ -108,6 +109,16 @@ export function loadPrios(storage) {
 export function savePrios(order, storage) {
   if (!Array.isArray(order)) return false;
   return writeJSON(storage, K_PRIOS, order.filter(x => typeof x === "string"));
+}
+
+// --- objetivos fijados (override individual) de la cola (Fase 4.7) ---
+export function loadPins(storage) {
+  const v = readJSON(storage, K_PINS, null);
+  return Array.isArray(v) ? v.filter(x => typeof x === "string") : [];
+}
+export function savePins(ids, storage) {
+  if (!Array.isArray(ids)) return false;
+  return writeJSON(storage, K_PINS, [...new Set(ids.filter(x => typeof x === "string"))]);
 }
 
 // --- formato de TW del constructor de defensa (Fase 4.4) ---

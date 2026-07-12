@@ -10,7 +10,9 @@
 > - **4.5 · Planificador de datacrones** — `v4.5-datacrons` (pestaña Datacrons, `datacrons.js`, guía curada).
 > - **4.6 · Objetivo de ascensión configurable** — `v4.6-ascension` (de-hardcodeo: tab "Vader"→"Ascensión",
 >   `unlock_db.json` + `ascension.js`, plan editable, tab GL derivada). **224 tests.** Prerrequisito de la Fase 5.
-> - **4.7 · Prioridades editables** — pendiente (`v4.7-prios`). Especificación completa en **`PHASE4.6.md`**.
+> - **4.7 · Prioridades de farmeo editables** — `v4.7-prios` (hub de prioridades en "Mejoras": tiers
+>   reordenables + cola "próximo a farmear" con pins + Top 5 derivado; catálogo a 21 objetivos, 3 tiers).
+>   **237 tests. Cierra la Fase 4.** Especificación en **`PHASE4.6.md`**; el long tail de journeys queda pendiente.
 >
 > Las especificaciones detalladas de **4.6 y 4.7** viven en **`PHASE4.6.md`**. Lo que sigue abajo es la guía
 > original de la **4.1** (se conserva como referencia histórica).
