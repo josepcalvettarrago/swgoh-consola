@@ -9,6 +9,7 @@
 const K_LOCKED = "swgoh.gac.locked";
 const K_BOARD = "swgoh.gac.board";
 const K_ENERGY = "swgoh.vader.energy"; // energía diaria para el planificador de Vader (Fase 4.2)
+const K_TW = "swgoh.tw.format";        // formato de TW del constructor de defensa (Fase 4.4)
 
 function store(storage) {
   if (storage) return storage;
@@ -64,4 +65,16 @@ export function saveEnergy(energy, storage) {
   const v = Number(energy);
   if (!Number.isFinite(v) || v <= 0) return false;
   return writeJSON(storage, K_ENERGY, Math.round(v));
+}
+
+// --- formato de TW del constructor de defensa (Fase 4.4) ---
+export function loadTW(storage) {
+  const v = readJSON(storage, K_TW, null);
+  if (!v || typeof v !== "object") return null;
+  const clamp = (n, lo, hi, d) => { const x = Math.round(Number(n)); return Number.isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d; };
+  return { zones: clamp(v.zones, 1, 12, 4), perZone: clamp(v.perZone, 1, 20, 5), size: v.size === 3 ? 3 : 5 };
+}
+export function saveTW(fmt, storage) {
+  if (!fmt || typeof fmt !== "object") return false;
+  return writeJSON(storage, K_TW, { zones: fmt.zones, perZone: fmt.perZone, size: fmt.size === 3 ? 3 : 5 });
 }
