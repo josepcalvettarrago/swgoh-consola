@@ -2,6 +2,28 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 4.5 — Planificador de datacrones (guía curada por temporada) — `v4.5-datacrons`
+
+- Nueva pestaña **Datacrons (11)**: recupera el planificador que la Fase 4.1 **difirió** (tienes **0**
+  datacrones → nada personal que auditar). NO es un auditor de datos personales: es un **recomendador
+  CURADO por temporada** —mismo patrón que `counter_db` (Fase 3) y `fleet_db` (Fase 4.3)—.
+- **Datos evergreen y honestos:** el set de datacrones **rota** cada temporada y **no se puede traer en
+  vivo** (egress a swgoh.gg bloqueado + no viene en el export). Por eso `datacron_db.json` cura **rutas**
+  `alineación (L3) → facción (L6) → personaje (L9)` **estables** para squads meta, con texto **cualitativo**
+  (qué potencia y por qué), **sin cifras inventadas**. Nota clara: en el juego eliges el set más cercano.
+- **Motor puro** `web/src/datacrons.js` (`planDatacrons`): cruza la guía con el roster en vivo → marca
+  `usable` (poseo el personaje L9 **y** tengo su facción), relic/gear del target, recuento de facción.
+  Orden determinista: aprovechables → tier (S<A<B) → id. Nunca lanza.
+- **14 rutas curadas** (First Order/SLKR, Sith/SEE, Jedi/JML+JMK, Rebeldes/GL Leia, República/GAS+Padmé,
+  Nightsister/Great Mothers, Cazarrecompensas/Jabba, Imperio/Thrawn, Separatistas/Grievous,
+  Resistencia/GL Rey, Old Republic/JKR, Sith/Darth Revan). **base_ids de target y tags de facción
+  verificados** contra CHAR_META/RD (test de integridad).
+- El callout **"0 datacrons"** de Arena/Mods se **mantiene** y ahora **enlaza** a la nueva pestaña.
+- **100% cliente:** cero Worker, cero pipeline, cero endpoint (guía estática + roster ya cargado). Tests:
+  `datacrons.test.js` (13) + `datacrons-render.test.js` (7, jsdom) → **203 verdes**. Build → 1 HTML (472 KB).
+  (Se añade `vitest.config.js` con `testTimeout` mayor para que `npm test` sea verde bajo carga.)
+- Tag: `v4.5-datacrons`.
+
 ## Fase 4.4 — Constructor de defensa de TW (+ contexto de gremio) — `v4.4-twdefense`
 
 - Nueva pestaña **TW (10)**: monta **tu defensa** de Territory War desde tu roster completo —

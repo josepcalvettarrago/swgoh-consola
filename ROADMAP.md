@@ -228,7 +228,7 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   quick-wins (nivel/reubicar, sin gasto), grid filtrable. `loadMods()` con fallback embebido → nunca en
   blanco. Export honesto a Grandivory (deep-link inexistente verificado → abrir + copiar ally code).
 - Datacrones (0) → sin panel vacío. Worker read-only. **141 tests verdes.**
-- **NO abordado (difiere a sub-fases):** planificador de datacrones (curado por temporada; tienes 0).
+- Planificador de datacrones (curado por temporada) → **abordado en Fase 4.5** (ya no diferido).
 
 ### Fase 4.2 — Planificador de energía / ETA hacia Lord Vader (`v4.2-vaderplan`) — ✅ HECHA
 - **Cliente 100%** (cero Worker/pipeline). `web/src/vaderplan.js` (puro): cruza el roster en vivo
@@ -250,7 +250,16 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   `zonas × defensas/zona` escuadrones desde el roster (reutiliza `assemble`; GL única por escuadrón),
   repartidos por zonas; `ranOut` si el roster se agota. Formato **configurable/persistido** (`store.js`).
 - **Honesto:** la API de gremio solo da GP (sin rosters) → construye TU defensa + contexto de gremio
-  (rango por GP). No simula combates. Pestaña **TW (10)**. **183 tests.** **Fase 4 completa.**
+  (rango por GP). No simula combates. Pestaña **TW (10)**. **183 tests.**
+
+### Fase 4.5 — Planificador de datacrones (`v4.5-datacrons`) — ✅ HECHA
+- **100% cliente** (guía estática + roster; cero Worker/pipeline). Recupera el planificador diferido en
+  4.1: tienes **0** datacrones → **recomendador CURADO por temporada**, no auditor personal.
+- `web/src/data/datacron_db.json` (14 rutas evergreen `alineación→facción→personaje`, targets/facciones
+  verificados) + motor puro `web/src/datacrons.js` (`planDatacrons`): marca `usable` (poseo el L9 y su
+  facción), relic/gear del target, orden determinista. Pestaña **Datacrons (11)**.
+- **Honesto:** el set rota y no se puede traer en vivo → texto cualitativo, sin cifras inventadas; el
+  callout "0 datacrons" se mantiene y enlaza a la pestaña. **203 tests.** **Fase 4 completa.**
 
 ## FASE 5 — Gremio multi-usuario (3-4 sesiones)
 - **Firebase Auth** para el login del gremio (esto es lo que Firebase te ahorra construir).
