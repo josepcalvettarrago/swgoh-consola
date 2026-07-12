@@ -33,7 +33,8 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **4.1 — Auditoría de mods + Grandivory** | ✅ Hecha | `v4.1-modaudit` | Auditoría dinámica de 1700 mods por el pipeline (ingesta compacta → `mods/{ally}` → endpoint read-only `/api/mods` → HTML con fallback). Motor puro `mods.js` (ofensores por inversión + quick-wins). Export honesto a Grandivory. **141 tests verdes.** |
 | **4.2 — Planificador energía → Vader** | ✅ Hecha | `v4.2-vaderplan` | Card computada en la pestaña Vader: gap relic/gear en vivo + orden priorizado + ETA en semanas con energía diaria configurable/persistida. Motor puro `vaderplan.js`, 100% cliente. **153 tests verdes.** |
 | **4.3 — Fleet Arena module** | ✅ Hecha | `v4.3-fleet` | Pestaña Flota: flotas meta montables (naves 7★) + arranque + crew (pilotos en vivo). Pipeline de naves (`compactShips` → `ships/{ally}` → `/api/fleet` read-only) + `SHIP_META` + `fleet_db` curado. Motor puro `fleet.js`. **167 tests verdes.** |
-| 4.4 · 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
+| **4.4 — Defensa de TW** | ✅ Hecha | `v4.4-twdefense` | Pestaña TW: monta tu defensa (escuadrones sin solapar desde tu roster) por zonas configurables + contexto de gremio (GP). Motor puro `twdefense.js`, 100% cliente. **183 tests verdes.** Cierra la Fase 4. |
+| 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
 - swgoh.gg → normaliza → **Firestore** (base con nombre **`swgohapi`**, `europe-west3`, proyecto `swgoh-13551`).
@@ -244,8 +245,12 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   **crew** (pilotos con relic desde `RD`). Pestaña **Flota (09)**. Honesto: meta curada, la fuerza real
   depende de pilotos/mods. Con el roster real: **7/10 montables**. **167 tests.**
 
-### Pendientes de Fase 4 (una por sesión)
-- **4.4 · Simulador defensivo de TW** (con datos del gremio).
+### Fase 4.4 — Constructor de defensa de TW (`v4.4-twdefense`) — ✅ HECHA
+- **100% cliente.** `web/src/twdefense.js` (`planTWDefense`): greedy no-solapante que monta
+  `zonas × defensas/zona` escuadrones desde el roster (reutiliza `assemble`; GL única por escuadrón),
+  repartidos por zonas; `ranOut` si el roster se agota. Formato **configurable/persistido** (`store.js`).
+- **Honesto:** la API de gremio solo da GP (sin rosters) → construye TU defensa + contexto de gremio
+  (rango por GP). No simula combates. Pestaña **TW (10)**. **183 tests.** **Fase 4 completa.**
 
 ## FASE 5 — Gremio multi-usuario (3-4 sesiones)
 - **Firebase Auth** para el login del gremio (esto es lo que Firebase te ahorra construir).

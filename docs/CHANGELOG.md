@@ -2,6 +2,22 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 4.4 — Constructor de defensa de TW (+ contexto de gremio) — `v4.4-twdefense`
+
+- Nueva pestaña **TW (10)**: monta **tu defensa** de Territory War desde tu roster completo —
+  `zonas × defensas/zona` escuadrones fuertes **sin repetir personajes**, repartidos por zonas.
+- **Gate de honestidad:** la API de gremio da **GP por miembro, no rosters** → NO se simula qué monta
+  cada compañero. El módulo construye TU defensa (datos que sí tenemos) + **contexto de gremio** (tu
+  rango por GP, vía `guildRanking`). Disclaimer visible; no simula combates.
+- **Motor puro** `web/src/twdefense.js`: `planTWDefense` greedy no-solapante (pool que mengua,
+  reutiliza `assemble()`; **unicidad de GL por escuadrón** intacta; las GL se reparten entre defensas).
+  Determinista. `ranOut` si el roster no da para todos.
+- **Formato configurable y persistido** (`store.js`, `loadTW/saveTW`): nº de zonas, defensas por zona,
+  tamaño 3/5. Botón Regenerar.
+- **100% cliente** (roster + gremio ya cargados): cero Worker, cero pipeline. Tests: `twdefense.test.js`
+  (12) + `twdefense-render.test.js` (6, jsdom) → **183 verdes**. Build → 1 HTML (455 KB).
+- **Cierra la Fase 4.** Tag: `v4.4-twdefense`.
+
 ## Fase 4.3 — Fleet Arena module (recomendador de flota) — `v4.3-fleet`
 
 - Nueva pestaña **Flota (09)**: qué **flotas meta puedes montar** (naves 7★ que posees), cuáles están
