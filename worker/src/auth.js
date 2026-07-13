@@ -200,6 +200,39 @@ export async function handleDeleteUser(env, claims, ally, db) {
   return { status: 200, data: { ok: true } };
 }
 
+// GET /api/admin/overview (Bearer adm:1) -> estado del gremio para el panel de administración (5.3).
+// Cruza EN EL WORKER (una sola llamada, sin 50 fetches en cliente): miembros del gremio × cuentas
+// registradas (users) × rosters ingestados (players). Necesita db.listDocs además de getDoc.
+// SEGURIDAD: nunca devuelve passHash/salt — solo ally/role/createdAt de cada cuenta.
+export async function handleAdminOverview(env, claims, db) {
+  const guildDoc = await db.getDoc(env, `guild/${claims.gid}`);
+  const guild = guildDoc && guildDoc.data ? safeParse(guildDoc.data) : null;
+  if (!guild || !Array.isArray(guild.members)) return { status: 404, data: { error: "sin datos de gremio" } };
+
+  // Cuentas registradas del gremio (filtradas por guildId; solo campos públicos).
+  const users = (await db.listDocs(env, "users", { limit: 300 })) || [];
+  const registered = new Map();
+  for (const u of users) {
+    if (u.guildId && u.guildId !== claims.gid) continue; // no filtrar por otros gremios
+    registered.set(String(u.ally != null ? u.ally : u._id), { role: u.role === "admin" ? "admin" : "member", createdAt: u.createdAt || null });
+  }
+  // Rosters ingestados (players/{ally}.updatedAt).
+  const players = (await db.listDocs(env, "players", { limit: 300 })) || [];
+  const ingested = new Map();
+  for (const p of players) ingested.set(String(p._id), p.updatedAt || null);
+
+  const rows = guild.members
+    .map(m => {
+      const ally = String(m.ally);
+      const reg = registered.get(ally);
+      return { ally, name: m.name || "", gp: m.gp || 0, registered: !!reg, role: reg ? reg.role : null, createdAt: reg ? reg.createdAt : null, ingested: ingested.has(ally), updatedAt: ingested.get(ally) || null };
+    })
+    .sort((a, b) => b.gp - a.gp);
+
+  const stats = { total: rows.length, registrados: rows.filter(r => r.registered).length, ingestados: rows.filter(r => r.ingested).length };
+  return { status: 200, data: { guild: { name: guild.name || null, memberCount: guild.memberCount || rows.length }, stats, rows } };
+}
+
 // ¿Puede esta sesión leer los datos de `ally`? (Fase 5.2) Solo tu propio ally, o cualquiera si
 // eres admin. Puro y testeable — lo usa el gate de los endpoints de lectura por-jugador.
 export function canReadAlly(claims, ally) {

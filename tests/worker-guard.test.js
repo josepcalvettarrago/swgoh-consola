@@ -41,4 +41,11 @@ describe("guard del Worker (antes de Firestore)", () => {
     const res = await worker.fetch(new Request("https://api.test/api/roster/1", { method: "OPTIONS" }), ENV);
     expect(res.headers.get("access-control-allow-headers")).toMatch(/authorization/i);
   });
+  it("/api/admin/overview sin sesión => 401; con sesión NO admin => 403 (Fase 5.3)", async () => {
+    const anon = await worker.fetch(new Request("https://api.test/api/admin/overview"), ENV);
+    expect(anon.status).toBe(401);
+    const memberTok = await signSession({ sub: "222222222", gid: "G1", adm: 0 }, ENV.AUTH_SECRET, { ttl: 60 });
+    const member = await worker.fetch(req("/api/admin/overview", memberTok), ENV);
+    expect(member.status).toBe(403);
+  });
 });

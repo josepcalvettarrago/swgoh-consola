@@ -26,7 +26,7 @@
  * Secrets: FIREBASE_SERVICE_ACCOUNT (Firestore) + AUTH_SECRET (firma de sesiones, Fase 5.1).
  */
 import { getDoc, listDocs, setDoc, deleteDoc } from "./firestore.js";
-import { authenticate, canReadAlly, handleRegister, handleLogin, handleGetConfig, handlePutConfig, handleRotateInvite, handleDeleteUser } from "./auth.js";
+import { authenticate, canReadAlly, handleRegister, handleLogin, handleGetConfig, handlePutConfig, handleRotateInvite, handleDeleteUser, handleAdminOverview } from "./auth.js";
 
 // limit saneado de ?limit=N (1..100, por defecto 20).
 function limitOf(url, def = 20) {
@@ -52,7 +52,7 @@ export default {
     const { pathname } = url;
     if (request.method === "OPTIONS") return new Response(null, { headers: cors(env) });
 
-    const db = { getDoc, setDoc, deleteDoc }; // capa Firestore inyectada en los handlers de auth
+    const db = { getDoc, setDoc, deleteDoc, listDocs }; // capa Firestore inyectada en los handlers de auth
     const body = async () => { try { return await request.json(); } catch { return null; } };
 
     try {
@@ -81,6 +81,10 @@ export default {
         }
         // Gates admin: solo adm:1.
         if (claims.adm !== 1) return json({ error: "solo el admin del gremio" }, env, 403);
+        if (pathname === "/api/admin/overview" && request.method === "GET") {
+          const r = await handleAdminOverview(env, claims, db);
+          return json(r.data, env, r.status);
+        }
         if (pathname === "/api/admin/invite" && request.method === "POST") {
           const r = await handleRotateInvite(env, claims, await body(), db);
           return json(r.data, env, r.status);
@@ -158,7 +162,7 @@ export default {
         return json({ error: "metadata no cacheada todavía" }, env, 503);
       }
 
-      return json({ ok: true, phase: 5, role: "lectura + auth (ingesta local)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally", "/api/mods/:ally", "/api/fleet/:ally", "/api/auth/register", "/api/auth/login", "/api/me", "/api/config", "/api/admin/invite", "/api/admin/users/:ally"] }, env);
+      return json({ ok: true, phase: 5, role: "lectura + auth (ingesta local)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally", "/api/mods/:ally", "/api/fleet/:ally", "/api/auth/register", "/api/auth/login", "/api/me", "/api/config", "/api/admin/overview", "/api/admin/invite", "/api/admin/users/:ally"] }, env);
     } catch (err) {
       return json({ error: String((err && err.message) || err) }, env, 500);
     }

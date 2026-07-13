@@ -4,7 +4,7 @@
 import { describe, it, expect } from "vitest";
 import {
   hashSecret, verifySecret, signSession, verifySession, bearerToken,
-  handleRegister, handleLogin, handleGetConfig, handlePutConfig, handleRotateInvite, handleDeleteUser,
+  handleRegister, handleLogin, handleGetConfig, handlePutConfig, handleRotateInvite, handleDeleteUser, handleAdminOverview,
 } from "../worker/src/auth.js";
 
 const ENV = { ADMIN_ALLY: "111111111", AUTH_SECRET: "secret-de-tests" };
@@ -165,5 +165,63 @@ describe("admin — rotar invitación y reset de cuentas", () => {
     expect((await handleLogin(ENV, { ally: "222222222", password: "olvidada1" }, db, noDelay)).status).toBe(401);
     expect((await handleRegister(ENV, { invite: "INV", guildId: GUILD, ally: "222222222", password: "nueva-pass1" }, db)).status).toBe(201);
     expect((await handleLogin(ENV, { ally: "222222222", password: "nueva-pass1" }, db, noDelay)).status).toBe(200);
+  });
+});
+
+describe("admin overview (Fase 5.3) — cruce gremio × registrados × ingestados", () => {
+  // db en memoria con soporte de listDocs (una colección = prefijo del path).
+  function memDbList(seed = {}) {
+    const docs = { ...seed };
+    return {
+      docs,
+      getDoc: async (_e, p) => (p in docs ? docs[p] : null),
+      setDoc: async (_e, p, d) => { docs[p] = d; },
+      deleteDoc: async (_e, p) => { delete docs[p]; },
+      listDocs: async (_e, col) => Object.entries(docs)
+        .filter(([p]) => p.startsWith(col + "/") && p.split("/").length === 2)
+        .map(([p, d]) => ({ _id: p.split("/")[1], ...d })),
+    };
+  }
+  const claims = { sub: "111111111", gid: GUILD, adm: 1 };
+  function seeded() {
+    return memDbList({
+      [`guild/${GUILD}`]: guildDoc(MEMBERS), // 111 (GP alto), 222
+      "users/111111111": { ally: "111111111", guildId: GUILD, role: "admin", createdAt: "2026-07-10", passHash: "SECRETO", salt: "S", iters: 1 },
+      "users/222222222": { ally: "222222222", guildId: GUILD, role: "member", createdAt: "2026-07-11", passHash: "SECRETO2", salt: "S2", iters: 1 },
+      "users/999999999": { ally: "999999999", guildId: "OTRO-GREMIO", role: "member", passHash: "X", salt: "Y", iters: 1 }, // otro gremio → fuera
+      "players/111111111": { rd: "{}", meta: "{}", updatedAt: "2026-07-12T08:00:00Z" }, // ingestado
+      // 222 registrado pero SIN roster ingestado
+    });
+  }
+  it("cruza estado, ordena por GP y NUNCA filtra passHash/salt", async () => {
+    const r = await handleAdminOverview(ENV, claims, seeded());
+    expect(r.status).toBe(200);
+    expect(r.data.stats).toEqual({ total: 2, registrados: 2, ingestados: 1 });
+    // Orden por GP desc: MEMBERS[0]=111 (mayor GP en guildDoc), luego 222.
+    expect(r.data.rows.map(x => x.ally)).toEqual(["111111111", "222222222"]);
+    const admin = r.data.rows.find(x => x.ally === "111111111");
+    expect(admin).toMatchObject({ registered: true, role: "admin", ingested: true });
+    expect(admin.updatedAt).toMatch(/2026-07-12/);
+    const member = r.data.rows.find(x => x.ally === "222222222");
+    expect(member).toMatchObject({ registered: true, role: "member", ingested: false });
+    // Ningún campo sensible se filtra al cliente.
+    const blob = JSON.stringify(r.data);
+    expect(blob).not.toMatch(/passHash|SECRETO|salt/i);
+  });
+  it("un miembro no registrado aparece como pendiente", async () => {
+    const db = seeded();
+    delete db.docs["users/222222222"];
+    const r = await handleAdminOverview(ENV, claims, db);
+    expect(r.data.stats.registrados).toBe(1);
+    expect(r.data.rows.find(x => x.ally === "222222222")).toMatchObject({ registered: false, ingested: false });
+  });
+  it("los usuarios de OTRO gremio no cuentan como registrados", async () => {
+    // 999 pertenece a OTRO-GREMIO y ni siquiera está en members → no aparece.
+    const r = await handleAdminOverview(ENV, claims, seeded());
+    expect(r.data.rows.find(x => x.ally === "999999999")).toBeUndefined();
+  });
+  it("sin datos de gremio => 404", async () => {
+    const r = await handleAdminOverview(ENV, claims, memDb());
+    expect(r.status).toBe(404);
   });
 });
