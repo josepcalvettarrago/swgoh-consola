@@ -77,6 +77,7 @@
     <button class="tab" role="tab" aria-selected="false" data-p="fleet"><span class="n">09</span> Flota</button>
     <button class="tab" role="tab" aria-selected="false" data-p="tw"><span class="n">10</span> TW</button>
     <button class="tab" role="tab" aria-selected="false" data-p="datacron"><span class="n">11</span> Datacrons</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="admin" hidden><span class="n">12</span> Gremio</button>
   </nav>
 
   <!-- MODS -->
@@ -341,6 +342,24 @@
       <p class="mods-disc"><b>Curado, no dato personal.</b> Las rutas donde <b>posees</b> el personaje L9 y tienes su facción salen primero. El texto de bonus es cualitativo (qué potencia y por qué), no cifras del set.</p>
     </div>
     <div id="dc-list"></div>
+  </section>
+
+  <!-- GREMIO (panel admin, Fase 5.3) — solo visible con sesión role=admin -->
+  <section class="panel" id="p-admin" role="tabpanel">
+    <div class="card"><div class="head"><h3>Administración del gremio</h3><span class="note" id="adm-src">—</span></div>
+      <div class="statgrid" id="adm-stats"></div>
+    </div>
+    <div class="card"><div class="head"><h3>Código de invitación</h3>
+      <span class="note">El nuevo código invalida el anterior para altas futuras (no expulsa a nadie)</span></div>
+      <div class="rx-controls">
+        <input id="adm-invite" class="rx-in" type="text" placeholder="p. ej. CATALONIA25" autocomplete="off">
+        <button class="cgen" id="adm-rotate">🔑 Rotar invitación</button>
+      </div>
+      <p class="adm-status" id="adm-invite-status">Teclea el código que repartirás por Discord y pulsa rotar.</p>
+    </div>
+    <div class="card"><div class="head"><h3>Miembros</h3><span class="note" id="adm-count">—</span></div>
+      <div id="adm-list"></div>
+    </div>
   </section>
 
   <footer><span id="foot-updated">—</span><span>Actualiza: descarga swgoh.gg/api/player/355463284/ y súbelo de nuevo</span></footer>

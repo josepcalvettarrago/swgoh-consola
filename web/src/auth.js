@@ -64,6 +64,10 @@ export function pushConfig({ apiBase, token, config, updatedAt, fetchImpl } = {}
 }
 
 // --- admin (Bearer con adm:1) ---
+// Resumen del gremio para el panel admin (Fase 5.3): { guild, stats, rows }.
+export function fetchAdminOverview({ apiBase, token, fetchImpl } = {}) {
+  return post(apiBase, "api/admin/overview", null, fetchImpl, "GET", token);
+}
 export function rotateInvite({ apiBase, token, invite, fetchImpl } = {}) {
   return post(apiBase, "api/admin/invite", { invite }, fetchImpl, "POST", token);
 }

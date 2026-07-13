@@ -22,6 +22,7 @@ const rxState = { q: "", side: "", role: "", fac: "", ab: "", sort: "p" };
 let NAME2ID = {}, ID2U = {}; // se (re)construyen en init() a partir del roster activo.
 let PROGRESS = { events: [], snapshots: [] }; // datos de la pestaña Progreso (o vacío -> estado vacío).
 let GUILD = null;                              // resumen del gremio (o null -> bloque oculto).
+let ADMIN_API = null;                          // callbacks admin (Fase 5.3), solo si role==="admin".
 let pgRingDone = false;
 let cqCons = [];
 const CQTYPE_ES = { fac: "Facción", side: "Lado", role: "Rol", ab: "Mecánica", char: "Personaje" };
@@ -961,6 +962,48 @@ export function initLogin({ onLogin, onRegister, onDemo } = {}) {
   return true;
 }
 
+// ===== panel de administración del gremio (Fase 5.3) =====
+// Pinta el estado de los miembros (registrado / roster ingestado) sobre el ranking por GP, con
+// datos calculados en el Worker (ADMIN_API.fetchOverview). Reutiliza el markup pg-grow/gr-* del
+// ranking de Progreso. Nunca en blanco: estado vacío honesto si la llamada falla.
+async function renderAdmin() {
+  const list = $("#adm-list"); if (!list || !ADMIN_API) return;
+  const statsBox = $("#adm-stats"), src = $("#adm-src"), count = $("#adm-count");
+  list.innerHTML = `<div class="pg-empty soft">Cargando estado del gremio…</div>`;
+  const r = await ADMIN_API.fetchOverview();
+  if (!r || !r.ok) {
+    if (src) src.textContent = "sin conexión";
+    list.innerHTML = `<div class="pg-empty soft">No se pudo cargar el estado del gremio${r && r.error ? ` (${r.error})` : ""}.</div>`;
+    return;
+  }
+  if (src) src.textContent = (r.guild && r.guild.name) || "gremio";
+  const st = r.stats || { total: 0, registrados: 0, ingestados: 0 };
+  if (statsBox) statsBox.innerHTML = [["Miembros", st.total], ["Registrados", `${st.registrados}/${st.total}`], ["Con roster", `${st.ingestados}/${st.total}`]]
+    .map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+  if (count) count.textContent = `${st.total} miembros`;
+  const rows = (r.rows || []).map((m, i) => {
+    const reg = m.registered ? `<span class="adm-badge ok">registrado</span>` : `<span class="adm-badge">pendiente</span>`;
+    const ros = m.ingested ? `<span class="adm-badge ok">roster ✓${m.updatedAt ? " " + String(m.updatedAt).slice(0, 10) : ""}</span>` : `<span class="adm-badge soft">sin roster</span>`;
+    const admChip = m.role === "admin" ? ' <b class="gr-you">ADMIN</b>' : "";
+    const resetBtn = m.registered ? `<button class="adm-reset" data-ally="${m.ally}">Resetear</button>` : "";
+    return `<div class="pg-grow"><span class="gr-rk">${i + 1}</span>${portrait(lookupByName(m.name))}
+     <span class="gr-nm">${m.name}${admChip}</span>
+     <span class="adm-badges">${reg} ${ros}</span>
+     <span class="gr-gp">${(m.gp / 1e6).toFixed(2)}M</span>${resetBtn}</div>`;
+  }).join("") || `<div class="pg-empty soft">Sin miembros en el resumen del gremio.</div>`;
+  list.innerHTML = `<div class="pg-grid">${rows}</div>
+   <div class="simfoot">Registrado = ya tiene cuenta en la consola. Roster = su roster está ingestado (Fase 5.2). El detalle por miembro y la readiness de TW quedan para una fase posterior.</div>`;
+  // Reset de cuenta (con confirmación): borra users/{ally}; el miembro se re-registra con la invitación.
+  $$("#adm-list .adm-reset").forEach(b => b.onclick = async () => {
+    const ally = b.dataset.ally;
+    const ok = typeof window !== "undefined" && window.confirm && window.confirm(`¿Resetear la cuenta de ${ally}? Tendrá que registrarse de nuevo con el código de invitación. Su configuración se conserva.`);
+    if (!ok) return;
+    b.disabled = true; b.textContent = "…";
+    const res = await ADMIN_API.resetUser(ally);
+    if (res && res.ok) renderAdmin(); else { b.disabled = false; b.textContent = "Error"; }
+  });
+}
+
 // ===== cableado de eventos + arranque =====
 export function init(rd, extra = {}) {
   // Roster inyectado (en vivo) o embebido como fallback.
@@ -980,6 +1023,25 @@ export function init(rd, extra = {}) {
   }
   const dbn = $("#demo-banner");
   if (dbn && extra.demoNote) { dbn.hidden = false; dbn.textContent = extra.demoNote; }
+
+  // Panel de gremio (Fase 5.3): tab 12 solo visible/renderizada para role==="admin". El Worker ya
+  // exige adm:1 en /api/admin/* — esto es defensa en profundidad + no enseñar la pestaña a miembros.
+  if (extra.session && extra.session.role === "admin" && extra.adminApi) {
+    ADMIN_API = extra.adminApi;
+    const at = $('.tab[data-p="admin"]'); if (at) at.hidden = false;
+    renderAdmin();
+    const rot = $("#adm-rotate");
+    if (rot) rot.onclick = async () => {
+      const inp = $("#adm-invite"), status = $("#adm-invite-status");
+      const code = ((inp && inp.value) || "").trim();
+      if (code.length < 6) { if (status) status.textContent = "el código debe tener al menos 6 caracteres"; return; }
+      rot.disabled = true;
+      const res = await ADMIN_API.rotateInvite(code);
+      rot.disabled = false;
+      if (status) status.textContent = res && res.ok ? "✓ invitación actualizada — repártela por Discord" : `no se pudo rotar${res && res.error ? ` (${res.error})` : ""}`;
+      if (res && res.ok && inp) inp.value = "";
+    };
+  }
 
   renderStatic();
   renderGL();
@@ -1089,7 +1151,7 @@ export function init(rd, extra = {}) {
   cxSetMode("scout");
 
   // Pestañas
-  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso", fleet: "#p-fleet", tw: "#p-tw", datacron: "#p-datacron" };
+  const panels = { mods: "#p-mods", vader: "#p-vader", gl: "#p-gl", next: "#p-next", counters: "#p-counters", roster: "#p-roster", conquest: "#p-conquest", progreso: "#p-progreso", fleet: "#p-fleet", tw: "#p-tw", datacron: "#p-datacron", admin: "#p-admin" };
   $$(".tab").forEach(tab => tab.onclick = () => {
     $$(".tab").forEach(t => t.setAttribute("aria-selected", t === tab));
     const key = tab.dataset.p; Object.entries(panels).forEach(([k, sel]) => $(sel).classList.toggle("on", k === key));

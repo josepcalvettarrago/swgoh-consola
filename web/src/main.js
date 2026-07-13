@@ -8,7 +8,7 @@
 import { init, initLogin, showLogin } from "./ui.js";
 import { RD, CHAR_META, MODS_EMBED, SHIPS_EMBED } from "./data.js";
 import { auditMods } from "./engine.js";
-import { parseToken, loginUser, registerUser, pullConfig, pushConfig } from "./auth.js";
+import { parseToken, loginUser, registerUser, pullConfig, pushConfig, fetchAdminOverview, rotateInvite, resetUser } from "./auth.js";
 import { loadAuth, saveAuth, clearAuth, exportConfig, importConfig, loadConfigTs, onConfigChange } from "./store.js";
 
 // Configurable en build/deploy. Vacío = sin backend -> se usa directamente el embebido.
@@ -151,7 +151,13 @@ async function startConsole(session) {
     if (rd === RD) {
       demoNote = "Tu roster aún no está ingestado — pídele al admin que corra la ingesta del gremio. Mientras, ves datos de demostración; tu configuración sí es tuya.";
     }
-    init(rd, { progress, guild, charMeta, mods, fleet, session, demoNote, onLogout: () => { clearAuth(); location.reload(); } });
+    // Panel admin (Fase 5.3): callbacks ligados con apiBase+token, solo si eres admin.
+    const adminApi = session.role === "admin" ? {
+      fetchOverview: () => fetchAdminOverview({ apiBase: API_BASE, token }),
+      rotateInvite: invite => rotateInvite({ apiBase: API_BASE, token, invite }),
+      resetUser: a => resetUser({ apiBase: API_BASE, token, ally: a }),
+    } : null;
+    init(rd, { progress, guild, charMeta, mods, fleet, session, demoNote, adminApi, onLogout: () => { clearAuth(); location.reload(); } });
     return;
   }
   // Demo: solo el mapa global en vivo; el resto embebido (sin token, sin exponer Firestore).

@@ -1,7 +1,7 @@
 // Cliente de auth (Fase 5.1): parseToken + llamadas al Worker con fetch INYECTADO. Nada de red;
 // ninguna función lanza (devuelven { ok:false, error } ante cualquier fallo).
 import { describe, it, expect } from "vitest";
-import { parseToken, loginUser, registerUser, fetchMe, pullConfig, pushConfig } from "../web/src/auth.js";
+import { parseToken, loginUser, registerUser, fetchMe, pullConfig, pushConfig, fetchAdminOverview } from "../web/src/auth.js";
 
 // Fabrica un JWT sin firma válida (el cliente NO verifica firma, solo claims/exp).
 function fakeToken(claims) {
@@ -61,5 +61,14 @@ describe("llamadas al Worker (fetch inyectado)", () => {
     const boom = async () => { throw new Error("net down"); };
     expect((await loginUser({ apiBase: "https://api", ally: "1", password: "x", fetchImpl: boom })).ok).toBe(false);
     expect((await pullConfig({ apiBase: "", token: "T" })).ok).toBe(false);
+  });
+  it("fetchAdminOverview va con Bearer y método GET (Fase 5.3)", async () => {
+    const calls = [];
+    const r = await fetchAdminOverview({ apiBase: "https://api", token: "AD", fetchImpl: mockFetch(200, { guild: { name: "Cat" }, stats: { total: 2 }, rows: [] }, calls) });
+    expect(r.ok).toBe(true);
+    expect(r.stats.total).toBe(2);
+    expect(calls[0].url).toBe("https://api/api/admin/overview");
+    expect(calls[0].opts.method).toBe("GET");
+    expect(calls[0].opts.headers.authorization).toBe("Bearer AD");
   });
 });
