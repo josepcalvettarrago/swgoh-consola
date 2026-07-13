@@ -1,9 +1,15 @@
 // Entry de la app. Fase 1: intenta cargar el roster EN VIVO desde el Worker y, si falla
 // (red caída, backend sin configurar, forma inesperada), cae al RD embebido del bundle.
 // La consola nunca se queda en blanco. Los motores ya son agnósticos del roster.
-import { init } from "./ui.js";
+//
+// Fase 5.1 — puerta de acceso del gremio: sin sesión válida se muestra el overlay de login
+// (con "ver demo" como salida honesta); con sesión, la config por-usuario se sincroniza con
+// Firestore vía el Worker (last-write-wins por updatedAt) y localStorage queda de caché offline.
+import { init, initLogin, showLogin } from "./ui.js";
 import { RD, CHAR_META, MODS_EMBED, SHIPS_EMBED } from "./data.js";
 import { auditMods } from "./engine.js";
+import { parseToken, loginUser, registerUser, pullConfig, pushConfig } from "./auth.js";
+import { loadAuth, saveAuth, clearAuth, exportConfig, importConfig, loadConfigTs, onConfigChange } from "./store.js";
 
 // Configurable en build/deploy. Vacío = sin backend -> se usa directamente el embebido.
 const API_BASE = "swgoh-consola.josep-calvet-tarrago.workers.dev";
@@ -100,9 +106,70 @@ export async function loadFleet({ apiBase = API_BASE, ally = ALLY, fetchImpl } =
   }
 }
 
+// --- sync de config por-usuario (Fase 5.1) ---
+// Al entrar: pull → si el remoto es más nuevo pisa el local; si no, push del local. Después,
+// cada save* de store.js dispara un push debounced (~2 s). Nunca lanza; sin red, la config
+// sigue viviendo en localStorage como siempre.
+let _pushTimer = null;
+function wireConfigSync(session, apiBase = API_BASE) {
+  onConfigChange(() => {
+    clearTimeout(_pushTimer);
+    _pushTimer = setTimeout(() => {
+      pushConfig({ apiBase, token: session.token, config: exportConfig(), updatedAt: loadConfigTs() || Date.now() });
+    }, 2000);
+  });
+}
+export async function syncConfig(session, { apiBase = API_BASE, fetchImpl } = {}) {
+  const remote = await pullConfig({ apiBase, token: session.token, fetchImpl });
+  if (!remote.ok) return { mode: "offline" };
+  if (remote.config && (remote.updatedAt || 0) > loadConfigTs()) {
+    importConfig(remote.config, remote.updatedAt);
+    return { mode: "pulled" };
+  }
+  await pushConfig({ apiBase, token: session.token, config: exportConfig(), updatedAt: loadConfigTs() || Date.now(), fetchImpl });
+  return { mode: "pushed" };
+}
+
+// Arranca la consola (con o sin sesión). En 5.1 solo el roster de Yusepi está ingestado: si el
+// miembro autenticado no tiene snapshot (el loader cae al embebido), se dice honestamente.
+async function startConsole(session) {
+  let demoNote = "";
+  if (session) {
+    await syncConfig(session);
+    wireConfigSync(session);
+  } else {
+    demoNote = "Modo demo — datos de Yusepi. Entra con tu cuenta del gremio para guardar tu configuración.";
+  }
+  const ally = session && session.ally ? session.ally : ALLY;
+  const [rd, progress, guild, charMeta, mods, fleet] = await Promise.all([loadRoster({ ally }), loadProgress({ ally }), loadGuild(), loadCharMeta(), loadMods({ ally }), loadFleet({ ally })]);
+  if (session && ally !== ALLY && rd === RD) {
+    demoNote = "Tu roster aún no está ingestado (llega en la Fase 5.2) — viendo los datos de demostración de Yusepi. Tu configuración sí es tuya.";
+  }
+  init(rd, { progress, guild, charMeta, mods, fleet, session, demoNote, onLogout: () => { clearAuth(); location.reload(); } });
+}
+
 async function boot() {
-  const [rd, progress, guild, charMeta, mods, fleet] = await Promise.all([loadRoster(), loadProgress(), loadGuild(), loadCharMeta(), loadMods(), loadFleet()]);
-  init(rd, { progress, guild, charMeta, mods, fleet });
+  // Sesión guardada y aún vigente → directo a la consola.
+  const saved = loadAuth();
+  if (saved && parseToken(saved.token)) return startConsole(saved);
+  if (saved) clearAuth(); // caducada
+
+  // Sin sesión: puerta de acceso (si el HTML no la tiene — tests antiguos — arranca en demo).
+  const gated = initLogin({
+    onLogin: async ({ ally, password }) => {
+      const r = await loginUser({ apiBase: API_BASE, ally, password });
+      if (r.ok) { saveAuth(r); showLogin(false); startConsole(loadAuth()); }
+      return r;
+    },
+    onRegister: async ({ invite, guildId, ally, password }) => {
+      const r = await registerUser({ apiBase: API_BASE, invite, guildId, ally, password });
+      if (r.ok) { saveAuth(r); showLogin(false); startConsole(loadAuth()); }
+      return r;
+    },
+    onDemo: () => { showLogin(false); startConsole(null); },
+  });
+  if (!gated) return startConsole(null);
+  showLogin(true);
 }
 
 // Solo arranca en navegador (evita efectos secundarios al importar en tests).

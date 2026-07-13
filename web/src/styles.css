@@ -608,3 +608,30 @@ footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:v
 .fq-act{display:flex;gap:6px}
 .fq-act button{background:var(--surface);border:1px solid var(--line);color:var(--holo);border-radius:8px;width:34px;height:32px;cursor:pointer;font-size:14px}
 .fq-act button:hover{border-color:var(--holo)}
+
+/* ===== Fase 5.1 — puerta de acceso del gremio + sesión + banner demo (aditivo) ===== */
+.login-gate{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:radial-gradient(1200px 700px at 50% -10%,rgba(58,214,230,.08),transparent),var(--void)}
+.login-gate[hidden]{display:none}
+.login-card{width:min(420px,100%);border:1px solid var(--line-strong);border-radius:var(--r);
+  background:var(--surface);padding:26px 26px 20px;box-shadow:0 30px 80px -40px rgba(58,214,230,.35)}
+.login-card h1{font-family:'Chakra Petch';font-size:24px;margin:4px 0 14px}
+.login-modes{display:flex;gap:8px;margin-bottom:16px}
+.lgm{appearance:none;cursor:pointer;flex:1;border:1px solid var(--line);background:var(--surface2);
+  color:var(--muted);border-radius:10px;padding:9px 0;font-family:'Chakra Petch';font-weight:700;font-size:13px}
+.lgm[aria-pressed="true"]{color:var(--text);border-color:var(--holo);box-shadow:0 0 0 1px var(--holo-dim)}
+#login form{display:flex;flex-direction:column;gap:11px}
+#login form label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;color:var(--muted);
+  font-family:'Chakra Petch';font-weight:600;letter-spacing:.03em}
+#login form .rx-in{width:100%}
+#login form .cgen{margin-top:6px}
+.login-err{margin:12px 0 0;color:var(--ember);font-size:13.5px;border:1px dashed rgba(255,53,70,.4);
+  border-radius:9px;padding:8px 11px;background:rgba(255,53,70,.06)}
+.login-demo{margin:14px 0 0;font-size:13px;color:var(--muted);text-align:center}
+.login-demo a{color:var(--holo);text-decoration:none}
+.login-demo a:hover{text-decoration:underline}
+#session-chip a{color:var(--holo);text-decoration:none;font-size:12.5px}
+#session-chip a:hover{text-decoration:underline}
+.demo-banner{margin-top:14px;border:1px dashed var(--line-strong);border-radius:10px;padding:9px 13px;
+  background:rgba(244,182,52,.06);color:var(--gold);font-size:13.5px}
+.demo-banner[hidden]{display:none}

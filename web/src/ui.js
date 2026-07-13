@@ -928,6 +928,39 @@ function modExportWire() {
   };
 }
 
+// ===== puerta de acceso del gremio (Fase 5.1) =====
+// Overlay #login del template. main.js inyecta los callbacks (que hablan con el Worker vía
+// web/src/auth.js); aquí solo va el DOM. Si el overlay no existe (tests antiguos), no-op.
+export function showLogin(show) {
+  const g = $("#login"); if (g) g.hidden = !show;
+}
+export function initLogin({ onLogin, onRegister, onDemo } = {}) {
+  const g = $("#login"); if (!g) return false;
+  const err = $("#login-err");
+  const setErr = msg => { if (err) { err.hidden = !msg; err.textContent = msg || ""; } };
+  const setMode = up => {
+    $("#login-mode-in").setAttribute("aria-pressed", String(!up));
+    $("#login-mode-up").setAttribute("aria-pressed", String(up));
+    $("#login-form-in").hidden = up; $("#login-form-up").hidden = !up; setErr("");
+  };
+  $("#login-mode-in").onclick = () => setMode(false);
+  $("#login-mode-up").onclick = () => setMode(true);
+  $("#login-form-in").onsubmit = async e => {
+    e.preventDefault(); setErr("");
+    const r = onLogin ? await onLogin({ ally: $("#li-ally").value.trim(), password: $("#li-pass").value }) : { ok: false, error: "sin backend" };
+    if (!r || !r.ok) setErr((r && r.error) || "no se pudo iniciar sesión");
+  };
+  $("#login-form-up").onsubmit = async e => {
+    e.preventDefault(); setErr("");
+    const pass = $("#rg-pass").value, pass2 = $("#rg-pass2").value;
+    if (pass !== pass2) return setErr("las contraseñas no coinciden");
+    const r = onRegister ? await onRegister({ invite: $("#rg-invite").value.trim(), guildId: $("#rg-guild").value.trim(), ally: $("#rg-ally").value.trim(), password: pass }) : { ok: false, error: "sin backend" };
+    if (!r || !r.ok) setErr((r && r.error) || "no se pudo crear la cuenta");
+  };
+  $("#login-demo") && ($("#login-demo").onclick = e => { e.preventDefault(); onDemo && onDemo(); });
+  return true;
+}
+
 // ===== cableado de eventos + arranque =====
 export function init(rd, extra = {}) {
   // Roster inyectado (en vivo) o embebido como fallback.
@@ -937,6 +970,16 @@ export function init(rd, extra = {}) {
   PROGRESS = { events: (extra.progress && extra.progress.events) || [], snapshots: (extra.progress && extra.progress.snapshots) || [] };
   GUILD = extra.guild || null;
   MODS = (extra.mods && extra.mods.audit) ? extra.mods : { audit: MODS_EMBED, live: false };
+
+  // Sesión (Fase 5.1): chip con el usuario + salir; banner honesto en modo demo / roster ajeno.
+  const sc = $("#session-chip");
+  if (sc && extra.session) {
+    sc.hidden = false;
+    $("#session-user").textContent = extra.session.name || ("#" + extra.session.ally);
+    $("#session-exit") && ($("#session-exit").onclick = e => { e.preventDefault(); extra.onLogout && extra.onLogout(); });
+  }
+  const dbn = $("#demo-banner");
+  if (dbn && extra.demoNote) { dbn.hidden = false; dbn.textContent = extra.demoNote; }
 
   renderStatic();
   renderGL();

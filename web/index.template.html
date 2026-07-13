@@ -12,6 +12,33 @@
 </style>
 </head>
 <body>
+<!-- Fase 5.1 — puerta de acceso del gremio. Oculta por defecto: main.js la muestra si no hay
+     sesión válida. El enlace "ver demo" abre la consola con los datos embebidos (nunca en blanco). -->
+<div id="login" class="login-gate" hidden>
+  <div class="login-card">
+    <div class="eyebrow">Holotable · Consola de mando</div>
+    <h1>Acceso del gremio</h1>
+    <div class="login-modes" role="tablist">
+      <button id="login-mode-in" class="lgm" aria-pressed="true">Entrar</button>
+      <button id="login-mode-up" class="lgm" aria-pressed="false">Registrarse</button>
+    </div>
+    <form id="login-form-in" autocomplete="on">
+      <label>Código de aliado<input id="li-ally" class="rx-in" type="text" inputmode="numeric" placeholder="p. ej. 355463284" autocomplete="username" required></label>
+      <label>Contraseña<input id="li-pass" class="rx-in" type="password" autocomplete="current-password" required></label>
+      <button class="cgen" type="submit">Entrar</button>
+    </form>
+    <form id="login-form-up" hidden autocomplete="on">
+      <label>Código de invitación<input id="rg-invite" class="rx-in" type="text" placeholder="te lo pasa el oficial del gremio" autocomplete="off" required></label>
+      <label>Nº de gremio<input id="rg-guild" class="rx-in" type="text" placeholder="id del gremio" autocomplete="off" required></label>
+      <label>Código de aliado<input id="rg-ally" class="rx-in" type="text" inputmode="numeric" placeholder="tu ally code" autocomplete="username" required></label>
+      <label>Contraseña (mín. 8)<input id="rg-pass" class="rx-in" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label>Repite la contraseña<input id="rg-pass2" class="rx-in" type="password" autocomplete="new-password" minlength="8" required></label>
+      <button class="cgen" type="submit">Crear cuenta</button>
+    </form>
+    <p id="login-err" class="login-err" hidden></p>
+    <p class="login-demo">¿Solo mirar? <a href="#" id="login-demo">Ver demo (datos de Yusepi)</a></p>
+  </div>
+</div>
 <div class="wrap">
   <header>
     <div class="hbar">
@@ -25,8 +52,10 @@
         <div class="chip rank" id="rankchip"><div class="k">Rango arena</div><div class="v" id="prank">—</div></div>
         <div class="chip"><div class="k">En gremio</div><div class="v" id="pguildrank">—</div></div>
         <div class="chip"><div class="k">Skill rating</div><div class="v" id="pskill">—</div></div>
+        <div class="chip" id="session-chip" hidden><div class="k">Sesión</div><div class="v"><span id="session-user">—</span> · <a href="#" id="session-exit">salir</a></div></div>
       </div>
     </div>
+    <div id="demo-banner" class="demo-banner" hidden></div>
     <div class="diag">
       <span class="dot"></span>
       <div>
