@@ -10,8 +10,9 @@ compatibility_date = "2025-01-01"
 FIRESTORE_DB = "swgohapi"
 ALLY_CODE    = "355463284"
 GUILD_ID     = "U6tWH0WuSDyl_g7lmgZm-w"
+ADMIN_ALLY   = "355463284"    # ally del admin del gremio (rol admin al registrarse; Fase 5.1)
 PAGES_ORIGIN = "*"            # en prod: https://<tu-proyecto>.pages.dev
 
-# Secret (NUNCA en el repo). Solo lectura de Firestore:
+# Secrets (NUNCA en el repo). En local: usar .dev.vars (ya está en .gitignore).
 #   wrangler secret put FIREBASE_SERVICE_ACCOUNT   # JSON del service account en una línea
-# En local: usar .dev.vars (ya está en .gitignore).
+#   wrangler secret put AUTH_SECRET                # cadena aleatoria larga (firma de sesiones, Fase 5.1)

@@ -14,9 +14,19 @@
  *   GET /api/mods/:ally         -> inventario de mods compacto + inversión por unidad (auditoría)
  *   GET /api/fleet/:ally        -> naves poseídas (compacto) para el módulo de flota
  *
- * Secret: FIREBASE_SERVICE_ACCOUNT (solo lectura de Firestore).
+ * Fase 5.1 — auth propio (invitación + gremio + ally + contraseña; ver auth.js):
+ *   POST /api/auth/register     -> alta con código de invitación (crea users/{ally} + JWT)
+ *   POST /api/auth/login        -> sesión (JWT HS256, 30 días)
+ *   GET  /api/me                -> claims de la sesión (Bearer)
+ *   GET  /api/config            -> config remota del usuario (Bearer)
+ *   PUT  /api/config            -> guarda la config del usuario (Bearer)
+ *   POST /api/admin/invite      -> rota el código de invitación (Bearer admin)
+ *   DELETE /api/admin/users/:a  -> reset de cuenta de un miembro (Bearer admin)
+ *
+ * Secrets: FIREBASE_SERVICE_ACCOUNT (Firestore) + AUTH_SECRET (firma de sesiones, Fase 5.1).
  */
-import { getDoc, listDocs } from "./firestore.js";
+import { getDoc, listDocs, setDoc, deleteDoc } from "./firestore.js";
+import { authenticate, handleRegister, handleLogin, handleGetConfig, handlePutConfig, handleRotateInvite, handleDeleteUser } from "./auth.js";
 
 // limit saneado de ?limit=N (1..100, por defecto 20).
 function limitOf(url, def = 20) {
@@ -26,7 +36,7 @@ function limitOf(url, def = 20) {
 
 function cors(env) {
   const origin = env.PAGES_ORIGIN || "*";
-  return { "access-control-allow-origin": origin, "access-control-allow-methods": "GET, OPTIONS", "access-control-allow-headers": "content-type" };
+  return { "access-control-allow-origin": origin, "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS", "access-control-allow-headers": "content-type, authorization" };
 }
 function json(data, env, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json; charset=utf-8", ...cors(env) } });
@@ -42,8 +52,46 @@ export default {
     const { pathname } = url;
     if (request.method === "OPTIONS") return new Response(null, { headers: cors(env) });
 
+    const db = { getDoc, setDoc, deleteDoc }; // capa Firestore inyectada en los handlers de auth
+    const body = async () => { try { return await request.json(); } catch { return null; } };
+
     try {
       let m;
+
+      // --- Fase 5.1: auth + config por usuario (auth.js) ---
+      if (pathname === "/api/auth/register" && request.method === "POST") {
+        const r = await handleRegister(env, await body(), db);
+        return json(r.data, env, r.status);
+      }
+      if (pathname === "/api/auth/login" && request.method === "POST") {
+        const r = await handleLogin(env, await body(), db);
+        return json(r.data, env, r.status);
+      }
+      if (pathname === "/api/me" || pathname === "/api/config" || pathname.startsWith("/api/admin/")) {
+        const claims = await authenticate(request, env);
+        if (!claims) return json({ error: "sesión inválida o caducada" }, env, 401);
+        if (pathname === "/api/me") return json({ ally: claims.sub, name: claims.name || "", guildId: claims.gid, role: claims.adm ? "admin" : "member", exp: claims.exp }, env);
+        if (pathname === "/api/config" && request.method === "GET") {
+          const r = await handleGetConfig(env, claims, db);
+          return json(r.data, env, r.status);
+        }
+        if (pathname === "/api/config" && request.method === "PUT") {
+          const r = await handlePutConfig(env, claims, await body(), db);
+          return json(r.data, env, r.status);
+        }
+        // Gates admin: solo adm:1.
+        if (claims.adm !== 1) return json({ error: "solo el admin del gremio" }, env, 403);
+        if (pathname === "/api/admin/invite" && request.method === "POST") {
+          const r = await handleRotateInvite(env, claims, await body(), db);
+          return json(r.data, env, r.status);
+        }
+        if ((m = pathname.match(/^\/api\/admin\/users\/(\d+)$/)) && request.method === "DELETE") {
+          const r = await handleDeleteUser(env, claims, m[1], db);
+          return json(r.data, env, r.status);
+        }
+        return json({ error: "ruta admin desconocida" }, env, 404);
+      }
+
       if ((m = pathname.match(/^\/api\/roster\/(\d+)$/))) {
         const doc = await getDoc(env, `players/${m[1]}`);
         if (doc && doc.rd) return raw(doc.rd, env); // ya es el JSON {R,V}
@@ -100,7 +148,7 @@ export default {
         return json({ error: "metadata no cacheada todavía" }, env, 503);
       }
 
-      return json({ ok: true, phase: 4, role: "read-only (ingesta local)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally", "/api/mods/:ally", "/api/fleet/:ally"] }, env);
+      return json({ ok: true, phase: 5, role: "lectura + auth (ingesta local)", routes: ["/api/roster/:ally", "/api/guild/:id", "/api/meta/characters", "/api/progress/:ally", "/api/snapshots/:ally", "/api/mods/:ally", "/api/fleet/:ally", "/api/auth/register", "/api/auth/login", "/api/me", "/api/config", "/api/admin/invite", "/api/admin/users/:ally"] }, env);
     } catch (err) {
       return json({ error: String((err && err.message) || err) }, env, 500);
     }

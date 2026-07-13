@@ -110,6 +110,16 @@ export async function listDocs(env, collectionPath, { limit = 20 } = {}) {
   }).sort((a, b) => (a._id < b._id ? 1 : a._id > b._id ? -1 : 0)).slice(0, limit);
 }
 
+// Borra un documento (Fase 5.1: reset de cuenta por el admin). Las subcolecciones NO se borran
+// (Firestore no cascada): la config de usuario sobrevive al reset — es intencionado (al
+// re-registrarse recupera sus prioridades/tablero).
+export async function deleteDoc(env, path) {
+  const sa = parseSA(env), token = await getAccessToken(sa);
+  const res = await fetch(`${docBase(sa, env)}/${path}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok && res.status !== 404) throw new Error(`deleteDoc ${res.status}: ${await res.text()}`);
+  return true;
+}
+
 // Escribe (upsert) un documento. data = objeto plano. Usado post-gate por el normalizador.
 export async function setDoc(env, path, data) {
   const sa = parseSA(env), token = await getAccessToken(sa);
