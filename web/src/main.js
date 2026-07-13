@@ -12,7 +12,9 @@ import { parseToken, loginUser, registerUser, pullConfig, pushConfig, fetchAdmin
 import { loadAuth, saveAuth, clearAuth, exportConfig, importConfig, loadConfigTs, onConfigChange } from "./store.js";
 
 // Configurable en build/deploy. Vacío = sin backend -> se usa directamente el embebido.
-const API_BASE = "swgoh-consola.josep-calvet-tarrago.workers.dev";
+// URL ABSOLUTA con https:// (fetch cross-origin desde Pages la necesita); sin barra final para
+// no generar `//api/...`.
+const API_BASE = "https://swgoh-consola-worker.josep-calvet-tarrago.workers.dev";
 const ALLY = "355463284";
 const GUILD_ID = "U6tWH0WuSDyl_g7lmgZm-w"; // Catalonian Republic (descubierto en Fase 2).
 

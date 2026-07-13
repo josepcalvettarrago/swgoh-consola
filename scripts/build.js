@@ -11,6 +11,9 @@ const ROOT = resolve(__dirname, "..");
 const WEB = resolve(ROOT, "web");
 const OUT_DIR = resolve(WEB, "dist");
 const OUT_FILE = resolve(OUT_DIR, "SWGOH_Consola_Yusepi.html");
+// index.html = misma salida, para que Cloudflare Pages la sirva en la raíz "/". El nombre
+// "SWGOH_Consola_Yusepi.html" se conserva para compartir el fichero suelto.
+const OUT_INDEX = resolve(OUT_DIR, "index.html");
 const watch = process.argv.includes("--watch");
 
 const esbuildOpts = {
@@ -33,8 +36,8 @@ async function emit() {
     .replace("<!--INJECT:CSS-->", () => css)
     .replace("<!--INJECT:JS-->", () => js);
   await mkdir(OUT_DIR, { recursive: true });
-  await writeFile(OUT_FILE, html, "utf8");
-  console.log(`✓ ${OUT_FILE} (${(html.length / 1024).toFixed(1)} KB)`);
+  await Promise.all([writeFile(OUT_FILE, html, "utf8"), writeFile(OUT_INDEX, html, "utf8")]);
+  console.log(`✓ ${OUT_FILE} + index.html (${(html.length / 1024).toFixed(1)} KB)`);
 }
 
 if (watch) {
