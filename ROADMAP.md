@@ -39,6 +39,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **4.7 — Prioridades de farmeo editables** | ✅ Hecha | `v4.7-prios` | Hub de prioridades en "Mejoras": tiers reordenables + cola "próximo a farmear" (pins/override) + Top 5 derivado del estado. Catálogo ampliado (21 objetivos, 3 tiers). **237 tests verdes.** Cierra la Fase 4. |
 | **5.1 — Login del gremio + config remota** | ✅ Hecha | `v5.1-auth` | Auth propio en el Worker (invitación + gremio + ally + contraseña propia; PBKDF2 + JWT). Overlay de login con modo demo honesto; config por-usuario sincronizada con Firestore (last-write-wins). **270 tests verdes.** |
 | **5.2 — Rosters multi-miembro** | ✅ Hecha | `v5.2-guild-rosters` | Ingesta de gremio (`ingest-guild.mjs`: roster de cada miembro → `players/{ally}`) + cierre de las lecturas por-jugador tras sesión (solo tu ally, o admin). Cada miembro ve SU roster; demo = embebido. **286 tests verdes.** |
+| **5.3 — Panel admin del gremio** | ✅ Hecha | `v5.3-admin` | Pestaña 12 "Gremio" solo para `role=admin`: estado de los 50 (registrado/roster ingestado) sobre el ranking por GP, rotar invitación y resetear cuentas. Endpoint `GET /api/admin/overview` (cruce server-side). **299 tests verdes. Fase 5 completa.** |
 | 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
@@ -320,10 +321,17 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   honesto. Demo (sin sesión) = embebido, sin pedir datos por-jugador. **286 tests.**
 - **Pendiente:** `PAGES_ORIGIN` definitivo (cuando haya dominio) y correr la ingesta real de los 50.
 
-### Fase 5.3 — Panel admin (`v5.3-admin`) — pendiente
-- Vista solo-admin: estado de los 50 (registrado sí/no, GP, último snapshot), rotar invitación,
-  resetear cuentas, TW readiness, ranking.
-- Hosting definitivo: **Cloudflare Pages** + dominio.
+### Fase 5.3 — Panel admin (`v5.3-admin`) — ✅ HECHA
+- **Pestaña 12 "Gremio"**, visible **solo con sesión `role=admin`** (defensa en profundidad: el Worker ya
+  exige `adm:1`). Estado de los ~50 sobre el ranking por GP: badge **registrado**/pendiente (cruce
+  guild×users) y **roster ingestado**/sin roster + fecha (cruce guild×players).
+- **Endpoint `GET /api/admin/overview`** (`handleAdminOverview`, puro): cruza gremio × cuentas × rosters
+  **en el Worker** (una sola llamada, sin 50 fetches en cliente) y **nunca** devuelve `passHash`/`salt`.
+- **Acciones:** rotar el código de invitación (el admin escribe el nuevo) y **resetear** una cuenta (con
+  confirmación) — reutilizan `handleRotateInvite`/`handleDeleteUser` de la 5.1. **299 tests.**
+- **Diferido a Fase 6** (en `DEBTS.md`): drill-down del roster por miembro y "TW readiness" por jugador.
+- **Pendiente Fase 5:** hosting definitivo **Cloudflare Pages** + dominio; probar el Worker desplegado
+  (deudas en `DEBTS.md`).
 
 ## FASE 6 — Pulido
 - **PWA** (manifest + service worker) para instalar en el móvil.

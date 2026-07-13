@@ -2,6 +2,30 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 5.3 — Panel de administración del gremio — `v5.3-admin`
+
+- **Cierra la Fase 5.** Nueva **pestaña 12 "Gremio"**, visible **solo con sesión `role=admin`** (la tab va
+  `hidden` por defecto y solo se desoculta para el admin; el Worker ya exige `adm:1` en `/api/admin/*` —
+  defensa en profundidad). Yusepi ya no necesita `curl` para administrar.
+- **Endpoint `GET /api/admin/overview`** (`handleAdminOverview`, puro con deps inyectadas): cruza **en el
+  Worker** el resumen del gremio (`guild/{id}.members`) × cuentas registradas (`users`) × rosters
+  ingestados (`players`) en **una sola llamada** (sin 50 fetches en cliente). **Seguridad:** nunca
+  devuelve `passHash`/`salt`, solo `ally`/`role`/`createdAt`; filtra por `guildId` del token. `listDocs`
+  se añade a la capa `db` inyectada.
+- **UI:** estado de los ~50 sobre el ranking por GP (reutiliza `guildRanking` + markup `pg-grow`/`gr-*`):
+  badges **registrado**/pendiente y **roster ✓ fecha**/sin roster, chip **ADMIN**, y por fila registrada un
+  botón **Resetear** (con `window.confirm`). Card de **invitación**: el admin teclea el código nuevo y
+  **Rotar** (reusa `handleRotateInvite`). Estado vacío honesto si el overview falla.
+- **Cliente** (`web/src/auth.js`): `fetchAdminOverview` (GET+Bearer). `main.js` liga
+  `adminApi = { fetchOverview, rotateInvite, resetUser }` con apiBase+token y lo pasa a `init` **solo** si
+  `session.role==="admin"`.
+- **Diferido a Fase 6** (anotado en `DEBTS.md`): drill-down del roster por miembro y "TW readiness" por
+  jugador (mal definida y cara para 5.3).
+- Verificación: **299 tests verdes** (286 + 13: cruce del overview + exclusión de `passHash` + filtro por
+  gremio, gate 401/403 de la ruta admin, cliente con Bearer, render admin/member/demo + reset + rotar).
+  Build → 1 HTML (534 KB). **Pendiente:** probar el ciclo admin real contra el Worker desplegado (`DEBTS.md`).
+- Tag: `v5.3-admin`.
+
 ## Fase 5.2 — Rosters multi-miembro — `v5.2-guild-rosters`
 
 - **Cada miembro ve SU propio roster.** Antes solo el de Yusepi estaba en Firestore; ahora la ingesta baja

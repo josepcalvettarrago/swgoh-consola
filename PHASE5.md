@@ -119,11 +119,20 @@ en 5.2 pasan a Bearer. CORS: `GET, POST, PUT, DELETE` + header `authorization`.
 - **Pendiente:** correr la ingesta real de los 50 (IP residencial) y `PAGES_ORIGIN` definitivo cuando
   haya dominio de Pages. Ver `DEBTS.md`.
 
-## Fase 5.3 — panel admin (especificada)
-- Vista solo `adm:1`: los 50 miembros (GP, **registrado sí/no** — cruce guild×users, último snapshot),
-  **rotar invitación** y **resetear cuentas** desde la UI (los endpoints ya existen desde 5.1),
-  TW readiness, ranking.
-- Tag: `v5.3-admin`.
+## Fase 5.3 — panel admin — IMPLEMENTADA (`v5.3-admin`)
+- **Pestaña 12 "Gremio"** (`#p-admin`), botón nav `hidden` por defecto y desocultado solo si
+  `session.role==="admin"` (`web/src/ui.js`, tras el bloque de sesión). Defensa en profundidad: el Worker
+  ya exige `adm:1` en `/api/admin/*`.
+- **`GET /api/admin/overview`** (`handleAdminOverview` en `worker/src/auth.js`, puro): cruza en el Worker
+  `guild/{gid}.members` × `users` (registrados, filtrados por `guildId`) × `players` (ingestados) → una
+  sola respuesta `{ guild, stats, rows }`. **Nunca** devuelve `passHash`/`salt`. `listDocs` añadido a la
+  capa `db` inyectada en `index.js`.
+- **UI** (`renderAdmin`): stats (registrados/con-roster) + tabla de los ~50 reusando `guildRanking` +
+  markup `pg-grow`/`gr-*`; badges registrado/pendiente y roster ✓/sin roster; **Resetear** por fila
+  (con `window.confirm`) y card de **invitación** (el admin escribe el código nuevo → **Rotar**). Cliente
+  `fetchAdminOverview` en `web/src/auth.js`; `adminApi` ligado en `main.js` solo para admin.
+- **Diferido a Fase 6:** drill-down del roster por miembro y "TW readiness" por jugador (mal definida/cara).
+- **286 → 299 tests.** Pendiente: probar el ciclo admin real contra el Worker desplegado (`DEBTS.md`).
 
 ## Nota de seguridad verificada (Fase 5.1)
 El JSON del service account que vive en `firebase/` **nunca estuvo commiteado** (untracked; `.gitignore`

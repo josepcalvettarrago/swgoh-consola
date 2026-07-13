@@ -24,9 +24,12 @@ No se ha ejecutado nunca contra el Worker real ni en navegador.
 5. **Navegador real:** servir el HTML apuntando `API_BASE` al `wrangler dev`, comprobar overlay de login,
    "ver demo", persistencia de sesión y **sync de config** (cambiar energía/objetivo → recargar → se
    mantiene desde Firestore).
+6. **Ciclo admin (Fase 5.3):** con la sesión admin, abrir la pestaña **"Gremio"** y verificar que
+   `GET /api/admin/overview` puebla la tabla (registrado/roster), que **Rotar invitación** cambia el código
+   (registrar un ally con el nuevo, fallar con el viejo) y que **Resetear** borra la cuenta.
 
-**Definición de saldada:** el ciclo completo funciona contra `wrangler dev` y el navegador; anotar en
-`docs/CHANGELOG.md` que la 5.1 quedó verificada end-to-end.
+**Definición de saldada:** el ciclo completo (auth + admin) funciona contra `wrangler dev` y el navegador;
+anotar en `docs/CHANGELOG.md` que la Fase 5 quedó verificada end-to-end.
 
 ---
 
@@ -47,4 +50,17 @@ Fase 6 (pulido). Hasta entonces, mitigado por el coste de PBKDF2 (100k iteracion
 Toda la Fase 4 está verificada con jsdom (render tests), **nunca en un navegador real**. Falta un repaso
 visual de las pestañas nuevas (estética, anillos, meters, reordenar tiers, editor de plan).
 
-**Cómo saldarla:** abrir `web/dist/SWGOH_Consola_Yusepi.html` en Chrome/Firefox y recorrer las 11 pestañas.
+**Cómo saldarla:** abrir `web/dist/SWGOH_Consola_Yusepi.html` en Chrome/Firefox y recorrer las 12 pestañas.
+
+---
+
+## D5 · Detalle por miembro y TW readiness en el panel admin (Fase 5.3)
+**Estado:** diferido a Fase 6 · **Origen:** `v5.3-admin`
+
+El panel "Gremio" muestra estado (registrado/roster) + ranking por GP, pero **no** deja pinchar a un
+miembro para ver su roster/GL, ni calcula "readiness de TW" por jugador.
+
+**Cómo saldarla:** con los rosters ya en `players/{ally}` (Fase 5.2) y `canReadAlly` (admin lee cualquiera),
+añadir un drill-down que haga `GET /api/roster/{ally}` bajo demanda y muestre GL/GP/unidades clave; y una
+métrica de readiness (p. ej. nº de squads de defensa montables con `planTWDefense` sobre su roster). No
+había función de readiness de gremio (habría que crearla).
