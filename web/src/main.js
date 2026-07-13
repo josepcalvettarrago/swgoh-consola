@@ -16,12 +16,16 @@ const API_BASE = "swgoh-consola.josep-calvet-tarrago.workers.dev";
 const ALLY = "355463284";
 const GUILD_ID = "U6tWH0WuSDyl_g7lmgZm-w"; // Catalonian Republic (descubierto en Fase 2).
 
+// Cabeceras con Bearer si hay sesión (Fase 5.2). Las lecturas por-jugador del Worker exigen token;
+// sin él (demo) el fetch devuelve 401/403 y el loader cae al embebido — la consola nunca en blanco.
+function authHeaders(token) { return token ? { headers: { authorization: `Bearer ${token}` } } : undefined; }
+
 // Devuelve un roster con forma RD ({R, V}). Nunca lanza: ante cualquier fallo -> embebido.
-export async function loadRoster({ apiBase = API_BASE, ally = ALLY, fetchImpl } = {}) {
+export async function loadRoster({ apiBase = API_BASE, ally = ALLY, token, fetchImpl } = {}) {
   const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
   if (!apiBase || !f) return RD;
   try {
-    const res = await f(`${apiBase}/api/roster/${ally}`);
+    const res = await f(`${apiBase}/api/roster/${ally}`, authHeaders(token));
     if (!res || !res.ok) throw new Error(`status ${res && res.status}`);
     const data = await res.json();
     if (data && Array.isArray(data.R) && data.V) return data; // forma RD válida
@@ -33,24 +37,24 @@ export async function loadRoster({ apiBase = API_BASE, ally = ALLY, fetchImpl } 
 
 // Progreso (eventos ya diffeados + snapshots). Nunca lanza: ante cualquier fallo -> vacío,
 // y la pestaña muestra su estado vacío (la consola nunca se queda en blanco).
-export async function loadProgress({ apiBase = API_BASE, ally = ALLY, fetchImpl } = {}) {
+export async function loadProgress({ apiBase = API_BASE, ally = ALLY, token, fetchImpl } = {}) {
   const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
   if (!apiBase || !f) return { events: [], snapshots: [] };
   try {
     const [pr, sn] = await Promise.all([
-      f(`${apiBase}/api/progress/${ally}`).then(r => (r && r.ok ? r.json() : null)).catch(() => null),
-      f(`${apiBase}/api/snapshots/${ally}`).then(r => (r && r.ok ? r.json() : null)).catch(() => null),
+      f(`${apiBase}/api/progress/${ally}`, authHeaders(token)).then(r => (r && r.ok ? r.json() : null)).catch(() => null),
+      f(`${apiBase}/api/snapshots/${ally}`, authHeaders(token)).then(r => (r && r.ok ? r.json() : null)).catch(() => null),
     ]);
     return { events: (pr && pr.events) || [], snapshots: (sn && sn.snapshots) || [] };
   } catch { return { events: [], snapshots: [] }; }
 }
 
 // Resumen de gremio. Nunca lanza: ante cualquier fallo -> null (el bloque de gremio se oculta).
-export async function loadGuild({ apiBase = API_BASE, guildId = GUILD_ID, fetchImpl } = {}) {
+export async function loadGuild({ apiBase = API_BASE, guildId = GUILD_ID, token, fetchImpl } = {}) {
   const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
   if (!apiBase || !f || !guildId) return null;
   try {
-    const res = await f(`${apiBase}/api/guild/${guildId}`);
+    const res = await f(`${apiBase}/api/guild/${guildId}`, authHeaders(token));
     if (!res || !res.ok) return null;
     const data = await res.json();
     return data && Array.isArray(data.members) ? data : null;
@@ -75,11 +79,11 @@ export async function loadCharMeta({ apiBase = API_BASE, fetchImpl } = {}) {
 
 // Mods (Fase 4.1): inventario compacto + inversión → auditoría calculada en cliente. Si el endpoint
 // falla, cae al resumen embebido (MODS_EMBED) ya calculado. Nunca lanza; la pestaña nunca en blanco.
-export async function loadMods({ apiBase = API_BASE, ally = ALLY, fetchImpl } = {}) {
+export async function loadMods({ apiBase = API_BASE, ally = ALLY, token, fetchImpl } = {}) {
   const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
   if (!apiBase || !f) return { audit: MODS_EMBED, live: false };
   try {
-    const res = await f(`${apiBase}/api/mods/${ally}`);
+    const res = await f(`${apiBase}/api/mods/${ally}`, authHeaders(token));
     if (!res || !res.ok) throw new Error(`status ${res && res.status}`);
     const data = await res.json();
     if (data && Array.isArray(data.mods) && data.units) {
@@ -92,11 +96,11 @@ export async function loadMods({ apiBase = API_BASE, ally = ALLY, fetchImpl } = 
 }
 
 // Naves poseídas (Fase 4.3): para el módulo de flota. Fallback al snapshot embebido. Nunca lanza.
-export async function loadFleet({ apiBase = API_BASE, ally = ALLY, fetchImpl } = {}) {
+export async function loadFleet({ apiBase = API_BASE, ally = ALLY, token, fetchImpl } = {}) {
   const f = fetchImpl || (typeof fetch !== "undefined" ? fetch : null);
   if (!apiBase || !f) return { owned: SHIPS_EMBED, live: false };
   try {
-    const res = await f(`${apiBase}/api/fleet/${ally}`);
+    const res = await f(`${apiBase}/api/fleet/${ally}`, authHeaders(token));
     if (!res || !res.ok) throw new Error(`status ${res && res.status}`);
     const data = await res.json();
     if (data && Array.isArray(data.owned) && data.owned.length) return { owned: data.owned, live: true };
@@ -130,22 +134,30 @@ export async function syncConfig(session, { apiBase = API_BASE, fetchImpl } = {}
   return { mode: "pushed" };
 }
 
-// Arranca la consola (con o sin sesión). En 5.1 solo el roster de Yusepi está ingestado: si el
-// miembro autenticado no tiene snapshot (el loader cae al embebido), se dice honestamente.
+// Arranca la consola (con o sin sesión).
+// - Con sesión (Fase 5.2): baja el roster DEL PROPIO ally con el token (las lecturas por-jugador
+//   exigen Bearer). Si aún no está ingestado → embebido + banner honesto.
+// - Sin sesión (demo): NO pide datos por-jugador en vivo (darían 401); usa embebidos + banner demo.
+//   El mapa global de personajes (meta/characters) sí se pide: es público y lo necesita el Scout.
 async function startConsole(session) {
   let demoNote = "";
   if (session) {
     await syncConfig(session);
     wireConfigSync(session);
-  } else {
-    demoNote = "Modo demo — datos de Yusepi. Entra con tu cuenta del gremio para guardar tu configuración.";
+    const ally = session.ally, token = session.token;
+    const [rd, progress, guild, charMeta, mods, fleet] = await Promise.all([
+      loadRoster({ ally, token }), loadProgress({ ally, token }), loadGuild({ token }), loadCharMeta(), loadMods({ ally, token }), loadFleet({ ally, token }),
+    ]);
+    if (rd === RD) {
+      demoNote = "Tu roster aún no está ingestado — pídele al admin que corra la ingesta del gremio. Mientras, ves datos de demostración; tu configuración sí es tuya.";
+    }
+    init(rd, { progress, guild, charMeta, mods, fleet, session, demoNote, onLogout: () => { clearAuth(); location.reload(); } });
+    return;
   }
-  const ally = session && session.ally ? session.ally : ALLY;
-  const [rd, progress, guild, charMeta, mods, fleet] = await Promise.all([loadRoster({ ally }), loadProgress({ ally }), loadGuild(), loadCharMeta(), loadMods({ ally }), loadFleet({ ally })]);
-  if (session && ally !== ALLY && rd === RD) {
-    demoNote = "Tu roster aún no está ingestado (llega en la Fase 5.2) — viendo los datos de demostración de Yusepi. Tu configuración sí es tuya.";
-  }
-  init(rd, { progress, guild, charMeta, mods, fleet, session, demoNote, onLogout: () => { clearAuth(); location.reload(); } });
+  // Demo: solo el mapa global en vivo; el resto embebido (sin token, sin exponer Firestore).
+  demoNote = "Modo demo — datos de Yusepi. Entra con tu cuenta del gremio para ver tu roster y guardar tu configuración.";
+  const charMeta = await loadCharMeta();
+  init(RD, { progress: { events: [], snapshots: [] }, guild: null, charMeta, mods: { audit: MODS_EMBED, live: false }, fleet: { owned: SHIPS_EMBED, live: false }, session: null, demoNote });
 }
 
 async function boot() {

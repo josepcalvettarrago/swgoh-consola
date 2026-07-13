@@ -200,6 +200,12 @@ export async function handleDeleteUser(env, claims, ally, db) {
   return { status: 200, data: { ok: true } };
 }
 
+// ¿Puede esta sesión leer los datos de `ally`? (Fase 5.2) Solo tu propio ally, o cualquiera si
+// eres admin. Puro y testeable — lo usa el gate de los endpoints de lectura por-jugador.
+export function canReadAlly(claims, ally) {
+  return !!claims && (claims.adm === 1 || String(claims.sub) === String(ally));
+}
+
 // Autentica una request: devuelve claims o null. Para gates admin, comprobar claims.adm === 1.
 export async function authenticate(request, env, opts = {}) {
   const token = bearerToken(request);

@@ -26,7 +26,7 @@
  * Secrets: FIREBASE_SERVICE_ACCOUNT (Firestore) + AUTH_SECRET (firma de sesiones, Fase 5.1).
  */
 import { getDoc, listDocs, setDoc, deleteDoc } from "./firestore.js";
-import { authenticate, handleRegister, handleLogin, handleGetConfig, handlePutConfig, handleRotateInvite, handleDeleteUser } from "./auth.js";
+import { authenticate, canReadAlly, handleRegister, handleLogin, handleGetConfig, handlePutConfig, handleRotateInvite, handleDeleteUser } from "./auth.js";
 
 // limit saneado de ?limit=N (1..100, por defecto 20).
 function limitOf(url, def = 20) {
@@ -90,6 +90,16 @@ export default {
           return json(r.data, env, r.status);
         }
         return json({ error: "ruta admin desconocida" }, env, 404);
+      }
+
+      // --- Fase 5.2: las lecturas por-jugador y de gremio exigen sesión (solo TU ally, o admin).
+      // /api/meta/characters queda público (mapa global, lo necesita el Scout incluso en demo).
+      const perPlayer = pathname.match(/^\/api\/(?:roster|progress|snapshots|mods|fleet)\/(\d+)$/);
+      const guildRead = pathname.match(/^\/api\/guild\/[\w-]+$/);
+      if (perPlayer || guildRead) {
+        const claims = await authenticate(request, env);
+        if (!claims) return json({ error: "necesitas iniciar sesión" }, env, 401);
+        if (perPlayer && !canReadAlly(claims, perPlayer[1])) return json({ error: "solo puedes ver tu propio roster" }, env, 403);
       }
 
       if ((m = pathname.match(/^\/api\/roster\/(\d+)$/))) {

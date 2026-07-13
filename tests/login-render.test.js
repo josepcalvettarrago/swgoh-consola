@@ -8,12 +8,16 @@ import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TPL = readFileSync(resolve(__dirname, "../web/index.template.html"), "utf8");
+const { RD } = await import("../web/src/data.js");
 
 beforeEach(() => {
   let clock = 0;
   globalThis.performance = { now: () => (clock += 600) };
   globalThis.requestAnimationFrame = cb => cb(performance.now());
   globalThis.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+  // Por defecto sin backend: los loaders caen a embebido. Cada test que necesite datos en vivo
+  // sobrescribe globalThis.fetch (Fase 5.2).
+  globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) });
   document.open(); document.write(TPL); document.close();
   try { window.localStorage.clear(); } catch { /* jsdom sin storage */ }
   vi.resetModules();
@@ -61,6 +65,8 @@ describe("puerta de acceso — sin sesión", () => {
     expect($("#login-err").textContent).toMatch(/no coinciden/);
   });
   it("'ver demo' abre la consola con banner honesto y sin chip de sesión", async () => {
+    // Demo (Fase 5.2): no pide datos por-jugador en vivo; todo embebido salvo el mapa global.
+    globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) });
     await import("../web/src/main.js");
     await tick();
     $("#login-demo").click();
@@ -73,8 +79,12 @@ describe("puerta de acceso — sin sesión", () => {
   });
 });
 
-describe("puerta de acceso — con sesión guardada", () => {
-  it("sesión vigente => consola directa, chip con el usuario, sin overlay ni banner", async () => {
+describe("puerta de acceso — con sesión guardada (Fase 5.2)", () => {
+  it("sesión vigente con roster ingestado => consola con SU roster en vivo, chip, sin banner", async () => {
+    // El Worker sirve el roster propio (con Bearer): loader lo trae en vivo (objeto ≠ embebido).
+    globalThis.fetch = async (url) => /\/api\/roster\//.test(String(url))
+      ? { ok: true, json: async () => ({ ...RD }) }              // roster en vivo (clon ≠ RD embebido)
+      : { ok: false, status: 503, json: async () => ({}) };       // config/mods/etc → fallback
     const exp = Math.floor(Date.now() / 1000) + 3600;
     window.localStorage.setItem("swgoh.auth.session", JSON.stringify({ token: fakeToken({ sub: "355463284", exp }), ally: "355463284", name: "Yusepi", role: "admin" }));
     await import("../web/src/main.js");
@@ -82,16 +92,17 @@ describe("puerta de acceso — con sesión guardada", () => {
     expect($("#login").hidden).toBe(true);
     expect($("#session-chip").hidden).toBe(false);
     expect($("#session-user").textContent).toBe("Yusepi");
-    expect($("#demo-banner").hidden).toBe(true); // su roster (embebido) SÍ es el suyo
+    expect($("#demo-banner").hidden).toBe(true); // roster en vivo → sin banner
   });
-  it("sesión de OTRO miembro sin roster ingestado => banner honesto de Fase 5.2", async () => {
+  it("sesión de un miembro cuyo roster aún NO está ingestado => embebido + banner honesto", async () => {
+    globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) }); // roster 503 → embebido
     const exp = Math.floor(Date.now() / 1000) + 3600;
     window.localStorage.setItem("swgoh.auth.session", JSON.stringify({ token: fakeToken({ sub: "222222222", exp }), ally: "222222222", name: "Wampa", role: "member" }));
     await import("../web/src/main.js");
     await vi.waitFor(() => expect($("#modstats").children.length).toBe(4));
     expect($("#session-chip").hidden).toBe(false);
     expect($("#demo-banner").hidden).toBe(false);
-    expect($("#demo-banner").textContent).toMatch(/5\.2/);
+    expect($("#demo-banner").textContent).toMatch(/ingesta del gremio/);
   });
   it("sesión caducada => se limpia y vuelve el overlay", async () => {
     const exp = Math.floor(Date.now() / 1000) - 10;
