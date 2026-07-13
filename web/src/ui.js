@@ -946,16 +946,26 @@ export function initLogin({ onLogin, onRegister, onDemo } = {}) {
   };
   $("#login-mode-in").onclick = () => setMode(false);
   $("#login-mode-up").onclick = () => setMode(true);
+  // Ejecuta el submit con el botón en estado "cargando" (disabled + texto), restaurándolo siempre.
+  const withLoading = async (btn, loadingText, run) => {
+    const prev = btn && btn.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = loadingText; }
+    try { return await run(); }
+    finally { if (btn) { btn.disabled = false; btn.textContent = prev; } }
+  };
   $("#login-form-in").onsubmit = async e => {
     e.preventDefault(); setErr("");
-    const r = onLogin ? await onLogin({ ally: $("#li-ally").value.trim(), password: $("#li-pass").value }) : { ok: false, error: "sin backend" };
+    const r = await withLoading(e.target.querySelector('button[type="submit"]'), "Entrando…", () =>
+      onLogin ? onLogin({ ally: $("#li-ally").value.trim(), password: $("#li-pass").value }) : { ok: false, error: "sin backend" });
     if (!r || !r.ok) setErr((r && r.error) || "no se pudo iniciar sesión");
   };
   $("#login-form-up").onsubmit = async e => {
     e.preventDefault(); setErr("");
     const pass = $("#rg-pass").value, pass2 = $("#rg-pass2").value;
+    if (pass.length < 8) return setErr("la contraseña debe tener al menos 8 caracteres");
     if (pass !== pass2) return setErr("las contraseñas no coinciden");
-    const r = onRegister ? await onRegister({ invite: $("#rg-invite").value.trim(), guildId: $("#rg-guild").value.trim(), ally: $("#rg-ally").value.trim(), password: pass }) : { ok: false, error: "sin backend" };
+    const r = await withLoading(e.target.querySelector('button[type="submit"]'), "Creando cuenta…", () =>
+      onRegister ? onRegister({ invite: $("#rg-invite").value.trim(), guildId: $("#rg-guild").value.trim(), ally: $("#rg-ally").value.trim(), password: pass }) : { ok: false, error: "sin backend" });
     if (!r || !r.ok) setErr((r && r.error) || "no se pudo crear la cuenta");
   };
   $("#login-demo") && ($("#login-demo").onclick = e => { e.preventDefault(); onDemo && onDemo(); });

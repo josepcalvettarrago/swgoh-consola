@@ -64,6 +64,28 @@ describe("puerta de acceso — sin sesión", () => {
     expect($("#login-err").hidden).toBe(false);
     expect($("#login-err").textContent).toMatch(/no coinciden/);
   });
+  it("el campo de invitación NO es required (bootstrap del admin con invitación vacía)", async () => {
+    await import("../web/src/main.js");
+    await tick();
+    $("#login-mode-up").click();
+    // Fase 5.4-fix: el Worker permite al ADMIN_ALLY registrarse sin invitación; el input no debe forzarla.
+    expect($("#rg-invite").required).toBe(false);
+    expect($("#rg-invite").hasAttribute("required")).toBe(false);
+  });
+  it("contraseña < 8 => error de longitud en cliente, sin llamar a la red", async () => {
+    let called = false;
+    globalThis.fetch = async () => { called = true; return { ok: false, status: 503, json: async () => ({}) }; };
+    await import("../web/src/main.js");
+    await tick();
+    $("#login-mode-up").click();
+    $("#rg-invite").value = ""; $("#rg-guild").value = "G1"; $("#rg-ally").value = "123456789";
+    $("#rg-pass").value = "1234567"; $("#rg-pass2").value = "1234567"; // coinciden pero < 8
+    $("#login-form-up").dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
+    await tick();
+    expect($("#login-err").hidden).toBe(false);
+    expect($("#login-err").textContent).toMatch(/al menos 8/);
+    expect(called).toBe(false);
+  });
   it("'ver demo' abre la consola con banner honesto y sin chip de sesión", async () => {
     // Demo (Fase 5.2): no pide datos por-jugador en vivo; todo embebido salvo el mapa global.
     globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) });

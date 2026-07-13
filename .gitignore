@@ -11,3 +11,7 @@ firebase/*service*account*.json
 *serviceAccount*.json
 # Logs de la ingesta local
 *.log
+
+# Fase 5.4 — datos maestros y rescate del admin (contienen procedimiento sensible / tocan Firestore)
+/ADMIN.md
+/scripts/admin-reset-local.mjs

@@ -134,6 +134,21 @@ en 5.2 pasan a Bearer. CORS: `GET, POST, PUT, DELETE` + header `authorization`.
 - **Diferido a Fase 6:** drill-down del roster por miembro y "TW readiness" por jugador (mal definida/cara).
 - **286 → 299 tests.** Pendiente: probar el ciclo admin real contra el Worker desplegado (`DEBTS.md`).
 
+## Fase 5.4-fix — login compacto + rescate admin
+- **Login usable:** el overlay `#login` renderizaba con los campos gigantes porque los inputs usan la
+  clase compartida `.rx-in` (`flex:1 1 190px`), que dentro del `label` en columna estira la altura a
+  ~190 px. Fix quirúrgico en CSS (`web/src/styles.css`, bloque 5.1): `#login .rx-in` a altura fija de
+  44 px (`flex:0 0 auto;min-width:0`), `.login-card` con `max-height`+`overflow` y `.login-gate` con
+  `overflow` (scroll interno del modal, nunca de la página). Sin renombrar clases ni tocar la estética.
+- **Registro:** `#rg-invite` deja de ser `required` (el bootstrap del admin envía invitación vacía; el
+  Worker ya lo valida). JS mínimo en `initLogin` (`web/src/ui.js`): botón `disabled`+"Entrando…/Creando
+  cuenta…" durante la llamada y validación inline de contraseña < 8 antes de tocar la red. `auth.js` y
+  los endpoints intactos. +2 tests (`tests/login-render.test.js`) → **301**.
+- **Rescate admin:** `scripts/admin-reset-local.mjs <ally>` (gitignored) reutiliza `deleteDoc` de
+  `worker/src/firestore.js` y el service account local para borrar `users/{ally}` (config conservada),
+  idempotente. Procedimiento maestro en `ADMIN.md` (gitignored, sin secretos). `ADMIN_ALLY = "355463284"`
+  ya era correcto en `wrangler.toml` — sin cambios en el toml.
+
 ## Nota de seguridad verificada (Fase 5.1)
 El JSON del service account que vive en `firebase/` **nunca estuvo commiteado** (untracked; `.gitignore`
 ya cubría `firebase/*adminsdk*.json`; `git log --all` vacío para esa ruta). No hizo falta rotación.
