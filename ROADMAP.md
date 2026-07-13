@@ -38,6 +38,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **4.6 — Objetivo de ascensión configurable** | ✅ Hecha | `v4.6-ascension` | De-hardcodeo: tab "Vader"→"Ascensión" con selector de objetivo (`unlock_db`: 10 GLs + 3 legendaries; Vader migrado 57/17) + motor `ascension.js` + plan editable + tab GL derivada. Prerrequisito de la Fase 5. **224 tests verdes.** |
 | **4.7 — Prioridades de farmeo editables** | ✅ Hecha | `v4.7-prios` | Hub de prioridades en "Mejoras": tiers reordenables + cola "próximo a farmear" (pins/override) + Top 5 derivado del estado. Catálogo ampliado (21 objetivos, 3 tiers). **237 tests verdes.** Cierra la Fase 4. |
 | **5.1 — Login del gremio + config remota** | ✅ Hecha | `v5.1-auth` | Auth propio en el Worker (invitación + gremio + ally + contraseña propia; PBKDF2 + JWT). Overlay de login con modo demo honesto; config por-usuario sincronizada con Firestore (last-write-wins). **270 tests verdes.** |
+| **5.2 — Rosters multi-miembro** | ✅ Hecha | `v5.2-guild-rosters` | Ingesta de gremio (`ingest-guild.mjs`: roster de cada miembro → `players/{ally}`) + cierre de las lecturas por-jugador tras sesión (solo tu ally, o admin). Cada miembro ve SU roster; demo = embebido. **286 tests verdes.** |
 | 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
@@ -306,10 +307,18 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   `users/{ally}/data/config` — pull al entrar (last-write-wins por `updatedAt`), push debounced en cada
   save; localStorage queda de caché offline. **270 tests.**
 
-### Fase 5.2 — Rosters multi-miembro (`v5.2-guild-rosters`) — pendiente
-- Ingesta `--guild`: baja el roster de cada miembro (`players/{ally}` solo; snapshots/mods/ships siguen
-  siendo de Yusepi). Lecturas por-jugador pasan a exigir Bearer y sirven solo el ally del token
-  (o cualquiera si admin). `PAGES_ORIGIN` definitivo. Cada miembro ve **SU** consola.
+### Fase 5.2 — Rosters multi-miembro (`v5.2-guild-rosters`) — ✅ HECHA
+- **Ingesta de gremio** (`scripts/ingest-guild.mjs`, núcleo `ingestGuild` con deps inyectadas → testeable
+  sin red): lee `guild/{id}.members[]` y baja el roster de cada miembro a `players/{ally}` (solo rd+meta;
+  mods/naves/snapshots siguen siendo de Yusepi). Reutiliza `normalize.js` + el curl anti-fingerprint
+  extraído a `scripts/gg-fetch.mjs` (compartido con `ingest.mjs`, comportamiento idéntico). Flags
+  `--dry/--limit/--only`; salta miembros con perfil privado/404 sin abortar. Corre en local
+  (`ingest-guild-local.ps1`, IP residencial).
+- **Worker:** las 5 lecturas por-jugador (`roster/progress/snapshots/mods/fleet`) + `guild` exigen **Bearer**;
+  helper puro `canReadAlly` (solo tu ally, o cualquiera si `adm:1`). `meta/characters` sigue público.
+- **Cliente:** el miembro autenticado baja **SU** roster con el token; sin ingestar aún → embebido + banner
+  honesto. Demo (sin sesión) = embebido, sin pedir datos por-jugador. **286 tests.**
+- **Pendiente:** `PAGES_ORIGIN` definitivo (cuando haya dominio) y correr la ingesta real de los 50.
 
 ### Fase 5.3 — Panel admin (`v5.3-admin`) — pendiente
 - Vista solo-admin: estado de los 50 (registrado sí/no, GP, último snapshot), rotar invitación,

@@ -2,6 +2,31 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 5.2 — Rosters multi-miembro — `v5.2-guild-rosters`
+
+- **Cada miembro ve SU propio roster.** Antes solo el de Yusepi estaba en Firestore; ahora la ingesta baja
+  el roster de todos los miembros del gremio y los endpoints de lectura se cierran tras sesión.
+- **Ingesta de gremio** (`scripts/ingest-guild.mjs`): lee `guild/{id}.members[]` y baja el roster de cada
+  miembro a `players/{ally}` (solo `rd`+meta; mods/naves/snapshots/progreso siguen siendo de Yusepi por
+  coste/tiempo). Núcleo `ingestGuild` con dependencias inyectadas (red + Firestore) → **testeable sin red**.
+  Flags `--dry`/`--limit N`/`--only {ally}`. Un miembro con perfil privado/404 se **salta y se registra**,
+  nunca aborta el run. Corre en local (`scripts/ingest-guild-local.ps1`, IP residencial, tarea aparte).
+- **Refactor sin cambio de comportamiento:** el cliente curl anti-fingerprint (JA3) se extrae de
+  `ingest.mjs` a `scripts/gg-fetch.mjs`, compartido por ambas ingestas.
+- **Worker:** las 5 lecturas por-jugador (`roster/progress/snapshots/mods/fleet`) y `guild` pasan a exigir
+  **Bearer**; helper puro `canReadAlly` (solo tu propio ally, o cualquiera si eres admin) → si no, **403**;
+  sin sesión, **401**. `meta/characters` **sigue público** (mapa global, lo necesita el Scout en demo).
+- **Cliente:** los loaders (`loadRoster/loadProgress/loadGuild/loadMods/loadFleet`) mandan
+  `Authorization: Bearer` si hay sesión; el miembro autenticado baja **su** roster. Si aún no está
+  ingestado (503) → embebido + **banner honesto** ("pídele al admin que corra la ingesta del gremio").
+  El **modo demo** (sin sesión) ya no pide datos por-jugador en vivo: usa embebidos (no expone Firestore).
+- Verificación: **286 tests verdes** (270 + 16: `canReadAlly`, guard del Worker 401/403, núcleo
+  `ingestGuild` con deps inyectadas, loaders con Bearer, render de sesión/roster propio/demo). Build → 1
+  HTML (527 KB). **Pendiente:** correr la ingesta real de los 50 y `PAGES_ORIGIN` definitivo (ver `DEBTS.md`).
+- **Deuda anotada** (`DEBTS.md`, nuevo): probar el Worker de auth de la 5.1 desplegado (`wrangler dev` +
+  `AUTH_SECRET`, registro admin, ciclo completo) y en navegador real; rate-limit por IP; repaso visual F4/F5.
+- Tag: `v5.2-guild-rosters`.
+
 ## Fase 5.1 — Login del gremio + config remota — `v5.1-auth`
 
 - **Abre la consola al gremio.** Flujo de acceso fácil: para registrarse hacen falta **código de

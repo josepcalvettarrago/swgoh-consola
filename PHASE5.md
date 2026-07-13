@@ -97,15 +97,27 @@ en 5.2 pasan a Bearer. CORS: `GET, POST, PUT, DELETE` + header `authorization`.
 3. Yusepi se registra (bootstrap, sin invitación) → `POST /api/admin/invite` con el código a repartir.
 4. Publicar el HTML nuevo (Pages). `PAGES_ORIGIN` al dominio definitivo cuando exista.
 
-## Fase 5.2 — rosters multi-miembro (especificada)
-- `scripts/ingest.mjs --guild`: lee `guild/{id}.members[]` y baja el roster de cada ally con
-  curl-impersonate (pausa entre fetches; el egress sigue siendo solo residencial). Solo
-  `players/{ally}` (rd + meta) por miembro; snapshots/history/mods/ships siguen siendo de Yusepi
-  (coste/tiempo). Presupuesto Firestore holgado (~50 × ~200 KB ≪ 1 GB free tier).
-- Worker: las lecturas por-jugador exigen Bearer y **solo sirven el ally del token** (o cualquiera si
-  `adm:1`). `PAGES_ORIGIN` definitivo.
-- UI: la consola carga el roster del ally autenticado; el banner demo desaparece para los ingestados.
-- Tag: `v5.2-guild-rosters`.
+## Fase 5.2 — rosters multi-miembro — IMPLEMENTADA (`v5.2-guild-rosters`)
+- **`scripts/ingest-guild.mjs`** (script aparte; `ingest.mjs` intacto para Yusepi): lee
+  `guild/{id}.members[]` (ya escrito por la ingesta de Yusepi) y baja el roster de cada miembro a
+  `players/{ally}` (solo `rd`+meta). Núcleo **`ingestGuild(env, deps, opts)`** con red y Firestore
+  **inyectados** → testeable sin tocar swgoh.gg. Flags `--dry`/`--limit`/`--only`; salta miembros con
+  perfil privado/404 sin abortar; cuenta `ok`/`fallidos`/`saltados`. Corre en local
+  (`scripts/ingest-guild-local.ps1`, IP residencial, tarea programada aparte, DESPUÉS de la de Yusepi).
+- **`scripts/gg-fetch.mjs`** (nuevo): el cliente curl anti-fingerprint (JA3) extraído de `ingest.mjs`,
+  compartido por ambas ingestas (comportamiento idéntico; los flujos de Yusepi no cambian).
+- **Worker** (`worker/src/index.js`): las 5 lecturas por-jugador (`roster/progress/snapshots/mods/fleet`)
+  y `guild` exigen **Bearer** antes de tocar Firestore; helper puro **`canReadAlly(claims, ally)`** en
+  `auth.js` (solo tu ally, o cualquiera si `adm:1`) → 403 si no; 401 sin sesión. `meta/characters` sigue
+  público. CORS ya lo permitía (5.1).
+- **Cliente** (`web/src/main.js`): los loaders aceptan `token` y mandan `Authorization: Bearer`;
+  `startConsole(session)` baja el roster **del propio ally**. Sin ingestar aún → embebido + banner
+  honesto. Demo (sin sesión) = embebido, sin pedir datos por-jugador (no expone Firestore).
+- Solo `players/{ally}` por miembro: **mods/naves/snapshots/progreso siguen siendo de Yusepi** (coste/
+  tiempo) → esas pestañas del miembro caen a embebido con banner honesto. Presupuesto Firestore holgado
+  (~50 × ~200 KB ≪ 1 GB free tier). **286 tests.**
+- **Pendiente:** correr la ingesta real de los 50 (IP residencial) y `PAGES_ORIGIN` definitivo cuando
+  haya dominio de Pages. Ver `DEBTS.md`.
 
 ## Fase 5.3 — panel admin (especificada)
 - Vista solo `adm:1`: los 50 miembros (GP, **registrado sí/no** — cruce guild×users, último snapshot),
