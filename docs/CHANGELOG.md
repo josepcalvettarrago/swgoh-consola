@@ -2,6 +2,37 @@
 
 Todas las fases del proyecto SWGOH Consola. Formato: fecha · fase · resumen en español.
 
+## Fase 5.1 — Login del gremio + config remota — `v5.1-auth`
+
+- **Abre la consola al gremio.** Flujo de acceso fácil: para registrarse hacen falta **código de
+  invitación** + **nº de gremio** + **código de aliado**, y cada miembro **elige su propia contraseña**.
+- **Auth propio en el Worker** (desviación documentada del plan "Firebase Auth": el flujo sin email no
+  encaja y el SDK sumaría ~100 KB al HTML único). `worker/src/auth.js`: PBKDF2-SHA256 (100k iteraciones,
+  salt por usuario, nada en claro) + sesión **JWT HS256** firmada con el secret `AUTH_SECRET` (30 días).
+  Firestore sigue **deny-all**: todo pasa por el Worker.
+- **Registro honesto y validado:** el ally debe estar en la **lista real de miembros** del gremio
+  (`guild/{id}` de la ingesta); la invitación es **una por gremio y rotable** por el admin (hasheada en
+  `auth/{guildId}`); cuenta duplicada → 409 y **reset por el admin** (sin email no hay auto-reset).
+  Bootstrap sin huevo-y-gallina: sin invitación activa solo puede registrarse `ADMIN_ALLY`. Login con
+  **401 genérico** (no revela si el ally existe) + retardo fijo; se documenta que **no hay rate-limit
+  real por IP** (mitigación en Fase 6 con KV/Turnstile).
+- **Endpoints nuevos** (index.js): `POST /api/auth/register|login`, `GET /api/me`, `GET|PUT /api/config`,
+  `POST /api/admin/invite`, `DELETE /api/admin/users/:ally` (admin). CORS ampliado
+  (POST/PUT/DELETE + `authorization`). `firestore.js` gana `deleteDoc`. El Worker deja de ser solo-lectura
+  **únicamente** para cuentas/config de usuario — los datos de juego siguen escribiéndose solo desde la
+  ingesta local.
+- **Cliente:** overlay de login (estética holotable, aditivo) con Entrar/Registrarse y **"ver demo"**
+  (datos embebidos de Yusepi con banner honesto — la consola nunca en blanco); chip de sesión con "salir";
+  si el miembro autenticado aún no tiene roster ingestado, **banner honesto** ("llega en la Fase 5.2").
+- **Config por-usuario sincronizada:** las 8 claves de `store.js` (bloqueo, tablero, energía, TW, objetivo,
+  plan, prioridades, pins) viajan a `users/{ally}/data/config` — pull al entrar (**last-write-wins** por
+  `updatedAt`), push **debounced** en cada save, localStorage de caché offline. `swgoh.auth.session` +
+  `swgoh.config.updatedAt` nuevas en `store.js`.
+- Verificación: **270 tests verdes** (237 + 33: PBKDF2/JWT, handlers con Firestore en memoria, cliente con
+  fetch inyectado, sync last-write-wins, render jsdom del overlay/demo/sesión). Build → 1 HTML (527 KB).
+  **Pendiente:** probar el Worker desplegado (secrets `AUTH_SECRET` + vars) y navegador real.
+- Tag: `v5.1-auth`.
+
 ## Fase 4.7 — Prioridades de farmeo editables + cola "próximo a farmear" — `v4.7-prios`
 
 - **Cierra el de-hardcodeo (prerrequisito de la Fase 5):** la pestaña **"Mejoras"** deja de ser un Top 5

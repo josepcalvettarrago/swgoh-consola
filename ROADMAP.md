@@ -37,6 +37,7 @@ Dashboard single-file HTML (~190 KB) para gestión de cuenta F2P de SWGOH.
 | **4.5 — Planificador de datacrones** | ✅ Hecha | `v4.5-datacrons` | Pestaña Datacrons: recomendador CURADO por temporada (tienes 0) cruzando `datacron_db` con el roster. Motor puro `datacrons.js`, 100% cliente. **203 tests verdes.** |
 | **4.6 — Objetivo de ascensión configurable** | ✅ Hecha | `v4.6-ascension` | De-hardcodeo: tab "Vader"→"Ascensión" con selector de objetivo (`unlock_db`: 10 GLs + 3 legendaries; Vader migrado 57/17) + motor `ascension.js` + plan editable + tab GL derivada. Prerrequisito de la Fase 5. **224 tests verdes.** |
 | **4.7 — Prioridades de farmeo editables** | ✅ Hecha | `v4.7-prios` | Hub de prioridades en "Mejoras": tiers reordenables + cola "próximo a farmear" (pins/override) + Top 5 derivado del estado. Catálogo ampliado (21 objetivos, 3 tiers). **237 tests verdes.** Cierra la Fase 4. |
+| **5.1 — Login del gremio + config remota** | ✅ Hecha | `v5.1-auth` | Auth propio en el Worker (invitación + gremio + ally + contraseña propia; PBKDF2 + JWT). Overlay de login con modo demo honesto; config por-usuario sincronizada con Firestore (last-write-wins). **270 tests verdes.** |
 | 5 · 6 · 6.5 | ⬜ Pendientes | — | — |
 
 **✅ Ingesta (write path) — OPERATIVA en local:**
@@ -286,13 +287,33 @@ Ver `PHASE0.md` para el paso a paso detallado. Resumen:
   (los 3 tiers con contenido; journey long tail pendiente, requisitos antiguos marcados "por confirmar").
 - **237 tests.** **Fase 4 completa.**
 
-## FASE 5 — Gremio multi-usuario (3-4 sesiones)
-- **Firebase Auth** para el login del gremio (esto es lo que Firebase te ahorra construir).
-- Colección `players` en Firestore; alta por ally code con enlace-invitación.
-- Cada miembro ve **SU** consola: los motores son agnósticos del roster **y** el objetivo/plan/prioridades
-  ya están de-hardcodeados (4.6/4.7). La Fase 5 solo mueve esa config por-usuario de `localStorage` a
-  Firestore y añade Auth — **4.6/4.7 son su prerrequisito**.
-- Panel admin para Yusepi: estado de los 50, TW readiness, ranking.
+## FASE 5 — Gremio multi-usuario (sub-fases 5.1 / 5.2 / 5.3; diseño completo en PHASE5.md)
+
+### Fase 5.1 — Login del gremio + config remota (`v5.1-auth`) — ✅ HECHA
+- **Desviación consciente del plan original ("Firebase Auth"):** el flujo pedido (código de invitación +
+  nº de gremio + ally code + **contraseña elegida por el miembro**, sin email) no encaja con Firebase Auth
+  (exige email o hacks) y su SDK sumaría ~100 KB al HTML único. En su lugar, **auth propio en el Worker**:
+  PBKDF2-SHA256 (100k iters, salt/usuario) + sesión **JWT HS256** (secret `AUTH_SECRET`, 30 días).
+  Firestore sigue **deny-all**: todo pasa por el Worker.
+- **Registro validado contra el gremio real:** el ally debe estar en `guild/{id}.members` (ingesta);
+  invitación **única por gremio, rotable** por el admin (hasheada en `auth/{guildId}`); duplicado → 409
+  ("pide reset al admin" — sin email no hay auto-reset). Bootstrap: sin invitación activa solo puede
+  registrarse `ADMIN_ALLY`. Login con **401 genérico** + retardo fijo (honesto: sin KV/DO no hay
+  rate-limit real por IP — mitigación futura en Fase 6).
+- **Cliente:** overlay de login (estética holotable, aditivo) con Entrar/Registrarse + **"ver demo"**
+  (consola nunca en blanco); chip de sesión con "salir"; **banner honesto** cuando el roster mostrado no
+  es el del usuario. Config por-usuario (8 claves de `store.js`) sincronizada con
+  `users/{ally}/data/config` — pull al entrar (last-write-wins por `updatedAt`), push debounced en cada
+  save; localStorage queda de caché offline. **270 tests.**
+
+### Fase 5.2 — Rosters multi-miembro (`v5.2-guild-rosters`) — pendiente
+- Ingesta `--guild`: baja el roster de cada miembro (`players/{ally}` solo; snapshots/mods/ships siguen
+  siendo de Yusepi). Lecturas por-jugador pasan a exigir Bearer y sirven solo el ally del token
+  (o cualquiera si admin). `PAGES_ORIGIN` definitivo. Cada miembro ve **SU** consola.
+
+### Fase 5.3 — Panel admin (`v5.3-admin`) — pendiente
+- Vista solo-admin: estado de los 50 (registrado sí/no, GP, último snapshot), rotar invitación,
+  resetear cuentas, TW readiness, ranking.
 - Hosting definitivo: **Cloudflare Pages** + dominio.
 
 ## FASE 6 — Pulido
